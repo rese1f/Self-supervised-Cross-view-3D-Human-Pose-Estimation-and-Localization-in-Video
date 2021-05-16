@@ -133,5 +133,4 @@ dmypy.json
 
 #config files
 configs.ini
-
-
+output/
