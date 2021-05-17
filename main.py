@@ -27,7 +27,7 @@ class main():
 
         if self.random_data_source:
             data_path_list = rf.random_data_source(self.input_path, input_num_min, input_num_max)
-            print("You've load {} successfully".format(data_path_list))
+            print("You've loaded {} successfully".format(data_path_list))
 
         self.data = [torch.tensor(scio.loadmat(i)['data']) for i in [self.input_path + j for j in data_path_list]]
 
