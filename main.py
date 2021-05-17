@@ -6,7 +6,7 @@ import torch
 from visualize import visualize as vis
 
 
-class main():
+class main:
     def __init__(self,
                  input_num_min=2, input_num_max=2,
                  translate_distance=1000,
@@ -42,13 +42,13 @@ class main():
         self.translate_distance = translate_distance
 
     def if_collision(self, datas):
-        '''
+        """
         check if any two people collision
-        '''
+        """
         pass
 
     def main(self):
-        datas = []
+        dataCluster = []
         org = []
         for data in self.data:
             org.append(data.reshape(data.shape[0], test.vertex_number, 3))
@@ -58,17 +58,17 @@ class main():
                 data = rf.random_translate(data, self.translate_distance)
             if self.random_rotate:
                 data = rf.random_rotate(data)
-            datas.append(data)
-        datas = torch.stack([i[:self.frame, :, :] for i in datas])
-        # self.if_collision(datas)
+            dataCluster.append(data)
+        dataCluster = torch.stack([i[:self.frame, :, :] for i in dataCluster])
+        # self.if_collision(dataCluster)
 
         v1 = vis(org, save_name='before.gif')
         v1.animate()
-        v2 = vis(datas, save_name='after.gif')
+        v2 = vis(dataCluster, save_name='after.gif')
         v2.animate()
 
-        print(datas)
-        print(datas.shape)
+        print(dataCluster)
+        print(dataCluster.shape)
 
 
 if __name__ == '__main__':

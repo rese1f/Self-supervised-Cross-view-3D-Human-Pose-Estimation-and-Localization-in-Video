@@ -9,7 +9,7 @@ import random_function as rf
 import torch
 
 
-class visualize():
+class visualize:
     def __init__(self, data=None, data_path_list=None, configs='configs.ini', radius=2000, if_box=True,
                  save_name='test.gif'):
         con = ConfigParser()

@@ -16,7 +16,7 @@ def random_data_source(input_path, min, max) -> list:
 
 def random_data_timeline(raw, rate=0.1):
     """
-
+    preprocess raw data into the new data.
     """
     frame = raw.shape[0]
     adjust = int(0.1 * np.random.randint(frame))
@@ -26,9 +26,9 @@ def random_data_timeline(raw, rate=0.1):
 
 
 def random_translate(raw, translate_distance):
-    '''
+    """
     Translate tensor
-    '''
+    """
     translate = torch.zeros(raw.size())
     random_x, random_y = torch.rand(1), torch.rand(1)
     translate[:, :, 0], translate[:, :, 1] = random_x, random_y
@@ -37,9 +37,9 @@ def random_translate(raw, translate_distance):
 
 
 def random_rotate(raw):
-    '''
+    """
     Rotate tensor
-    '''
+    """
     angle = torch.deg2rad(360 * torch.rand(1))
     r = torch.zeros(raw.size())
     r[:, :, 2] = 1
