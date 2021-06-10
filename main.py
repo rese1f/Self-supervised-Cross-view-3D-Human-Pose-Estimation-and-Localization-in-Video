@@ -66,7 +66,7 @@ class main:
                 data = rf.random_rotate(data)
             data_cluster.append(data)
         data_cluster = torch.stack([i[:self.frame, :, :] for i in data_cluster])
-        self.col_eli(data_cluster)
+        col_eli(data_cluster)
 
         v1 = vis(org, save_name='before.gif')
         v1.animate()
