@@ -10,7 +10,7 @@ import numpy as np
 def find_2d_bounding_box(data_cluster):
     """Utility function for finding the 2-dimensional bounding box
 
-    Find the 2-dimensional bounding box (with the view from up to down) of one person.
+    Find the 2-dimensional bounding box (with the top-down view) of one person.
     In details, deal with [x, 32, 2] for each i in n, by slicing dimensions into 2
     matrices. Iterate through all people and slice dimensions into 2. The initial
     output should be [x, 2], but because we have 2 dimensions we gain [x, 4]. By
@@ -127,5 +127,5 @@ def collision_eliminate(data_cluster):
     distance_tensor = find_distance(bounding_box)
     collision_cases_list = find_collision_cases(distance_tensor)
     best_shift_vector = decide_shift_vector(collision_cases_list)
-    data_cluster += best_shift_vector
+    # data_cluster += best_shift_vector
     return  # nothing
