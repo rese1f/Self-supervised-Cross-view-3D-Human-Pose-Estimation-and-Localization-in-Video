@@ -12,322 +12,380 @@ from visualize_2d import visualize_2d as vis_2d
 """
 
 
-def test_bounding_box(data_cluster_2d, data_cluster):
-    test_path_list = ['../Dataexpand_dataset/S1_Directions.mat', '../Dataexpand_dataset/S1_Greeting.mat']
-    # try animating the boxes inside 2 dimensions
-    v_2d = vis_2d(data=data_cluster_2d, data_path_list=test_path_list, save_name='2d.gif')
-    v_2d.animate()
-    # compare with 3d case
-    v_3d = vis(data=data_cluster, data_path_list=test_path_list, save_name='3d.gif')
-    v_3d.animate()
-    if True:
+class collision_eliminate:
+    def __init__(self, data_cluster=None):
+        # local variable initialization
+        self.n = data_cluster.shape[0]
+        self.x = data_cluster.shape[1]
+        self.number_of_all_vertices = data_cluster.shape[2]
+        self.data_cluster = data_cluster
+
+        # intermediate variable initialization
+        self.data_cluster_2d = torch.tensor([])
+        self.bounding_box = torch.tensor([])
+        self.central_distance_tensor = torch.tensor([])
+        self.bounding_box_vertexbased = torch.tensor([])
+        self.collision_cases_list = torch.tensor([])
+        self.best_shift_vector = torch.tensor([])
+
+        self.con = ConfigParser()
+        self.con.read('configs.ini')
+
+    def test_bounding_box(self):
+        test_path_list = ['../Dataexpand_dataset/S1_Directions.mat', '../Dataexpand_dataset/S1_Greeting.mat']
+        # try animating the boxes inside 2 dimensions
+        v_2d = vis_2d(data=self.data_cluster_2d, data_path_list=test_path_list, save_name='2d.gif')
+        v_2d.animate()
+        # compare with 3d case
+        v_3d = vis(data=self.data_cluster, data_path_list=test_path_list, save_name='3d.gif')
+        v_3d.animate()
         print("test_bounding_box: SUCCESS")
-    if False:
-        print("test_bounding_box: FAIL")
-    return
+        return
 
+    def throw_vertex_part(self):
+        # bounding points are decided: [0, 12, 21, 18, 26, 29, 16, 3, 5, 8, 10]
+        bounding_point = [int(i) for i in self.con.get('skeleton', 'bonding_point').split(',')]
 
-def throw_vertex_part(data_cluster_2d):
-    con = ConfigParser()
-    con.read('configs.ini')
+        # initialize the tensor cube
+        tensor_cube = []
 
-    # frame is a number indicating the shorter one for the two videos
-    x = np.min([data_cluster_2d[i].shape[0]
-                for i in range(len(data_cluster_2d))])
-    # bounding points are decided: [0, 12, 21, 18, 26, 29, 16, 3, 5, 8, 10]
-    bounding_point = [int(i) for i in con.get('skeleton', 'bonding_point').split(',')]
+        # iterate through n
+        for data in self.data_cluster_2d:
+            # data_cluster_2d has torch.Size([n, x, 32, 2])
+            # data has torch.Size([x, 32, 2]), with n iteration rounds
 
-    # initialize the tensor cube
-    tensor_cube = []
+            # initialize the tensor plane
+            tensor_plane = []
 
-    # iterate through n
-    for data in data_cluster_2d:
-        # data_cluster_2d has torch.Size([n, x, 32, 2])
-        # data has torch.Size([x, 32, 2]), with n iteration rounds
+            # iterate through x
+            for frame in range(self.x):
+                # candidate vertices for the box
+                x_sus = [data[frame, i, 0] for i in bounding_point]
+                y_sus = [data[frame, i, 1] for i in bounding_point]
 
-        # initialize the tensor plane
-        tensor_plane = []
+                # switch into the tensor
+                # x_sus is a list, and x_max is a value (the maximum of the list)
+                x_sus = torch.stack(x_sus, dim=0)
+                y_sus = torch.stack(y_sus, dim=0)
+                x_max = torch.max(x_sus)
+                x_min = torch.min(x_sus)
+                y_max = torch.max(y_sus)
+                y_min = torch.min(y_sus)
 
-        # iterate through x
-        for frame in range(x):
-            # candidate vertices for the box
-            x_sus = [data[frame, i, 0] for i in bounding_point]
-            y_sus = [data[frame, i, 1] for i in bounding_point]
+                # make a tensor bar
+                x_max_tensor = torch.tensor([x_max])
+                y_max_tensor = torch.tensor([y_max])
+                x_min_tensor = torch.tensor([x_min])
+                y_min_tensor = torch.tensor([y_min])
+                tensor_bar = torch.stack((x_max_tensor, y_max_tensor,
+                                          x_min_tensor, y_min_tensor))
 
-            # switch into the tensor
-            # x_sus is a list, and x_max is a value (the maximum of the list)
-            x_sus = torch.stack(x_sus, dim=0)
-            y_sus = torch.stack(y_sus, dim=0)
-            x_max = torch.max(x_sus)
-            x_min = torch.min(x_sus)
-            y_max = torch.max(y_sus)
-            y_min = torch.min(y_sus)
+                # make a tensor plane, concat if possible
+                if tensor_plane == []:
+                    tensor_plane = tensor_bar
+                else:
+                    tensor_plane = torch.cat((tensor_bar, tensor_plane), dim=1)
 
-            # make a tensor bar
-            x_max_tensor = torch.tensor([x_max])
-            y_max_tensor = torch.tensor([y_max])
-            x_min_tensor = torch.tensor([x_min])
-            y_min_tensor = torch.tensor([y_min])
-            tensor_bar = torch.stack((x_max_tensor, y_max_tensor,
-                                      x_min_tensor, y_min_tensor))
-
-            # make a tensor plane, concat if possible
-            if tensor_plane == []:
-                tensor_plane = tensor_bar
+            # make a tensor cube, concat if possible
+            # case 1. do not exist
+            if tensor_cube == []:
+                tensor_cube = tensor_plane  # becomes [4, x]
+                flag = 1
+            # case 2. only added once
+            elif flag == 1:
+                tensor_cube = torch.stack((tensor_cube, tensor_plane), dim=0)  # becomes [2, 4, x]
+                flag = 0
+            # case 3. added more than once
             else:
-                tensor_plane = torch.cat((tensor_bar, tensor_plane), dim=1)
+                tensor_plane = torch.unsqueeze(tensor_plane, 0)
+                tensor_cube = torch.cat((tensor_cube, tensor_plane), dim=0)  # becomes [3, 4, x]
 
-        # make a tensor cube, concat if possible
-        # case 1. do not exist
-        if tensor_cube == []:
-            tensor_cube = tensor_plane  # becomes [4, x]
-            flag = 1
-        # case 2. only added once
-        elif flag == 1:
-            tensor_cube = torch.stack((tensor_cube, tensor_plane), dim=0)  # becomes [2, 4, x]
-            flag = 0
-        # case 3. added more than once
-        else:
-            tensor_plane = torch.unsqueeze(tensor_plane, 0)
-            tensor_cube = torch.cat((tensor_cube, tensor_plane), dim=0)  # becomes [3, 4, x]
+        self.bounding_box = tensor_cube.permute(0, 2, 1)
+        return self.bounding_box
 
-    bounding_box_cluster = tensor_cube.permute(0, 2, 1)
-    return bounding_box_cluster
+    def find_2d_bounding_box(self):
+        """Utility function for finding the 2-dimensional bounding box
 
+        Find the 2-dimensional bounding box (with the top-down view) of one person.
+        In details, deal with [x, 32, 2] for each i in n, by slicing dimensions into 2
+        matrices. Iterate through all people and slice dimensions into 2. The initial
+        output should be [x, 2], but because we have 2 dimensions we gain [x, 4]. By
+        iterating through n people we get [n, x, 4].
 
-def find_2d_bounding_box(data_cluster):
-    """Utility function for finding the 2-dimensional bounding box
+        Args:
+            data_cluster: The tensor of size [n, x, 32, 3], where
+                n: number of people;
+                x: number of frames;
+                32: number of vertices on a person;
+                3: number of dimensions for each vertex.
 
-    Find the 2-dimensional bounding box (with the top-down view) of one person.
-    In details, deal with [x, 32, 2] for each i in n, by slicing dimensions into 2
-    matrices. Iterate through all people and slice dimensions into 2. The initial
-    output should be [x, 2], but because we have 2 dimensions we gain [x, 4]. By
-    iterating through n people we get [n, x, 4].
+        Returns:
+            The bounding boxes of each person, as a tensor of size [n, x, 8] where
+                n: number of people;
+                x: number of frames;
+                4: x_max, x_min, y_max, y_min (2 vertices, 2 dimensions, 2*2 = 4)
 
-    Args:
-        data_cluster: The tensor of size [n, x, 32, 3], where
-            n: number of people;
-            x: number of frames;
-            32: number of vertices on a person;
-            3: number of dimensions for each vertex.
+        Raises:
+            NOError: no error occurred up to now
+        """
 
-    Returns:
-        The bounding boxes of each person, as a tensor of size [n, x, 8] where
-            n: number of people;
-            x: number of frames;
-            4: x_max, x_min, y_max, y_min (2 vertices, 2 dimensions, 2*2 = 4)
+        # slice 3-dimensional to 2-dimensional
+        indices = torch.tensor([0, 1])
+        self.data_cluster_2d = torch.index_select(self.data_cluster, 3, indices)
+        # print(data_cluster_2d.shape) gives torch.Size([2, x, 32, 2]), because z-axis is
+        #   sliced out.
 
-    Raises:
-        NOError: no error occurred up to now
-    """
+        # test if the 2D bounding box is successfully found
+        # test_bounding_box(data_cluster_2d, data_cluster)
 
-    # slice 3-dimensional to 2-dimensional
-    indices = torch.tensor([0, 1])
-    data_cluster_2d = torch.index_select(data_cluster, 3, indices)
-    # print(data_cluster_2d.shape) gives torch.Size([2, x, 32, 2]), because z-axis is
-    #   sliced out.
+        # throw the vertex part
+        self.bounding_box = self.throw_vertex_part()
 
-    # test if the 2D bounding box is successfully found
-    # test_bounding_box(data_cluster_2d, data_cluster)
+        # return the bunch of bounding boxes
+        return
 
-    # throw the vertex part
-    bounding_box_cluster = throw_vertex_part(data_cluster_2d)
+    def find_central_distance(self):
+        """Utility function for finding the distance of two bounding boxes.
 
-    # return the bunch of bounding boxes
-    return bounding_box_cluster
+        For each pair of bounding boxes, find the distance between them, using their
+        central points. Read distances of EACH FRAME (each j in x). For each pair
+        of people there will be [x], and for n people there will be [n, n, x],
+        as [n, n] is the upper-triangular adjacency matrix of the people.
 
+        Args:
+            bounding_box: The tensor of size [n, x, 4].
 
-def find_central_distance(bounding_box):
-    """Utility function for finding the distance of two bounding boxes.
+        Returns:
+            The distance tensor of size [n, n, x] for each frame
 
-    For each pair of bounding boxes, find the distance between them, using their
-    central points. Read distances of EACH FRAME (each j in x). For each pair
-    of people there will be [x], and for n people there will be [n, n, x],
-    as [n, n] is the upper-triangular adjacency matrix of the people.
+        Raises:
+            NOError: no error occurred up to now
+        """
 
-    Args:
-        bounding_box: The tensor of size [n, x, 4].
+        # initialize the adjacency matrix tensor
+        adjacency_matrix_tensor = torch.zeros(self.n, self.n, self.x)
 
-    Returns:
-        The distance tensor of size [n, n, x] for each frame
+        # find the central point tensor of bounding_box
+        tensor_x = self.bounding_box[:, :, 0:2]
+        tensor_y = self.bounding_box[:, :, 2:4]
 
-    Raises:
-        NOError: no error occurred up to now
-    """
+        central_tensor_x = torch.mean(input=tensor_x, dim=2, keepdim=True)  # [n, x, 1 for x_center]
+        central_tensor_y = torch.mean(input=tensor_y, dim=2, keepdim=True)  # [n, x, 1 for y_center]
+        central_tensor_xy = torch.cat((central_tensor_x, central_tensor_y), dim=2)  # [n, x, 2 for (x,y)_center]
 
-    # initialize the adjacency matrix tensor
-    n = bounding_box.shape[0]
-    x = bounding_box.shape[1]
-    adjacency_matrix_tensor = torch.zeros(n, n, x)
+        # transform the central point tensor to the permutation of central distances [n, n, x]
 
-    # find the central point tensor of bounding_box
-    tensor_x = bounding_box[:, :, 0:2]
-    tensor_y = bounding_box[:, :, 2:4]
+        # find all the possibilities and store them into one list
+        permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
 
-    central_tensor_x = torch.mean(input=tensor_x, dim=2, keepdim=True)  # [n, x, 1 for x_center]
-    central_tensor_y = torch.mean(input=tensor_y, dim=2, keepdim=True)  # [n, x, 1 for y_center]
-    central_tensor_xy = torch.cat((central_tensor_x, central_tensor_y), dim=2)  # [n, x, 2 for (x,y)_center]
+        # the matrix form should be
+        # [[ 0, 1, 1
+        #    0, 0, 1
+        #    0, 0, 0 ]]
 
-    # transform the central point tensor to the permutation of central distances [n, n, x]
+        # iterate through the list and reshape the distances into the distance tensor
+        for permutation in permutation_list:
+            coordinate_of_0_x = central_tensor_xy[permutation[0], :, 0]
+            coordinate_of_0_y = central_tensor_xy[permutation[0], :, 1]
+            coordinate_of_1_x = central_tensor_xy[permutation[1], :, 0]
+            coordinate_of_1_y = central_tensor_xy[permutation[1], :, 1]
 
-    # find all the possibilities and store them into one list
-    permutation_list = list(iter.combinations([i for i in range(n)], 2))  # [(0, 1), (0, 2), (1, 2)]
+            distance_of_01_x = coordinate_of_0_x - coordinate_of_1_x  # [x]
+            distance_of_01_y = coordinate_of_0_y - coordinate_of_1_y
 
-    # the matrix form should be
-    # [[ 0, 1, 1
-    #    0, 0, 1
-    #    0, 0, 0 ]]
+            distance_of_01 = (distance_of_01_x.pow(2) + distance_of_01_y.pow(2)).pow(0.5)  # [x]
+            adjacency_matrix_tensor[permutation] = distance_of_01
 
-    # iterate through the list and reshape the distances into the distance tensor
-    for permutation in permutation_list:
-        coordinate_of_0_x = central_tensor_xy[permutation[0], :, 0]
-        coordinate_of_0_y = central_tensor_xy[permutation[0], :, 1]
-        coordinate_of_1_x = central_tensor_xy[permutation[1], :, 0]
-        coordinate_of_1_y = central_tensor_xy[permutation[1], :, 1]
+        distance_tensor = adjacency_matrix_tensor  # [n, n, x]
+        return distance_tensor
 
-        distance_of_01_x = coordinate_of_0_x - coordinate_of_1_x  # [x]
-        distance_of_01_y = coordinate_of_0_y - coordinate_of_1_y
+    def transfer_line_to_vertex_box(self):
+        # 1----------2
+        # |          |
+        # |          |
+        # 3----------4
 
-        distance_of_01 = (distance_of_01_x.pow(2) + distance_of_01_y.pow(2)).pow(0.5)  # [x]
-        adjacency_matrix_tensor[permutation] = distance_of_01
+        # localization
+        x_max_tensor = self.bounding_box[:, :, 0]
+        y_max_tensor = self.bounding_box[:, :, 1]
+        x_min_tensor = self.bounding_box[:, :, 2]
+        y_min_tensor = self.bounding_box[:, :, 3]
 
-    distance_tensor = adjacency_matrix_tensor  # [n, n, x]
-    return distance_tensor
+        # new order: x_min, y_max, x_max, y_max, x_min, y_min, x_max, y_min
+        self.bounding_box_vertexbased = torch.stack((
+            x_min_tensor, y_max_tensor, x_max_tensor, y_max_tensor,
+            x_min_tensor, y_min_tensor, x_max_tensor, y_min_tensor
+        ), dim=2)
 
+        return
 
-def transfer_line_to_vertex_box(bounding_box):
-    # 1----------2
-    # |          |
-    # |          |
-    # 3----------4
+    def find_collision_cases(self):
+        """Utility function for finding the
 
-    # localization
-    x_max_tensor = bounding_box[:, :, 0]
-    y_max_tensor = bounding_box[:, :, 1]
-    x_min_tensor = bounding_box[:, :, 2]
-    y_min_tensor = bounding_box[:, :, 3]
+        After finding the distances between multiple boxes, it's time to find the
+        candidate collision cases. We utilize the "candidate method", which is also
+        utilized in visualize.py, to gain a result tensor of size [n, n, x].
 
-    # new order: x_min, y_max, x_max, y_max, x_min, y_min, x_max, y_min
-    bounding_box_vertexbased = torch.stack((
-        x_min_tensor, y_max_tensor, x_max_tensor, y_max_tensor,
-        x_min_tensor, y_min_tensor, x_max_tensor, y_min_tensor
-    ), dim=2)
+        Args:
+            bounding_box: The tensor of size [n, x, 4].
+            bounding_box_vertexbased: The tensor of size [n, x, 8].
 
-    return bounding_box_vertexbased
+        Returns:
+            All the collision cases, as a list of tensor of size [n, n, x]. Inside the tensor all values
+            must be 0 (for no collision) and 1 (for collision)
 
+        Raises:
+            NOError: no error occurred up to now
+        """
 
-def find_collision_cases(bounding_box, bounding_box_vertexbased):
-    """Utility function for finding the
+        # initialize the adjacency matrix tensor
+        adjacency_matrix_tensor = torch.zeros(self.n, self.n, self.x)
 
-    After finding the distances between multiple boxes, it's time to find the
-    candidate collision cases. We utilize the "candidate method", which is also
-    utilized in visualize.py, to gain a result tensor of size [n, n, x].
+        # find all the possibilities and store them into one list
+        permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
 
-    Args:
-        bounding_box: The tensor of size [n, x, 4].
+        # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
+        for permutation in permutation_list:
 
-    Returns:
-        All the collision cases, as a list of tensor of size [n, n, x]. Inside the tensor all values
-        must be 0 (for no collision) and 1 (for collision)
+            # find the box range of both items
+            x_range_max_0 = self.bounding_box[permutation[0], :, 0]
+            y_range_max_0 = self.bounding_box[permutation[0], :, 1]
+            x_range_min_0 = self.bounding_box[permutation[0], :, 2]
+            y_range_min_0 = self.bounding_box[permutation[0], :, 3]
 
-    Raises:
-        NOError: no error occurred up to now
-    """
+            x_range_max_1 = self.bounding_box[permutation[1], :, 0]
+            y_range_max_1 = self.bounding_box[permutation[1], :, 1]
+            x_range_min_1 = self.bounding_box[permutation[1], :, 2]
+            y_range_min_1 = self.bounding_box[permutation[1], :, 3]
 
-    # initialize the adjacency matrix tensor
-    n = bounding_box.shape[0]
-    x = bounding_box.shape[1]
-    adjacency_matrix_tensor = torch.zeros(n, n, x)
+            # decide whether any vertex of one term is in the range of another term
 
-    # find all the possibilities and store them into one list
-    permutation_list = list(iter.combinations([i for i in range(n)], 2))  # [(0, 1), (0, 2), (1, 2)]
+            # any one vertex of four suffices
+            for i in range(4):
+                vertex_coordination_x_0 = self.bounding_box_vertexbased[permutation[0], :, i]
+                vertex_coordination_y_0 = self.bounding_box_vertexbased[permutation[0], :, i + 1]
 
-    # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
-    for permutation in permutation_list:
+                vertex_coordination_x_1 = self.bounding_box_vertexbased[permutation[1], :, i]
+                vertex_coordination_y_1 = self.bounding_box_vertexbased[permutation[1], :, i + 1]
 
-        # find the box range of both items
-        x_range_max_0 = bounding_box[permutation[0], :, 0]
-        y_range_max_0 = bounding_box[permutation[0], :, 1]
-        x_range_min_0 = bounding_box[permutation[0], :, 2]
-        y_range_min_0 = bounding_box[permutation[0], :, 3]
+                # iterate through each frame
+                for frame in range(self.x):
+                    # if the vertex is in the range
+                    if (
+                            (x_range_max_0[frame] > vertex_coordination_x_1[frame] > x_range_min_0[frame] and
+                             y_range_max_0[frame] > vertex_coordination_y_1[frame] > y_range_min_0[frame]) or
+                            (x_range_max_1[frame] > vertex_coordination_x_0[frame] > x_range_min_1[frame] and
+                             y_range_max_1[frame] > vertex_coordination_y_0[frame] > y_range_min_1[frame])
+                    ):
+                        # mark the frame
+                        adjacency_matrix_tensor[permutation][frame] = 1
 
-        x_range_max_1 = bounding_box[permutation[1], :, 0]
-        y_range_max_1 = bounding_box[permutation[1], :, 1]
-        x_range_min_1 = bounding_box[permutation[1], :, 2]
-        y_range_min_1 = bounding_box[permutation[1], :, 3]
+        self.collision_cases_list = adjacency_matrix_tensor  # [n, n, x]
+        return
 
-        # decide whether any vertex of one term is in the range of another term
+    def find_shift_vector_candidate(self):
+        """Auxiliary function for finding the shift vector pair
 
-        # any one vertex of four suffices
-        for i in range(4):
-            vertex_coordination_x_0 = bounding_box_vertexbased[permutation[0], :, i]
-            vertex_coordination_y_0 = bounding_box_vertexbased[permutation[0], :, i + 1]
+        We utilize only the vertical part of the shift vector, and choose 2 shift amounts for each
+        shift request (each call to this function).
 
-            vertex_coordination_x_1 = bounding_box_vertexbased[permutation[1], :, i]
-            vertex_coordination_y_1 = bounding_box_vertexbased[permutation[1], :, i + 1]
+        Args:
+            bounding_box_vertexbased: The tensor of size [n, x, 8].
 
-            # iterate through each fream
-            for frame in range(bounding_box.shape[1]):
-                # if the vertex is in the range
-                if (
-                        (x_range_max_0[frame] > vertex_coordination_x_1[frame] > x_range_min_0[frame] and
-                         y_range_max_0[frame] > vertex_coordination_y_1[frame] > y_range_min_0[frame]) or
-                        (x_range_max_1[frame] > vertex_coordination_x_0[frame] > x_range_min_1[frame] and
-                         y_range_max_1[frame] > vertex_coordination_y_0[frame] > y_range_min_1[frame])
-                ):
-                    # mark the frame
-                    adjacency_matrix_tensor[permutation][frame] = 1
+        Returns:
+            The result pair of candidate shift vectors. Note that each vector contains both the VERTICAL
+                shift amount and the item number to be shifted.
 
-    collision_cases_list = adjacency_matrix_tensor
-    return collision_cases_list
+        Raises:
+            NOError: no error occurred up to now
+        """
 
+        # we rule that the invalid point must be shifted to due east (left) or due west (right)
+        shift_vector_1 = np.random.randn(1)
+        shift_vector_2 = np.random.randn(1)
+        self.con
+        return [shift_vector_1, shift_vector_2]
 
-def decide_shift_vector(collision_cases_list):
-    """Utility function for finding the perfect shift vector for all frames
+    def decide_shift_vector(self):
+        """Utility function for finding the perfect shift vector for all frames
 
-    Firstly, we construct the shift vectors of all the collision cases, which
-    contains 2 possibilities for each frame, as we want to gain a better realization
-    of different direction of shifts. Secondly, we utilize a mathematical method on
-    the list of all shift vectors to choose the vector with largest absolute value
-    of length. This leads to a perfect match by conjecture.
+        Firstly, we construct the shift vectors of all the collision cases, which
+        contains 2 possibilities for each frame, as we want to gain a better realization
+        of different direction of shifts. Secondly, we utilize a mathematical method on
+        the list of all shift vectors to choose the vector with largest absolute value
+        of length. This leads to a perfect match by conjecture.
 
-    Args:
-        collision_cases_list: the list containing collision case vectors, each of
-            size [n_1, n_2, x_0].
+        Args:
+            collision_cases_list: the list containing collision case vectors, each of
+                size [n, n, x].
+            bounding_box_vertexbased: The tensor of size [n, x, 8].
 
-    Returns:
-        The answer of the best shift_vector.
+        Returns:
+            The answer of the best shift vector, which is an exact value.
 
-    Raises:
-        NOError: no error occurred up to now
-    """
-    best_shift_vector = []
-    return best_shift_vector
+        Raises:
+            NOError: no error occurred up to now
+        """
 
+        # initialize the candidates for the shift vector
+        shift_vector_candidate_list = []
 
-def collision_eliminate(data_cluster):
-    """Wrapper function for collision elimination
+        # find all the possibilities and store them into one list
+        permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
 
-    Reconstruct content in the cluster of data, from [2, x, 32, 3] to [2, x_star, 32, 3]
+        # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
+        for permutation in permutation_list:
 
-    Args:
-        data_cluster: The tensor of size [2, numOfFrames(or we call "x"), 32, 3].
+            # iterate through each frame
+            for frame in range(self.x):
+                # if collision happens
+                if self.collision_cases_list[permutation][frame] == 1:
+                    # append 2 vectors at one time
+                    shift_vector_candidate = self.find_shift_vector_candidate()
+                    shift_vector_candidate_list.append(shift_vector_candidate)
 
-    Returns:
-        Literally returns nothing, but changes data_cluster in the memory heap directly.
+        # decide the absolute value (note that the shift can only be VERTICAL)
 
-    Raises:
-        NOError: no error occurred up to now
-    """
+        if shift_vector_candidate_list == []:  # no collisions
+            self.best_shift_vector = 0
 
-    bounding_box = find_2d_bounding_box(data_cluster)  # [n, x, 4]
-    print("the shape of bounding_box is {}".format(bounding_box.shape))
-    central_distance_tensor = find_central_distance(bounding_box)
-    print("the shape of distance tensor is {}".format(central_distance_tensor.shape))
-    bounding_box_vertexbased = transfer_line_to_vertex_box(bounding_box)
-    print("the shape of vertex-based bounding box is {}".format(bounding_box_vertexbased.shape))
-    collision_cases_list = find_collision_cases(bounding_box, bounding_box_vertexbased)
-    print("the shape of collision cases list is {}".format(collision_cases_list.shape))
-    best_shift_vector = decide_shift_vector(collision_cases_list)
-    # data_cluster += best_shift_vector
-    return  # nothing
+        else:  # has collisions
+            # find the shift with the absolute value
+            best_shift_vector_positive = np.max(shift_vector_candidate_list)
+            best_shift_vector_negative = np.min(shift_vector_candidate_list)
+
+            if best_shift_vector_positive > -best_shift_vector_negative:
+                self.best_shift_vector = best_shift_vector_positive
+            else:
+                self.best_shift_vector = best_shift_vector_negative
+
+        return
+
+    def collision_eliminate(self):
+        """Wrapper function for collision elimination
+
+        Reconstruct content in the cluster of data, from [2, x, 32, 3] to [2, x_star, 32, 3]
+
+        Args:
+            data_cluster: The tensor of size [2, numOfFrames(or we call "x"), 32, 3].
+
+        Returns:
+            Literally returns nothing, but changes data_cluster in the memory heap directly.
+
+        Raises:
+            NOError: no error occurred up to now
+        """
+
+        self.find_2d_bounding_box()  # [n, x, 4]
+        print("the shape of bounding_box is {}".format(self.bounding_box.shape))
+        self.find_central_distance()
+        print("the shape of distance tensor is {}".format(self.central_distance_tensor.shape))
+        self.transfer_line_to_vertex_box()
+        print("the shape of vertex-based bounding box is {}".format(self.bounding_box_vertexbased.shape))
+        self.find_collision_cases()
+        print("the shape of collision cases list is {}".format(self.collision_cases_list.shape))
+        self.decide_shift_vector()
+        print("the best-shift vector is {}".format(self.best_shift_vector))
+
+        # data_cluster += best_shift_vector
+        return  # nothing
