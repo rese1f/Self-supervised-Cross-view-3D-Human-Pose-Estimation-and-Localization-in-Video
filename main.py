@@ -5,6 +5,7 @@ import random_function as rf
 import torch
 from visualize import visualize as vis
 from collision import collision_eliminate as col_eli
+from camera import Camera
 
 
 class main:
@@ -52,6 +53,28 @@ class main:
         ex_camera_data_cluster: 随帧数变化的外参矩阵 [x,3,4];
         return: [n,x,32,2];
         """
+
+        dataShape = data_cluster.size();
+        x = dataShape[0];
+        n = dataShape[1];
+        '''
+        datasT = datas.reshape(x,n,32,4,1);
+        '''
+        datasInHC = torch.cat((data_cluster,torch.tensor(np.ones((x,n,32,1))),3)).reshape(x,n,32,4,1);
+        
+
+        datasT = torch.transpose(datasInHC,0,1);
+        frame = 0;
+        for data in datasT:
+            data = torch.matmul(ex_camera_data_cluster[frame],datasT);
+            frame += 1;
+            data = torch.matmul(in_camera_data_cluster,data)
+        '''
+        .reshape(x,n,32,3)[:,:,:,:1];;
+        '''
+        datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4);
+        return datasT
+
         pass
 
     def data_preprocess(self):
