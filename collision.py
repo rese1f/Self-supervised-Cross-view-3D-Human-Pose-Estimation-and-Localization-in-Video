@@ -327,39 +327,38 @@ class collision_eliminate:
         Raises:
             NOError: no error occurred up to now
         """
-        """
+        # divide all shift vectors for 3 people respectively
+        if self.n > 6:
+            print("PANIC. determine_shift_vectors_for_each_person() only allows at most 5 people.")
+            exit()
+
+        personal_shift_vector_candidate_list = [[], [], [], [], [], []]
         for person_number in range(self.n):
             # TEST CASES.
-            # for person 0, we have shift 2.62, 3.17 (on frame 1654) -->
+            # for person 0, we have shift 2.62, 3.17 (on frame 1654)
             # for person 1, we have shift -2.76, 1.16 (on frame 1476)
             # for person 2, we have shift 4.81, 2.75 (on frame 981)
-            pass
+            for counter in range(shift_vector_candidate_list.shape[0]):
+                if shift_vector_candidate_list[counter, 1] == person_number:
+                    personal_shift_vector_candidate_list[person_number].append\
+                        (shift_vector_candidate_list[counter, 0])
 
-        # decide the absolute value (note that the shift can only be VERTICAL)
-        if shift_vector_candidate_list == torch.Size([0]):  # no collisions
-            best_shift_vector = torch.tensor([1, 0])  # default for the first one; no shift at all
-        else:  # has collisions
-            # find the shift with the maximum absolute value
-            best_shift_value_positive = torch.max(shift_vector_candidate_list[0])
-            best_shift_value_negative = torch.min(shift_vector_candidate_list[0])
+        # pick 3 shift vectors for each person
+        best_shift_vector = torch.tensor([0, 0, 0])
+        for person_number in range(self.n):
+            # decide the absolute value
+            if personal_shift_vector_candidate_list[person_number] == []:  # no collisions
+                best_shift_vector[person_number] = 0
+            else:  # has collisions, find the shift with the maximum absolute value
+                best_shift_value_positive = np.max(personal_shift_vector_candidate_list[person_number])
+                best_shift_value_negative = np.min(personal_shift_vector_candidate_list[person_number])
 
-            for i in range(shift_vector_candidate_list.shape[0]):
-                if shift_vector_candidate_list[i, 0] == best_shift_value_positive:
-                    who_to_shift_positive = shift_vector_candidate_list[i, 1]
-                if shift_vector_candidate_list[i, 0] == best_shift_value_negative:
-                    who_to_shift_negative = shift_vector_candidate_list[i, 1]
+                if best_shift_value_positive > -best_shift_value_negative:
+                    best_shift_vector[person_number] = best_shift_value_positive.item() # from np.float to float
+                else:
+                    best_shift_vector[person_number] = best_shift_value_negative.item()
 
-            best_shift_vector_positive = torch.tensor([best_shift_value_positive, who_to_shift_positive])
-            best_shift_vector_negative = torch.tensor([best_shift_value_negative, who_to_shift_negative])
-
-            if best_shift_value_positive > -best_shift_value_negative:
-                best_shift_vector = best_shift_vector_positive  # torch.Size([2]), i.e. a value and who it exerts on
-            else:
-                best_shift_vector = best_shift_vector_negative
-        """
-        # FIXME: for API test
-        best_shift_vector = torch.tensor([1146, -2277, 1165])
-
+        # example: best_shift_vector = torch.tensor([1146, -2277, 1165])
         return best_shift_vector
 
     def decide_shift_vector(self):
