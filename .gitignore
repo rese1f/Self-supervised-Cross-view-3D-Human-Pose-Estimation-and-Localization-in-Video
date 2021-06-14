@@ -134,3 +134,6 @@ dmypy.json
 #config files
 configs.ini
 output/
+
+# Apple Mac local files
+.DS_STORE

@@ -68,8 +68,8 @@ class main:
         
         self.data_preprocess()
 
-        col_eli(self.data_3d_std)
-        col_eli.collision_eliminate()
+        collision_handling_process = col_eli(self.data_3d_std)
+        collision_handling_process.collision_eliminate()
 
         # print(self.data[0].shape) gives torch.Size([1052, 96])
         # print(data.shape) gives torch.Size([2827, 32, 3])
