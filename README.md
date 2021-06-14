@@ -1,3 +1,3 @@
-# Dataexpand 1.0.0
+# Dataexpand 1.4.1
 
-self.data_3d_std: tensor(n,x,32,3)
+![下载](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-14-144814.png)
