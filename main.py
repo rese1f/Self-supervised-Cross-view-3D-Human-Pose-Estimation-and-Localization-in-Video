@@ -11,7 +11,7 @@ class main:
     def __init__(self,
                  input_num_min=2, input_num_max=4,
                  translate_distance=1000,
-                 data_path_list=None):
+                 data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"]):
 
         if torch.cuda.is_available():
             torch_device = torch.device('cuda')
@@ -28,7 +28,8 @@ class main:
 
         if self.random_data_source:
             data_path_list = rf.random_data_source(self.input_path, input_num_min, input_num_max)
-            print("You've load {} successfully".format(data_path_list))
+
+        print("You've load {} successfully".format(data_path_list))
 
         self.data = [torch.tensor(scio.loadmat(i)['data']) for i in [self.input_path + j for j in data_path_list]]
 
@@ -69,20 +70,10 @@ class main:
         self.data_preprocess()
 
         collision_handling_process = col_eli(self.data_3d_std)
-        collision_handling_process.collision_eliminate()
+        self.data_3d_std = collision_handling_process.collision_eliminate()
 
-        # print(self.data[0].shape) gives torch.Size([1052, 96])
-        # print(data.shape) gives torch.Size([2827, 32, 3])
-        # print(org[0].shape) gives torch.Size([1790, 32, 3])
-        # print(org[1].shape) gives the similar one
-        # print(org[2].shape) sometimes valid, sometimes not
-        # print(data_cluster.shape) gives torch.Size([2, 2288, 32, 3])
-
-        # v1 = vis(org, save_name='before.gif')
-        # v1.animate()
-
-        # v2 = vis(data_cluster, save_name='after.gif')
-        # v2.animate()
+        visualize_process = vis(self.data_3d_std, save_name='after.gif')
+        visualize_process.animate()
 
 
 if __name__ == '__main__':

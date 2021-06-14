@@ -26,7 +26,7 @@ class collision_eliminate:
         self.central_distance_tensor = torch.tensor([])
         self.bounding_box_vertexbased = torch.tensor([])
         self.collision_cases_list = torch.tensor([])
-        self.best_shift_vector = torch.tensor([])
+        self.best_shift_vector_modified = torch.tensor([])
 
         self.con = ConfigParser()
         self.con.read('configs.ini')
@@ -293,18 +293,74 @@ class collision_eliminate:
             bounding_box_vertexbased: The tensor of size [n, x, 8].
 
         Returns:
-            The result pair of candidate shift vectors. Note that each vector contains both the VERTICAL
-                shift amount and the item number to be shifted.
+            The result pair of candidate shift vectors (with whom it is acted on). Note that each vector contains
+            both the VERTICAL shift amount and the item number to be shifted.
 
         Raises:
             NOError: no error occurred up to now
         """
 
-        # we rule that the invalid point must be shifted to due east (left) or due west (right)
-        shift_vector_1 = np.random.randn(1)
-        shift_vector_2 = np.random.randn(1)
-        self.con
-        return [shift_vector_1, shift_vector_2]
+        # we rule that the invalid point must be shifted to due north (upper) or due south (down)
+        shift_vector_1 = torch.tensor([-1, 1])  # act on person no.1, go down 1 unit
+        shift_vector_2 = torch.tensor([2, 2])  # act on person no.2, go up 2 units
+        shift_vector = torch.stack([shift_vector_1, shift_vector_2])
+
+        return shift_vector  # torch.Size([2, 2])
+
+    def determine_shift_vectors_for_each_person(self, shift_vector_candidate_list):
+        """Auxiliary function for finding the best shift vector for each person
+
+        We now have the shift_vector_candidate_list of size [992, 2], and we'll iterate through it to find
+        the three vectors with the largest absolute value to the 3 people respectively.
+
+        Args:
+            shift_vector_candidate_list: The tensor of size [992, 2]. For example, it can be of the form
+            [-1.202, 2
+             1.389,  0
+             4.828,  2
+             -4.618  1
+              ...   ...]
+
+        Returns:
+            The unmodified best_shift_vector of size [3], respectively for person 0, 1, 2.
+
+        Raises:
+            NOError: no error occurred up to now
+        """
+        """
+        for person_number in range(self.n):
+            # TEST CASES.
+            # for person 0, we have shift 2.62, 3.17 (on frame 1654) -->
+            # for person 1, we have shift -2.76, 1.16 (on frame 1476)
+            # for person 2, we have shift 4.81, 2.75 (on frame 981)
+            pass
+
+        # decide the absolute value (note that the shift can only be VERTICAL)
+        if shift_vector_candidate_list == torch.Size([0]):  # no collisions
+            best_shift_vector = torch.tensor([1, 0])  # default for the first one; no shift at all
+        else:  # has collisions
+            # find the shift with the maximum absolute value
+            best_shift_value_positive = torch.max(shift_vector_candidate_list[0])
+            best_shift_value_negative = torch.min(shift_vector_candidate_list[0])
+
+            for i in range(shift_vector_candidate_list.shape[0]):
+                if shift_vector_candidate_list[i, 0] == best_shift_value_positive:
+                    who_to_shift_positive = shift_vector_candidate_list[i, 1]
+                if shift_vector_candidate_list[i, 0] == best_shift_value_negative:
+                    who_to_shift_negative = shift_vector_candidate_list[i, 1]
+
+            best_shift_vector_positive = torch.tensor([best_shift_value_positive, who_to_shift_positive])
+            best_shift_vector_negative = torch.tensor([best_shift_value_negative, who_to_shift_negative])
+
+            if best_shift_value_positive > -best_shift_value_negative:
+                best_shift_vector = best_shift_vector_positive  # torch.Size([2]), i.e. a value and who it exerts on
+            else:
+                best_shift_vector = best_shift_vector_negative
+        """
+        # FIXME: for API test
+        best_shift_vector = torch.tensor([1146, -2277, 1165])
+
+        return best_shift_vector
 
     def decide_shift_vector(self):
         """Utility function for finding the perfect shift vector for all frames
@@ -328,38 +384,38 @@ class collision_eliminate:
         """
 
         # initialize the candidates for the shift vector
-        shift_vector_candidate_list = []
+        shift_vector_candidate_list = torch.tensor([])
 
         # find all the possibilities and store them into one list
         permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
 
         # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
         for permutation in permutation_list:
-
             # iterate through each frame
             for frame in range(self.x):
                 # if collision happens
                 if self.collision_cases_list[permutation][frame] == 1:
-                    # append 2 vectors at one time
+                    # returns torch.Size[2, 2].
+                    # e.g. [2.23 for shift, #1 for person
+                    #      [-3.17 for shift, #2 for person]
                     shift_vector_candidate = self.find_shift_vector_candidate()
-                    shift_vector_candidate_list.append(shift_vector_candidate)
+                    # add candidates into the list one by one
+                    shift_vector_candidate_list = \
+                        torch.cat((shift_vector_candidate_list, shift_vector_candidate), 0)
 
-        # decide the absolute value (note that the shift can only be VERTICAL)
+            # print(shift_vector_candidate_list.shape) gives torch.Size([992, 2])
 
-        if shift_vector_candidate_list == []:  # no collisions
-            self.best_shift_vector = 0
+        # determine the shift vector for each person
+        best_shift_vector = self.determine_shift_vectors_for_each_person(shift_vector_candidate_list)
 
-        else:  # has collisions
-            # find the shift with the absolute value
-            best_shift_vector_positive = np.max(shift_vector_candidate_list)
-            best_shift_vector_negative = np.min(shift_vector_candidate_list)
+        # convert best_shift_vector to be best_shift_vector_modified of size [n, x, 32, 3]
+        # e.g. [EFFECTED, EFFECTED, EFFECTED, 2 dimensions EFFECTED]
+        self.best_shift_vector_modified = torch.zeros(self.n, self.x, self.number_of_all_vertices, 3)
+        for person_number in range(self.n):
+            # only shift in y direction
+            self.best_shift_vector_modified[person_number, :, :, 1] = best_shift_vector[person_number]
 
-            if best_shift_vector_positive > -best_shift_vector_negative:
-                self.best_shift_vector = best_shift_vector_positive
-            else:
-                self.best_shift_vector = best_shift_vector_negative
-
-        return
+        return self.best_shift_vector_modified
 
     def collision_eliminate(self):
         """Wrapper function for collision elimination
@@ -385,7 +441,7 @@ class collision_eliminate:
         self.find_collision_cases()
         print("the shape of collision cases list is {}".format(self.collision_cases_list.shape))
         self.decide_shift_vector()
-        print("the best-shift vector is {}".format(self.best_shift_vector))
+        print("the shape of best-shift vector (modified) is {}".format(self.best_shift_vector_modified.shape))
 
-        # data_cluster += best_shift_vector
-        return  # nothing
+        self.data_cluster = self.data_cluster + self.best_shift_vector_modified
+        return self.data_cluster  # nothing

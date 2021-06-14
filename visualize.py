@@ -162,6 +162,6 @@ class visualize:
         # print("now saving...")
 
         # if save
-        anim.save(self.save_name, writer='pillow', fps=165)
+        # anim.save(self.save_name, writer='pillow', fps=165)
 
         return
