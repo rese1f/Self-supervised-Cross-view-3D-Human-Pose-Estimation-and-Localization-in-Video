@@ -8,7 +8,6 @@ from collision import collision_eliminate as col_eli
 from camera import Camera
 from visualize_camera import visualize_2d as visc
 
-
 class main:
     def __init__(self,
                  input_num_min=2, input_num_max=4,
