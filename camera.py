@@ -110,7 +110,7 @@ class Camera:
         '''
         .reshape(x,n,32,3)[:,:,:,:1];;
         '''
-        datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4);
+        datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4)[:,:,:,:3];
         print("Data transformed into " + str(datasT.size()))
         return datasT
         

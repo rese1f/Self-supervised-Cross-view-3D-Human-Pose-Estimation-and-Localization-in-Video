@@ -63,8 +63,8 @@ class visualize_2d:
 
             
         
-        self.ax.set_xlim([-5000, 5000])
-        self.ax.set_ylim([-5000, 5000])
+        self.ax.set_xlim([-3000, 3000])
+        self.ax.set_ylim([-3000, 3000])
         
         if __name__ == '__main__':
             self.pbar.update(1)

@@ -483,7 +483,7 @@ class collision_eliminate:
         """
         Outmost wrapper function for collision elimination
         """
-        for epoch in range(10):
+        for epoch in range(2):
             print("Entering collision elimination epoch {}".format(epoch))
             self.collision_eliminate_routine()
 
