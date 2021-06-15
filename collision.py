@@ -466,15 +466,15 @@ class collision_eliminate:
             NOError: no error occurred up to now
         """
         self.find_2d_bounding_box()  # [n, x, 4]
-        print("the shape of bounding_box is {}".format(self.bounding_box.shape))
+        # print("the shape of bounding_box is {}".format(self.bounding_box.shape))
         self.find_central_distance()
-        print("the shape of distance tensor is {}".format(self.central_distance_tensor.shape))
+        # print("the shape of distance tensor is {}".format(self.central_distance_tensor.shape))
         self.transfer_line_to_vertex_box()
-        print("the shape of vertex-based bounding box is {}".format(self.bounding_box_vertexbased.shape))
+        # print("the shape of vertex-based bounding box is {}".format(self.bounding_box_vertexbased.shape))
         self.find_collision_cases()
-        print("the shape of collision cases list is {}".format(self.collision_cases_list.shape))
+        # print("the shape of collision cases list is {}".format(self.collision_cases_list.shape))
         self.decide_shift_vector()
-        print("the shape of best-shift vector (modified) is {}".format(self.best_shift_vector_modified.shape))
+        # print("the shape of best-shift vector (modified) is {}".format(self.best_shift_vector_modified.shape))
         self.data_cluster += self.best_shift_vector_modified
 
         return
@@ -483,8 +483,8 @@ class collision_eliminate:
         """
         Outmost wrapper function for collision elimination
         """
-        self.collision_eliminate_routine()
-        self.collision_eliminate_routine()
-        self.collision_eliminate_routine()
+        for epoch in range(10):
+            print("Entering collision elimination epoch {}".format(epoch))
+            self.collision_eliminate_routine()
 
         return self.data_cluster
