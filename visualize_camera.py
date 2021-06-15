@@ -13,7 +13,7 @@ class visualize_2d:
     def __init__(self, data=None, data_path_list=None, configs='configs.ini', radius=2000, if_box=True,
                  save_name='test.gif'):
         con = ConfigParser()
-        con.read('Dataexpand-main\configs.ini')
+        con.read('configs.ini')
         self.vertex_number = con.getint('skeleton', 'vertex_number')
         self.edge_number = con.getint('skeleton', 'edge_number')
         self.structure = np.reshape([int(i) for i in con.get('skeleton', 'structure').split(',')],

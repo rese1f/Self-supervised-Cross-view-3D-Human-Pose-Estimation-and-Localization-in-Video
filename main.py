@@ -18,7 +18,7 @@ class main:
             torch_device = torch.device('cuda')
 
         con = ConfigParser()
-        con.read('Dataexpand-main/configs.ini')
+        con.read('configs.ini')
 
         self.input_path = con.get('path', 'input_path')
         self.output_path = con.get('path', 'output_path')

@@ -4,7 +4,7 @@ import itertools as iter  # for permutation
 from configparser import ConfigParser
 
 from visualize import visualize as vis
-from collision_visualize import collision_visualize as col_vis
+from visualize_collision import visualize_collision as vis_col
 
 """
     NOTE(Jack BAI). We utilize PEP-257 comment & programming standard here. Please 
@@ -34,7 +34,7 @@ class collision_eliminate:
     def test_bounding_box(self):
         test_path_list = ['../Dataexpand_dataset/S1_Directions.mat', '../Dataexpand_dataset/S1_Greeting.mat']
         # try animating the boxes inside 2 dimensions
-        v_2d = col_vis(data=self.data_cluster_2d, data_path_list=test_path_list, save_name='2d.gif')
+        v_2d = vis_col(data=self.data_cluster_2d, data_path_list=test_path_list, save_name='2d.gif')
         v_2d.animate()
         # compare with 3d case
         v_3d = vis(data=self.data_cluster, data_path_list=test_path_list, save_name='3d.gif')

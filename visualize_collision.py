@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch
 
 
-class collision_visualize:
+class visualize_collision:
     def __init__(self, data=None, data_path_list=None, configs='configs.ini', radius=2000, if_box=True,
                  save_name='test_2d.gif'):
         """
