@@ -7,7 +7,7 @@ from visualize import visualize as vis
 from collision import collision_eliminate as col_eli
 from camera import Camera
 from visualize_camera import visualize_2d as visc
-
+from cover import cover
 
 class main:
     def __init__(self):
@@ -26,10 +26,10 @@ class main:
         self.random_rotate = con.getboolean('random_optional', 'random_rotate')
         self.bonding_point = [int(i) for i in con.get('skeleton', 'bonding_point').split(',')]
         self.vertex_number = con.getint('skeleton', 'vertex_number')
-        self.head = con.getint('skeleton', 'head')
-        self.body = np.array([int(i) for i in con.get('skeleton', 'body').split(',')]).reshape(2,2)
-        self.leg = np.array([int(i) for i in con.get('skeleton', 'leg').split(',')]).reshape(4,2)
-        self.arm = np.array([int(i) for i in con.get('skeleton', 'arm').split(',')]).reshape(6,2)
+        self.head_index = con.getint('skeleton', 'head')
+        self.body_index = [int(i) for i in con.get('skeleton', 'body').split(',')]
+        self.leg_index = [int(i) for i in con.get('skeleton', 'leg').split(',')]
+        self.arm_index = [int(i) for i in con.get('skeleton', 'arm').split(',')]
         
 
     def data_preprocess(self, data_path_list=None, input_num_min=2, input_num_max=4, translate_distance=1000):
@@ -59,19 +59,19 @@ class main:
         
         self.data_preprocess(data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"])
 
-        collision_handling_process = col_eli(self.data_3d_std)
-        self.data_3d_std = collision_handling_process.collision_eliminate()
+        #collision_handling_process = col_eli(self.data_3d_std)
+        #self.data_3d_std = collision_handling_process.collision_eliminate()
 
         camera_1 = Camera(self.frame)
         self.data_2d_std = camera_1.camera_transform(self.data_3d_std)
         
-
+        cov = cover(self.data_2d_std, self.head_index, self.body_index, self.leg_index, self.arm_index)
 
         #visualize_process = vis(self.data_3d_std, save_name='after.gif')
         #visualize_process.animate()
 
-        visualize_process_ca1 = visc(self.data_2d_std, save_name='after.gif')
-        visualize_process_ca1.animate()
+        #visualize_process_ca1 = visc(self.data_2d_std, save_name='after.gif')
+        #visualize_process_ca1.animate()
 
 
 if __name__ == '__main__':
