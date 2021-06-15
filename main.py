@@ -6,6 +6,7 @@ import torch
 from visualize import visualize as vis
 from collision import collision_eliminate as col_eli
 from camera import Camera
+from visualize_camera import visualize_2d as visc
 
 
 class main:
@@ -18,7 +19,7 @@ class main:
             torch_device = torch.device('cuda')
 
         con = ConfigParser()
-        con.read('configs.ini')
+        con.read('Dataexpand-main\configs.ini')
 
         self.input_path = con.get('path', 'input_path')
         self.output_path = con.get('path', 'output_path')
@@ -44,38 +45,6 @@ class main:
 
         self.translate_distance = translate_distance
 
-    def camera(self, data_cluster, in_camera_data_cluster, ex_camera_data_cluster):
-        """
-        n: 人数;
-        x: 帧数;
-        data_cluster: [n,x,32,3];
-        in_camera_data_cluster: 固定的内参矩阵 [3,3];
-        ex_camera_data_cluster: 随帧数变化的外参矩阵 [x,3,4];
-        return: [n,x,32,2];
-        """
-
-        dataShape = data_cluster.size();
-        x = dataShape[0];
-        n = dataShape[1];
-        '''
-        datasT = datas.reshape(x,n,32,4,1);
-        '''
-        datasInHC = torch.cat((data_cluster,torch.tensor(np.ones((x,n,32,1))),3)).reshape(x,n,32,4,1);
-        
-
-        datasT = torch.transpose(datasInHC,0,1);
-        frame = 0;
-        for data in datasT:
-            data = torch.matmul(ex_camera_data_cluster[frame],datasT);
-            frame += 1;
-            data = torch.matmul(in_camera_data_cluster,data)
-        '''
-        .reshape(x,n,32,3)[:,:,:,:1];;
-        '''
-        datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4);
-        return datasT
-
-        pass
 
     def data_preprocess(self):
         self.data_3d_std = []
@@ -94,9 +63,18 @@ class main:
 
         collision_handling_process = col_eli(self.data_3d_std)
         self.data_3d_std = collision_handling_process.collision_eliminate()
+        
+
+        camera_1 = Camera(self.frame);
+        self.data_2d_std = camera_1.camera_transform(self.data_3d_std);
+        
 
         visualize_process = vis(self.data_3d_std, save_name='after.gif')
         visualize_process.animate()
+                
+
+        visualize_process_ca1 = visc(self.data_2d_std, save_name='after.gif')
+        visualize_process_ca1.animate()
 
 
 if __name__ == '__main__':
