@@ -19,7 +19,7 @@ class main:
             torch_device = torch.device('cuda')
 
         con = ConfigParser()
-        con.read('Dataexpand-main\configs.ini')
+        con.read('Dataexpand-main/configs.ini')
 
         self.input_path = con.get('path', 'input_path')
         self.output_path = con.get('path', 'output_path')
@@ -45,7 +45,6 @@ class main:
 
         self.translate_distance = translate_distance
 
-
     def data_preprocess(self):
         self.data_3d_std = []
         for data in self.data:
@@ -63,15 +62,12 @@ class main:
 
         collision_handling_process = col_eli(self.data_3d_std)
         self.data_3d_std = collision_handling_process.collision_eliminate()
-        
 
         camera_1 = Camera(self.frame);
         self.data_2d_std = camera_1.camera_transform(self.data_3d_std);
-        
 
         visualize_process = vis(self.data_3d_std, save_name='after.gif')
         visualize_process.animate()
-                
 
         visualize_process_ca1 = visc(self.data_2d_std, save_name='after.gif')
         visualize_process_ca1.animate()
