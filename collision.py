@@ -444,7 +444,6 @@ class collision_eliminate:
         best_shift_vector = self.determine_shift_vectors_for_each_person(shift_vector_candidate_list)
 
         # convert best_shift_vector to be best_shift_vector_modified of size [n, x, 32, 3]
-        # e.g. [EFFECTED, EFFECTED, EFFECTED, 2 dimensions EFFECTED]
         self.best_shift_vector_modified = torch.zeros(self.n, self.x, self.number_of_all_vertices, 3)
         for person_number in range(self.n):
             # only shift in y direction
@@ -452,13 +451,13 @@ class collision_eliminate:
 
         return self.best_shift_vector_modified
 
-    def collision_eliminate(self):
+    def collision_eliminate_routine(self):
         """Wrapper function for collision elimination
 
         Reconstruct content in the cluster of data, from [2, x, 32, 3] to [2, x_star, 32, 3]
 
         Args:
-            data_cluster: The tensor of size [2, numOfFrames(or we call "x"), 32, 3].
+            self.data_cluster: The tensor of size [2, numOfFrames(or we call "x"), 32, 3].
 
         Returns:
             Literally returns nothing, but changes data_cluster in the memory heap directly.
@@ -466,7 +465,6 @@ class collision_eliminate:
         Raises:
             NOError: no error occurred up to now
         """
-
         self.find_2d_bounding_box()  # [n, x, 4]
         print("the shape of bounding_box is {}".format(self.bounding_box.shape))
         self.find_central_distance()
@@ -477,6 +475,16 @@ class collision_eliminate:
         print("the shape of collision cases list is {}".format(self.collision_cases_list.shape))
         self.decide_shift_vector()
         print("the shape of best-shift vector (modified) is {}".format(self.best_shift_vector_modified.shape))
+        self.data_cluster += self.best_shift_vector_modified
 
-        self.data_cluster = self.data_cluster + self.best_shift_vector_modified
-        return self.data_cluster  # nothing
+        return
+
+    def collision_eliminate(self):
+        """
+        Outmost wrapper function for collision elimination
+        """
+        self.collision_eliminate_routine()
+        self.collision_eliminate_routine()
+        self.collision_eliminate_routine()
+
+        return self.data_cluster
