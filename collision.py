@@ -283,28 +283,63 @@ class collision_eliminate:
         self.collision_cases_list = adjacency_matrix_tensor  # [n, n, x]
         return
 
-    def find_shift_vector_candidate(self):
+    def find_shift_vector_candidate(self, permutation, frame):
         """Auxiliary function for finding the shift vector pair
 
         We utilize only the vertical part of the shift vector, and choose 2 shift amounts for each
         shift request (each call to this function).
 
         Args:
-            bounding_box_vertexbased: The tensor of size [n, x, 8].
+            self.bounding_box: The tensor of size [n, x, 4], 4 with (x_max, y_max, x_min, y_min).
+            permutation: the permutation for the pair of people
+            frame: the given frame where a collision exists
 
         Returns:
-            The result pair of candidate shift vectors (with whom it is acted on). Note that each vector contains
-            both the VERTICAL shift amount and the item number to be shifted.
+            The result pair of candidate shift vectors (with whom it is acted on). Note that each
+            vector contains both the VERTICAL shift amount and the item number to be shifted.
 
         Raises:
             NOError: no error occurred up to now
         """
 
-        # we rule that the invalid point must be shifted to due north (upper) or due south (down)
-        shift_vector_1 = torch.tensor([-1, 1])  # act on person no.1, go down 1 unit
-        shift_vector_2 = torch.tensor([2, 2])  # act on person no.2, go up 2 units
-        shift_vector = torch.stack([shift_vector_1, shift_vector_2])
+        # We rule that the invalid point must be shifted to due north (upper) or due south (down)
 
+        # decide which case it is in
+        y_1_max = self.bounding_box[permutation[0], frame, 1]
+        y_1_min = self.bounding_box[permutation[0], frame, 3]
+        y_1_center = (y_1_max + y_1_min) / 2
+        y_2_max = self.bounding_box[permutation[1], frame, 1]
+        y_2_min = self.bounding_box[permutation[1], frame, 3]
+        y_2_center = (y_2_max + y_2_min) / 2
+
+        # case 1
+        if (y_1_max > y_2_max > y_1_min > y_2_min) or (y_2_max > y_1_max > y_2_min > y_1_min):
+            # permutation[0] is closer to the origin
+            shift_value_1 = (y_1_min - y_2_max) * 2
+            shift_value_2 = (y_1_max - y_2_min) * 2
+            if np.abs(y_1_center) < np.abs(y_2_center):
+                # shift on permutation[1]
+                shift_vector_1 = torch.tensor([shift_value_1, permutation[1]])
+                shift_vector_2 = torch.tensor([shift_value_2, permutation[1]])
+            else:
+                # shift on permutation[0]
+                shift_vector_1 = torch.tensor([-shift_value_1, permutation[0]])
+                shift_vector_2 = torch.tensor([-shift_value_2, permutation[0]])
+        # case 2
+        else:
+            # permutation[1] is closer to the origin
+            shift_value_1 = (y_1_max - y_2_min) * 2
+            shift_value_2 = (y_1_min - y_2_max) * 2
+            if np.abs(y_1_center) < np.abs(y_2_center):
+                # shift on permutation[1]
+                shift_vector_1 = torch.tensor([shift_value_1, permutation[1]])
+                shift_vector_2 = torch.tensor([shift_value_2, permutation[1]])
+            else:
+                # shift on permutation[0]
+                shift_vector_1 = torch.tensor([-shift_value_1, permutation[0]])
+                shift_vector_2 = torch.tensor([-shift_value_2, permutation[0]])
+
+        shift_vector = torch.stack([shift_vector_1, shift_vector_2])
         return shift_vector  # torch.Size([2, 2])
 
     def determine_shift_vectors_for_each_person(self, shift_vector_candidate_list):
@@ -329,7 +364,8 @@ class collision_eliminate:
         """
         # divide all shift vectors for 3 people respectively
         if self.n > 6:
-            print("PANIC. determine_shift_vectors_for_each_person() only allows at most 5 people.")
+            print("PANIC. determine_shift_vectors_for_each_person() in collision.py"
+                  " only allows at most 5 people.")
             exit()
 
         personal_shift_vector_candidate_list = [[], [], [], [], [], []]
@@ -354,11 +390,11 @@ class collision_eliminate:
                 best_shift_value_negative = np.min(personal_shift_vector_candidate_list[person_number])
 
                 if best_shift_value_positive > -best_shift_value_negative:
-                    best_shift_vector[person_number] = best_shift_value_positive.item() # from np.float to float
+                    best_shift_vector[person_number] = best_shift_value_positive.item()  # from np.float to float
                 else:
                     best_shift_vector[person_number] = best_shift_value_negative.item()
 
-        # example: best_shift_vector = torch.tensor([1146, -2277, 1165])
+        # test: best_shift_vector = torch.tensor([1146, -2277, 1165])
         return best_shift_vector
 
     def decide_shift_vector(self):
@@ -397,7 +433,7 @@ class collision_eliminate:
                     # returns torch.Size[2, 2].
                     # e.g. [2.23 for shift, #1 for person
                     #      [-3.17 for shift, #2 for person]
-                    shift_vector_candidate = self.find_shift_vector_candidate()
+                    shift_vector_candidate = self.find_shift_vector_candidate(permutation, frame)
                     # add candidates into the list one by one
                     shift_vector_candidate_list = \
                         torch.cat((shift_vector_candidate_list, shift_vector_candidate), 0)
