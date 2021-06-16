@@ -11,14 +11,16 @@ class Camera:
         '''
 
         self.frame = frames;
-        x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
-        y_default = np.array([np.random.randint(200)]*frames,dtype = np.float16).reshape(frames,1);
-        z_default = np.array([np.random.randint(200)]*frames,dtype = np.float16).reshape(frames,1);
+        #x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
+
+        x_default = np.array([3500]*frames,dtype = np.float16).reshape(frames,1)
+        y_default = np.linspace(-3000,3000,frames,dtype = np.float16).reshape(frames,1);
+        z_default = np.array([1500]*frames,dtype = np.float16).reshape(frames,1);
         self.camera_pos = np.concatenate((np.concatenate((x_default,y_default),1),z_default),1);
 
-        dir_x_default = np.array([2 * np.pi * np.random.random()]*frames,dtype = np.float16).reshape(frames,1);
-        dir_y_default = np.array([2 * np.pi * np.random.random()]*frames,dtype = np.float16).reshape(frames,1);
-        dir_z_default = np.array([2 * np.pi * np.random.random()]*frames,dtype = np.float16).reshape(frames,1);
+        dir_x_default = np.array([0]*frames,dtype = np.float16).reshape(frames,1);
+        dir_y_default = np.array([0]*frames,dtype = np.float16).reshape(frames,1);
+        dir_z_default = np.array([-np.pi/2]*frames,dtype = np.float16).reshape(frames,1);
         self.camera_arg = np.concatenate((np.concatenate((dir_x_default,dir_y_default),1),dir_z_default),1);
 
         
@@ -28,7 +30,7 @@ class Camera:
         '''
         Camera.exmat_generator(self);
         Camera.inmat_generator(self);
-        print("Camera initiallized!");
+        #print("Camera initiallized!");
         
 
         pass
@@ -66,8 +68,8 @@ class Camera:
             else:
                 self.exmat = torch.cat((self.exmat,H_ok.reshape(1,4,4)),0);
 
-        self.exmat = torch.tensor(self.exmat);
-        print("Extrinsic Camera Matrix generated successful!");
+        #self.exmat = torch.tensor(self.exmat);
+        #print("Extrinsic Camera Matrix generated successful!");
         return
 
     def inmat_generator(self):
@@ -77,8 +79,13 @@ class Camera:
         '''
 
         self.inmat = torch.tensor(np.eye(4));
+        self.inmat[0,0] = 1527.4;
+        self.inmat[2,2] = 1529.2;
+        self.inmat[0,1] = 957.1;
+        self.inmat[2,1] = 529.8;
+        #print(self.inmat)
 
-        print("Intrinsic Camera Matrix generated successful!");
+        #print("Intrinsic Camera Matrix generated successful!");
         return
 
     def camera_transform(self,data_3d):
@@ -90,7 +97,7 @@ class Camera:
         ex_camera_data_cluster: 随帧数变化的外参矩阵 [x,3,4];
         return: [n,x,32,2];
         """
-        print("Camera transform in progress")
+        #print("Camera transform in progress")
 
         dataShape = data_3d.size();
         x = dataShape[0];
@@ -102,18 +109,30 @@ class Camera:
         
 
         datasT = torch.transpose(datasInHC,0,1);
-        frame = 0;
-        for data in datasT:
-            data = torch.matmul(self.exmat[frame],data);
-            frame += 1;
-            data = torch.matmul(self.inmat,data)
+        for i in range(self.frame):
+            datasT[i] = torch.matmul(self.exmat[i],datasT[i]);
+            i += 1;
+            
+        datasT = torch.matmul(self.inmat,datasT);
+            
         '''
         .reshape(x,n,32,3)[:,:,:,:1];;
         '''
         datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4)[:,:,:,:3];
-        print("Data transformed into " + str(datasT.size()))
-        return datasT
         
+        datasT = datasT/torch.abs(torch.unsqueeze(datasT[:,:,:,1],3));
+        #print("Data transformed into " + str(datasT.size()))
+        return datasT
+
+    def get_rotation_center(self,data):
+      
+        self.rotational_center = np.array([torch.sum(data[:,:,15,0]),torch.sum(data[:,:,15,1])])/3
+
+        return
+
+    def camMotion_rotation(self, data, center = None, radius = 3000, angle = np.pi*2):
+        return
+
 
     def update_camera(self):
         '''

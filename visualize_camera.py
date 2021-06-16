@@ -32,9 +32,10 @@ class visualize_2d:
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel("x")
         self.ax.set_ylabel("y")
-        self.radius = radius
-        self.x0 = self.data[0][0, 0]
-        self.y0 = self.data[0][0, 0]
+        #self.radius = radius
+        #self.x0 = self.data[0][0, 0, 0]
+        #self.y0 = self.data[0][0, 0, 1]
+        #self.z0 = self.data[0][0, 0, 2]
 
         self.save_name = save_name
 
@@ -52,19 +53,23 @@ class visualize_2d:
         leftColor, rightColor, middleColor = "#3498db", "#e74c3c", "#000520"
         for data in self.data:
             for i in self.structure:
-                x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
-                y = torch.stack((data[frame, i[0], 2], data[frame, i[1], 2]), 0)
-                if i[2] == 0:
-                    self.ax.plot(x, y, lw=2, c=rightColor)
-                elif i[2] == 1:
-                    self.ax.plot(x, y, lw=2, c=leftColor)
-                else:
-                    self.ax.plot(x, y, lw=2, c=middleColor)
+                if data[frame, i[0], 1] > 0 and data[frame, i[1], 1] > 0:
+                    x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
+                    y = torch.stack((data[frame, i[0], 2], data[frame, i[1], 2]), 0)
+                    if i[2] == 0:
+                        self.ax.plot(x, y, lw=2, c=rightColor)
+                    elif i[2] == 1:
+                        self.ax.plot(x, y, lw=2, c=leftColor)
+                    else:
+                        self.ax.plot(x, y, lw=2, c=middleColor)
 
-            
+        fx = 1527.4;
+        fy = 1529.2;
+        cx = 957.1;
+        cy = 529.8;    
         
-        self.ax.set_xlim([-3000, 3000])
-        self.ax.set_ylim([-3000, 3000])
+        self.ax.set_xlim([cx-fx,cx+fx])
+        self.ax.set_ylim([cy-fy,cy+fy])
         
         if __name__ == '__main__':
             self.pbar.update(1)
