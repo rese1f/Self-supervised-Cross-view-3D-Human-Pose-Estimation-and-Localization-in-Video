@@ -15,7 +15,7 @@ class cover:
         # self.head -> [x,n,3]
         head = self.data[:,:,head_index,:]
         self.head_endpoint = torch.stack((head[:,:,0],head[:,:,2]),2)
-        self.head_depth = torch.unsqueeze(head[:,:,1],2)
+        self.head_depth = torch.unsqueeze(head[:,:,1],1)
 
         # self.cover -> [x,m,2,3]
         body = self.get_cover(body_index)
@@ -37,10 +37,10 @@ class cover:
         self.leg_norm = self.get_norm(self.leg_vector)
         self.arm_norm = self.get_norm(self.arm_vector)
         
-        # [x,m,1]
-        self.body_depth = torch.unsqueeze(self.get_depth(body),2)
-        self.leg_depth = torch.unsqueeze(self.get_depth(leg),2)
-        self.arm_depth = torch.unsqueeze(self.get_depth(arm),2)
+        # [x,1,m]
+        self.body_depth = torch.unsqueeze(self.get_depth(body),1)
+        self.leg_depth = torch.unsqueeze(self.get_depth(leg),1)
+        self.arm_depth = torch.unsqueeze(self.get_depth(arm),1)
 
         # self.data -> [x,32*n,3]
         self.data = self.data.reshape(self.x, self.n*self.m,3)
@@ -48,8 +48,11 @@ class cover:
         # self.data_pos -> [x,32*n,2]
         self.data_pos = torch.stack((self.data[:,:,0],self.data[:,:,2]),2)
 
-        # self.data_depth -> [x,1,32*n]
-        self.data_depth =  torch.unsqueeze(self.data[:,:,1],1)
+        # self.data_depth -> [x,32*n,1]
+        self.data_depth =  torch.unsqueeze(self.data[:,:,1],2)
+
+        # record cover at x frame and m vertex
+        self.record = torch.zeros((self.x,self.m*3))
 
 
     def get_cover(self, index):
@@ -79,19 +82,39 @@ class cover:
 
     
     def get_head_cases(self,depth):
-        cases = (self.data_depth.expand(self.x,depth.shape[1],3*self.m)-depth > 0).nonzero()
-        print(cases)
-
+        cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+        for i in range(cases.shape[0]):
+            x = cases[i][0]
+            v = cases[i][1]
+            if self.record[x][v] == 1:
+                continue
+            c = cases[i][2]
+            point = self.data_pos[x][v]
+            head = self.head_endpoint[x][c]
+            if (point[0] - 100 < head[0] < point[0] + 100) and (point[0] - 80 < head[0] < point[0] + 80):
+                self.record[x][v] = 1
+                                         
         return
+
 
     def get_cases(self,depth):
-        cases =  (self.data_depth.expand(self.x,depth.shape[1],3*self.m)-depth > 0).nonzero()
+        cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+        for i in range(cases.shape[0]):
+            x = cases[i][0]
+            v = cases[i][1]
+            if self.record[x][v] == 1:
+                continue
+            c = cases[i][2]
 
         return
+
 
     def main(self):
         # judge for the head
-        info = self.get_head_cases(self.head_depth)
+        self.get_head_cases(self.head_depth)
+        self.get_cases(self.body_depth)
+        self.get_cases(self.leg_depth)
+        self.get_cases(self.arm_depth)
 
         
         
