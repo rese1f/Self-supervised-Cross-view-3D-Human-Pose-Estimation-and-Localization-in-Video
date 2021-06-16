@@ -16,9 +16,29 @@ class cover:
         self.head = self.data[:,:,head_index,:]
 
         # self.cover -> [x,m,2,3]
-        self.body = self.generate_cover(body_index)
-        self.leg = self.generate_cover(leg_index)
-        self.arm = self.generate_cover(arm_index)
+        body = self.get_cover(body_index)
+        leg = self.get_cover(leg_index)
+        arm = self.get_cover(arm_index)
+
+        # [x,m,2]
+        self.body_endpoint = self.get_endpoint(body)
+        self.leg_endpoint = self.get_endpoint(leg)
+        self.arm_endpoint = self.get_endpoint(arm)
+
+        # [x,m,2]
+        self.body_vector = self.get_vector(body)
+        self.leg_vector = self.get_vector(leg)
+        self.arm_vector = self.get_vector(arm)
+        
+        # [x,m]
+        self.body_norm = self.get_norm(self.body_vector)
+        self.leg_norm = self.get_norm(self.leg_vector)
+        self.arm_norm = self.get_norm(self.arm_vector)
+        
+        # [x,m]
+        self.body_depth = self.get_depth(body)
+        self.leg_depth = self.get_depth(leg)
+        self.arm_depth = self.get_depth(arm)
 
         # self.data -> [x,32*n,3]
         self.data = self.data.reshape(self.x, self.n*self.m,3)
@@ -28,7 +48,7 @@ class cover:
         self.cover = torch.zeros(self.x,self.m*self.n,1)
 
 
-    def generate_cover(self, index):
+    def get_cover(self, index):
         """
         generate the covering tensor
         index -> list<int>
@@ -38,38 +58,17 @@ class cover:
         return torch.stack([self.data[:,:,i,:] for i in index],2).reshape(self.x,self.n,int(len(index)/2),2,3).reshape(self.x,self.n*int(len(index)/2),2,3)
         
 
-    def judge_head(self):
-        """
-        for single data, judge for every frame
-        """
-        # implement code
-
-
-    def judge_body(self):
-        """
-        for single data, judge for every frame
-        """
-        # implement code
-
-
-    def judge_leg(self):
-        """
-        for single data, judge for every frame
-        """
-        # implement code
-
-
-    def judge_arm(self):
-        """
-        for single data, judge for every frame
-        """
-        # implement code
+    def get_endpoint(self,data):
+        return torch.stack((data[:,:,0,0],data[:,:,0,2]),2)
     
+
+    def get_vector(self,data):
+        return torch.stack((data[:,:,1,0],data[:,:,1,2]),2)-torch.stack((data[:,:,0,0],data[:,:,0,2]),2)
+
     
-    def main(self):
-        self.judge_head()
-        self.judge_body()
-        self.judge_leg()
-        self.judge_arm()
-        self.data[:,:,:,-1] = self.cover
-        return self.data
+    def get_norm(self,data):
+        return data.norm(3,2)
+
+    
+    def get_depth(self,data):
+        return torch.max(data[:,:,:,1],2).values
