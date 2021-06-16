@@ -13,7 +13,9 @@ class cover:
         # implement code to change (x,y,z) to (x,z,y) for self.data
 
         # self.head -> [x,n,3]
-        self.head = self.data[:,:,head_index,:]
+        head = self.data[:,:,head_index,:]
+        self.head_endpoint = torch.stack((head[:,:,0],head[:,:,2]),2)
+        self.head_depth = torch.unsqueeze(head[:,:,1],2)
 
         # self.cover -> [x,m,2,3]
         body = self.get_cover(body_index)
@@ -35,17 +37,19 @@ class cover:
         self.leg_norm = self.get_norm(self.leg_vector)
         self.arm_norm = self.get_norm(self.arm_vector)
         
-        # [x,m]
-        self.body_depth = self.get_depth(body)
-        self.leg_depth = self.get_depth(leg)
-        self.arm_depth = self.get_depth(arm)
+        # [x,m,1]
+        self.body_depth = torch.unsqueeze(self.get_depth(body),2)
+        self.leg_depth = torch.unsqueeze(self.get_depth(leg),2)
+        self.arm_depth = torch.unsqueeze(self.get_depth(arm),2)
 
         # self.data -> [x,32*n,3]
         self.data = self.data.reshape(self.x, self.n*self.m,3)
 
-        # self.cover -> [x,32*n,1] 
-        # record the cover, 1 represent cover 
-        self.cover = torch.zeros(self.x,self.m*self.n,1)
+        # self.data_pos -> [x,32*n,2]
+        self.data_pos = torch.stack((self.data[:,:,0],self.data[:,:,2]),2)
+
+        # self.data_depth -> [x,1,32*n]
+        self.data_depth =  torch.unsqueeze(self.data[:,:,1],1)
 
 
     def get_cover(self, index):
@@ -56,7 +60,7 @@ class cover:
         return -> [x,m,2,3]
         """
         return torch.stack([self.data[:,:,i,:] for i in index],2).reshape(self.x,self.n,int(len(index)/2),2,3).reshape(self.x,self.n*int(len(index)/2),2,3)
-        
+
 
     def get_endpoint(self,data):
         return torch.stack((data[:,:,0,0],data[:,:,0,2]),2)
@@ -72,3 +76,24 @@ class cover:
     
     def get_depth(self,data):
         return torch.max(data[:,:,:,1],2).values
+
+    
+    def get_head_cases(self,depth):
+        cases = (self.data_depth.expand(self.x,depth.shape[1],3*self.m)-depth > 0).nonzero()
+        print(cases)
+
+        return
+
+    def get_cases(self,depth):
+        cases =  (self.data_depth.expand(self.x,depth.shape[1],3*self.m)-depth > 0).nonzero()
+
+        return
+
+    def main(self):
+        # judge for the head
+        info = self.get_head_cases(self.head_depth)
+
+        
+        
+
+        return
