@@ -126,7 +126,7 @@ class Camera:
             datasT[i] = torch.matmul(self.exmat[i],datasT[i]);
             i += 1;
             
-        datasT = torch.matmul(self.inmat,datasT);
+        #datasT = torch.matmul(self.inmat,datasT);
             
         datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4)[:,:,:,:3];
         
