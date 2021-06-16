@@ -66,6 +66,7 @@ class main:
         self.data_2d_std = camera_1.camera_transform(self.data_3d_std)
         
         cov = cover(self.data_2d_std, self.head_index, self.body_index, self.leg_index, self.arm_index)
+        self.data_std = cov.main()
 
         #visualize_process = vis(self.data_3d_std, save_name='after.gif')
         #visualize_process.animate()
