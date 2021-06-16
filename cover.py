@@ -1,5 +1,6 @@
 import torch
 
+
 class cover:
     def __init__(self, data_2d_std, head_index, body_index, leg_index, arm_index):
         # data_2d_std -> [n,x,32,3]
@@ -83,29 +84,57 @@ class cover:
     
     def get_head_cases(self,depth):
         cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+        print(cases)
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+
+        start.record()
+
         for i in range(cases.shape[0]):
+
             x = cases[i][0]
             v = cases[i][1]
-            if self.record[x][v] == 1:
+
+            if self.record[x][v] == 1:                    
                 continue
+                
             c = cases[i][2]
+
             point = self.data_pos[x][v]
             head = self.head_endpoint[x][c]
+
             if (point[0] - 100 < head[0] < point[0] + 100) and (point[0] - 80 < head[0] < point[0] + 80):
                 self.record[x][v] = 1
+
+        end.record()
+        torch.cuda.synchronize()
+        print(start.elapsed_time(end))
                                          
         return
 
 
     def get_cases(self,depth):
         cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+        print(cases)
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+
+        start.record()
+        
         for i in range(cases.shape[0]):
+
             x = cases[i][0]
             v = cases[i][1]
-            if self.record[x][v] == 1:
-                continue
-            c = cases[i][2]
 
+            if self.record[x][v] == 1:                    
+                continue
+                
+            c = cases[i][2]
+            
+
+        end.record()
+        torch.cuda.synchronize()
+        print(start.elapsed_time(end))
         return
 
 
