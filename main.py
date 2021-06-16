@@ -63,7 +63,7 @@ class main:
         #self.data_3d_std = collision_handling_process.collision_eliminate()
 
         camera_1 = Camera(self.frame)
-        self.data_2d_std = camera_1.camera_transform(self.data_3d_std)
+        self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
         
         cov = cover(self.data_2d_std, self.head_index, self.body_index, self.leg_index, self.arm_index)
         self.data_std = cov.main()
