@@ -14,7 +14,7 @@ class Camera:
         self.frame = frames;
         #x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
-        self.pos_initial = np.array([3500,0,1500]);
+        self.pos_initial = np.array([3500.,0.,1500.]);
         
         x_default = np.array([self.pos_initial[0]]*frames,dtype = np.float16).reshape(frames,1)
         y_default = np.array([self.pos_initial[1]]*frames,dtype = np.float16).reshape(frames,1)
@@ -64,9 +64,9 @@ class Camera:
             posCamera = self.camera_pos[i];
             argCamera = self.camera_arg[i];
 
-            Rz = torch.tensor(np.array([[np.cos(argCamera[2]),-np.sin(argCamera[2]),0],[np.sin(argCamera[2]),np.cos(argCamera[2]),0],[0,0,1]],dtype = np.float16));
-            Ry = torch.tensor(np.array([[np.cos(argCamera[1]),0,np.sin(argCamera[1])],[0,1,0],[-np.sin(argCamera[1]),0,np.cos(argCamera[1])]],dtype = np.float16));
-            Rx = torch.tensor(np.array([[1,0,0],[0,np.cos(argCamera[0]),-np.sin(argCamera[0])],[0,np.sin(argCamera[0]),np.cos(argCamera[0])]],dtype = np.float16));
+            Rz = torch.tensor(np.array([[np.cos(argCamera[2]),-np.sin(argCamera[2]),0.],[np.sin(argCamera[2]),np.cos(argCamera[2]),0.],[0.,0.,1.]],dtype = np.float16));
+            Ry = torch.tensor(np.array([[np.cos(argCamera[1]),0.,np.sin(argCamera[1])],[0.,1.,0.],[-np.sin(argCamera[1]),0.,np.cos(argCamera[1])]],dtype = np.float16));
+            Rx = torch.tensor(np.array([[1.,0.,0.],[0.,np.cos(argCamera[0]),-np.sin(argCamera[0])],[0.,np.sin(argCamera[0]),np.cos(argCamera[0])]],dtype = np.float16));
 
             R = torch.mm(Rz,Ry);
             R = torch.mm(R,Rx);
@@ -137,9 +137,10 @@ class Camera:
         '''
         Transform the tensor into sensor coordinate and eliminate the depth demention
         '''
-
-        data = torch.matmul(self.inmat,data);
+        data = data.reshape([data.shape[0],data.shape[1],32,3,1])
+        data = torch.matmul(self.inmat,data);    
         data = data/torch.abs(torch.unsqueeze(data[:,:,:,1],3));
+        data = data.reshape([data.shape[0],data.shape[1],32,3])
 
         return data
 
