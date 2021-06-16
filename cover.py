@@ -1,9 +1,10 @@
 import torch
+#import threading
 
-
-class cover:
+class cover():
     def __init__(self, data_2d_std, head_index, body_index, leg_index, arm_index):
         # data_2d_std -> [n,x,32,3]
+
         self.n = data_2d_std.shape[0]
         self.x = data_2d_std.shape[1]
         self.m = data_2d_std.shape[2]
@@ -53,7 +54,7 @@ class cover:
         self.data_depth =  torch.unsqueeze(self.data[:,:,1],2)
 
         # record cover at x frame and m vertex
-        self.record = torch.zeros((self.x,self.m*3))
+        self.record = torch.zeros((self.x,self.m*self.n))
 
 
     def get_cover(self, index):
@@ -82,10 +83,9 @@ class cover:
         return torch.max(data[:,:,:,1],2).values
 
     
-    def get_head_cases(self,depth):
-        cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+    def get_head_cases(self):
+        cases = (self.head_depth.expand(self.x,3*self.m,self.head_depth.shape[2])-self.data_depth < 0).nonzero()
         
-
         for i in range(cases.shape[0]):
 
             x = cases[i][0]
@@ -99,15 +99,12 @@ class cover:
             point = self.data_pos[x][v]
             head = self.head_endpoint[x][c]
 
-            if (point[0] - 100 < head[0] < point[0] + 100) and (point[0] - 80 < head[0] < point[0] + 80):
+            if torch.sum((point-head)*(point-head)) < 10000:
                 self.record[x][v] = 1
+        
 
-                                         
-        return
-
-
-    def get_cases(self,depth):
-        cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
+    def get_body_cases(self):
+        cases = (self.body_depth.expand(self.x,3*self.m,self.body_depth.shape[2])-self.data_depth < 0).nonzero()
         
         
         for i in range(cases.shape[0]):
@@ -119,20 +116,84 @@ class cover:
                 continue
                 
             c = cases[i][2]
+
+            AB = self.body_vector[x][c]
+            AP = self.data_pos[x][v] - self.body_endpoint[x][c]
+            cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
+            L = self.body_norm[x][c]
+            dis = cross / L
+            if dis < 200:
+                self.record[x][v] = 1
             
 
-        
-        return
-
-
-    def main(self):
-        # judge for the head
-        self.get_head_cases(self.head_depth)
-        self.get_cases(self.body_depth)
-        self.get_cases(self.leg_depth)
-        self.get_cases(self.arm_depth)
-
+    def get_leg_cases(self):
+        cases = (self.leg_depth.expand(self.x,3*self.m,self.leg_depth.shape[2])-self.data_depth < 0).nonzero()
         
         
+        for i in range(cases.shape[0]):
 
-        return
+            x = cases[i][0]
+            v = cases[i][1]
+
+            if self.record[x][v] == 1:                    
+                continue
+                
+            c = cases[i][2]
+
+            AB = self.leg_vector[x][c]
+            AP = self.data_pos[x][v] - self.leg_endpoint[x][c]
+            cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
+            L = self.leg_norm[x][c]
+            dis = cross / L
+            if dis < 80:
+                self.record[x][v] = 1
+    
+    def get_arm_cases(self):
+        cases = (self.arm_depth.expand(self.x,3*self.m,self.arm_depth.shape[2])-self.data_depth < 0).nonzero()
+        
+        
+        for i in range(cases.shape[0]):
+
+            x = cases[i][0]
+            v = cases[i][1]
+
+            if self.record[x][v] == 1:                    
+                continue
+                
+            c = cases[i][2]
+
+            AB = self.arm_vector[x][c]
+            AP = self.data_pos[x][v] - self.arm_endpoint[x][c]
+            cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
+            L = self.arm_norm[x][c]
+            dis = cross / L
+
+            if dis < 50:
+                self.record[x][v] = 1
+
+    def run(self):
+        '''
+        t1 = threading.Thread(target=self.get_head_cases)
+        t2 = threading.Thread(target=self.get_body_cases)
+        t3 = threading.Thread(target=self.get_leg_cases)
+        t4 = threading.Thread(target=self.get_arm_cases)
+
+        t1.start()
+        t2.start()
+        t3.start()
+        t4.start()
+
+        t1.join()
+        t2.join()
+        t3.join()
+        t4.join()
+        '''
+
+        self.get_head_cases()
+        self.get_body_cases()
+        self.get_leg_cases()
+        self.get_arm_cases()
+        
+        # cover_std -> [n,x,32,1]
+
+        return self.record.reshape(self.x,self.n,self.m,1).transpose(0,1)
