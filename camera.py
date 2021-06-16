@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from configparser import ConfigParser
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -7,35 +8,49 @@ class Camera:
 
     def __init__(self,frames) -> None:
         '''
-        Constructing an object of Camera class, defining its frame number, default rigid-body motion parameters
+        Constructing an object of Camera class, defining its frame number, default parameters
         '''
 
         self.frame = frames;
         #x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
-        x_default = np.array([3500]*frames,dtype = np.float16).reshape(frames,1)
-        y_default = np.linspace(-3000,3000,frames,dtype = np.float16).reshape(frames,1);
-        z_default = np.array([1500]*frames,dtype = np.float16).reshape(frames,1);
+        self.pos_initial = np.array([3500,0,1500]);
+        
+        x_default = np.array([self.pos_initial[0]]*frames,dtype = np.float16).reshape(frames,1)
+        y_default = np.array([self.pos_initial[1]]*frames,dtype = np.float16).reshape(frames,1)
+        z_default = np.array([self.pos_initial[2]]*frames,dtype = np.float16).reshape(frames,1);
         self.camera_pos = np.concatenate((np.concatenate((x_default,y_default),1),z_default),1);
 
-        dir_x_default = np.array([0]*frames,dtype = np.float16).reshape(frames,1);
-        dir_y_default = np.array([0]*frames,dtype = np.float16).reshape(frames,1);
-        dir_z_default = np.array([-np.pi/2]*frames,dtype = np.float16).reshape(frames,1);
+
+        self.dir_initial = np.array([0,0,-np.pi/2]);
+
+        dir_x_default = np.array([self.dir_initial[0]]*frames,dtype = np.float16).reshape(frames,1);
+        dir_y_default = np.array([self.dir_initial[1]]*frames,dtype = np.float16).reshape(frames,1);
+        dir_z_default = np.array([self.dir_initial[2]]*frames,dtype = np.float16).reshape(frames,1);
+        
         self.camera_arg = np.concatenate((np.concatenate((dir_x_default,dir_y_default),1),dir_z_default),1);
+
+        con = ConfigParser();
+        con.read('configs.ini');
+        self.fx = con.getfloat('camera_parameter','fx');
+        self.fy = con.getfloat('camera_parameter','fy');
+        self.u = con.getfloat('camera_parameter','u');
+        self.v = con.getfloat('camera_parameter','v');
+        self.s = con.getfloat('camera_parameter','s');
 
         
         '''
         Gernerate extrinsics and intrinsics camera matrix from its default parameter
         These matrix could be updated later
         '''
-        Camera.exmat_generator(self);
-        Camera.inmat_generator(self);
-        #print("Camera initiallized!");
+        Camera.__exmat_generator(self);
+        Camera.__inmat_generator(self,self.fx,self.fy,self.u,self.v,self.s);
         
 
         pass
     
-    def exmat_generator(self):
+
+    def __exmat_generator(self):
         '''
         Generate extrinsics matrix, used for transform the object in homogeneous world coordinate into homogeneous camera coordinate
         
@@ -68,27 +83,25 @@ class Camera:
             else:
                 self.exmat = torch.cat((self.exmat,H_ok.reshape(1,4,4)),0);
 
-        #self.exmat = torch.tensor(self.exmat);
-        #print("Extrinsic Camera Matrix generated successful!");
         return
 
-    def inmat_generator(self):
+
+    def __inmat_generator(self, fx = 1527.4, fy = 1529.2, u = 957.1, v = 529.8, s = 0):
         '''
         Generate intrinsics matrix
         * NOT COMPLETED
         '''
 
-        self.inmat = torch.tensor(np.eye(4));
-        self.inmat[0,0] = 1527.4;
-        self.inmat[2,2] = 1529.2;
-        self.inmat[0,1] = 957.1;
-        self.inmat[2,1] = 529.8;
-        #print(self.inmat)
-
-        #print("Intrinsic Camera Matrix generated successful!");
+        self.inmat = torch.tensor(np.array([[fx,u,s],[0,1,0],[0,v,fy]]));
+        #self.inmat[0,0] = fx;
+        #self.inmat[2,2] = fy;
+        #self.inmat[0,1] = u;
+        #self.inmat[2,1] = v;
+        #self.inmat
+        
         return
 
-    def camera_transform(self,data_3d):
+    def camera_transform_w2c(self,data_3d):
         """
         n: 人数;
         x: 帧数;
@@ -96,17 +109,17 @@ class Camera:
         in_camera_data_cluster: 固定的内参矩阵 [3,3];
         ex_camera_data_cluster: 随帧数变化的外参矩阵 [x,3,4];
         return: [n,x,32,2];
+
+        Transform the tensor in homogeneous 3d world coordinate into euclidiean 
+        equivlant ot 3d camera coordinate (homogeneous 2d coordinate)
+
         """
-        #print("Camera transform in progress")
 
         dataShape = data_3d.size();
         x = dataShape[0];
         n = dataShape[1];
-        '''
-        datasT = datas.reshape(x,n,32,4,1);
-        '''
-        datasInHC = torch.cat((data_3d,torch.tensor(np.ones((x,n,32,1),dtype=np.float16))),dim=3).reshape(x,n,32,4,1);
         
+        datasInHC = torch.cat((data_3d,torch.tensor(np.ones((x,n,32,1),dtype=np.float16))),dim=3).reshape(x,n,32,4,1);
 
         datasT = torch.transpose(datasInHC,0,1);
         for i in range(self.frame):
@@ -115,14 +128,21 @@ class Camera:
             
         datasT = torch.matmul(self.inmat,datasT);
             
-        '''
-        .reshape(x,n,32,3)[:,:,:,:1];;
-        '''
         datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4)[:,:,:,:3];
         
-        datasT = datasT/torch.abs(torch.unsqueeze(datasT[:,:,:,1],3));
-        #print("Data transformed into " + str(datasT.size()))
         return datasT
+    
+
+    def camera_transform_c2s(self,data):
+        '''
+        Transform the tensor into sensor coordinate and eliminate the depth demention
+        '''
+
+        data = torch.matmul(self.inmat,data);
+        data = data/torch.abs(torch.unsqueeze(data[:,:,:,1],3));
+
+        return data
+
 
     def get_rotation_center(self,data):
       
