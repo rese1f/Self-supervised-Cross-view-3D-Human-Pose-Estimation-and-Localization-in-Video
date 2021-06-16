@@ -84,7 +84,7 @@ class cover:
     
     def get_head_cases(self,depth):
         cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
-        print(cases)
+        
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
 
@@ -115,7 +115,6 @@ class cover:
 
     def get_cases(self,depth):
         cases = (depth.expand(self.x,3*self.m,depth.shape[2])-self.data_depth < 0).nonzero()
-        print(cases)
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
 
