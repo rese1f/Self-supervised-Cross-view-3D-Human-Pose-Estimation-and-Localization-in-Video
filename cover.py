@@ -194,6 +194,7 @@ class cover():
         self.get_leg_cases()
         self.get_arm_cases()
         
-        # cover_std -> [n,x,32,1]
+        # cover_std -> [n,x,32]
 
-        return self.record.reshape(self.x,self.n,self.m,1).transpose(0,1)
+        return self.record.reshape(self.x,self.n,self.m).transpose(0,1)
+    
