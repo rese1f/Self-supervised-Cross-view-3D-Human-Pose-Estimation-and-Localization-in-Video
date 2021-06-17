@@ -59,8 +59,8 @@ class main:
         
         self.data_preprocess(data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"])
 
-        #collision_handling_process = col_eli(self.data_3d_std)
-        #self.data_3d_std = collision_handling_process.collision_eliminate()
+        collision_handling_process = col_eli(self.data_3d_std)
+        self.data_3d_std = collision_handling_process.collision_eliminate()
 
         camera_1 = Camera(self.frame)
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
@@ -72,7 +72,7 @@ class main:
         self.data_2d_std[:,:,:,1] = self.data_2d_std[:,:,:,2]
         self.data_2d_std[:,:,:,2] = self.cover_std
 
-        visualize_process_ca1 = visc(self.data_2d_std)
+        visualize_process_ca1 = visc(data = self.data_2d_std,save_name="test_ac.gif")
         visualize_process_ca1.animate()
 
 

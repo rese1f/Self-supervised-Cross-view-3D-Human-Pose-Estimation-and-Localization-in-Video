@@ -9,7 +9,7 @@ import torch
 
 
 class visualize_2d:
-    def __init__(self, data=None, data_path_list=None, configs='configs.ini', save_name='test.gif'):
+    def __init__(self, data=None,data_path_list=None, configs='configs.ini', save_name='test_ac.gif'):
         con = ConfigParser()
         con.read('configs.ini')
         self.vertex_number = con.getint('skeleton', 'vertex_number')
@@ -45,19 +45,19 @@ class visualize_2d:
             for i in self.structure:
                 x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
                 y = torch.stack((data[frame, i[0], 1], data[frame, i[1], 1]), 0)
-                self.ax.plot(x, y, lw=2, color="b")
+                self.ax.plot(x, y, lw=2, color="y",alpha=0.5)
             
             for j in range(self.vertex_number):
                 x = data[frame,j,0]
                 y = data[frame,j,1]
                 c = data[frame,j,2]
                 if c == 0:
-                    self.ax.plot(x,y,'o',color="y")
+                    self.ax.plot(x,y,'.',color="g",alpha=0.2)
                 elif c == 1:
-                    self.ax.plot(x,y,'o',color="g")
+                    self.ax.plot(x,y,'.',color="r",alpha=0.2)
 
-        fx = 1527.4
-        fy = 1529.2
+        fx = 1527.4/2
+        fy = 1529.2/2
         cx = 957.1
         cy = 529.8    
         
@@ -109,7 +109,7 @@ class visualize_2d:
         Produce animation and save it
         '''
         anim = FuncAnimation(self.fig, self.update, self.frame, interval=1)
-        plt.show()
+        #plt.show()
         anim.save(self.save_name, writer='pillow', fps=165)
 
         return
