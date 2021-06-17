@@ -15,7 +15,7 @@ class Camera:
         #x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
         self.pos_initial = np.array([3500.,0.,1500.]);
-        
+
         x_default = np.array([self.pos_initial[0]]*frames,dtype = np.float16).reshape(frames,1)
         y_default = np.array([self.pos_initial[1]]*frames,dtype = np.float16).reshape(frames,1)
         z_default = np.array([self.pos_initial[2]]*frames,dtype = np.float16).reshape(frames,1);
@@ -27,7 +27,7 @@ class Camera:
         dir_x_default = np.array([self.dir_initial[0]]*frames,dtype = np.float16).reshape(frames,1);
         dir_y_default = np.array([self.dir_initial[1]]*frames,dtype = np.float16).reshape(frames,1);
         dir_z_default = np.array([self.dir_initial[2]]*frames,dtype = np.float16).reshape(frames,1);
-        
+
         self.camera_arg = np.concatenate((np.concatenate((dir_x_default,dir_y_default),1),dir_z_default),1);
 
         con = ConfigParser();
@@ -38,17 +38,17 @@ class Camera:
         self.v = con.getfloat('camera_parameter','v');
         self.s = con.getfloat('camera_parameter','s');
 
-        
+
         '''
         Gernerate extrinsics and intrinsics camera matrix from its default parameter
         These matrix could be updated later
         '''
         Camera.__exmat_generator(self);
         Camera.__inmat_generator(self,self.fx,self.fy,self.u,self.v,self.s);
-        
+
 
         pass
-    
+
 
     def __exmat_generator(self):
         '''
@@ -98,7 +98,7 @@ class Camera:
         #self.inmat[0,1] = u;
         #self.inmat[2,1] = v;
         #self.inmat
-        
+
         return
 
     def camera_transform_w2c(self,data_3d):
@@ -118,27 +118,27 @@ class Camera:
         dataShape = data_3d.size();
         x = dataShape[0];
         n = dataShape[1];
-        
+
         datasInHC = torch.cat((data_3d,torch.tensor(np.ones((x,n,32,1),dtype=np.float16))),dim=3).reshape(x,n,32,4,1);
 
         datasT = torch.transpose(datasInHC,0,1);
         for i in range(self.frame):
             datasT[i] = torch.matmul(self.exmat[i],datasT[i]);
             i += 1;
-            
+
         #datasT = torch.matmul(self.inmat,datasT);
-            
+
         datasT = torch.transpose(datasT,0,1).reshape(x,n,32,4)[:,:,:,:3];
-        
+
         return datasT
-    
+
 
     def camera_transform_c2s(self,data):
         '''
         Transform the tensor into sensor coordinate and eliminate the depth demention
         '''
         data = data.reshape([data.shape[0],data.shape[1],32,3,1])
-        data = torch.matmul(self.inmat,data);    
+        data = torch.matmul(self.inmat,data);
         data = data/torch.abs(torch.unsqueeze(data[:,:,:,1],3));
         data = data.reshape([data.shape[0],data.shape[1],32,3])
 
@@ -146,7 +146,7 @@ class Camera:
 
 
     def get_rotation_center(self,data):
-      
+
         self.rotational_center = np.array([torch.sum(data[:,:,15,0]),torch.sum(data[:,:,15,1])])/3
 
         return
