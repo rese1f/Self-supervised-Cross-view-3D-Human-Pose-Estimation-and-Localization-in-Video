@@ -137,3 +137,6 @@ output/
 
 # Apple Mac local files
 .DS_STORE
+
+# Data Storages
+*.mat
