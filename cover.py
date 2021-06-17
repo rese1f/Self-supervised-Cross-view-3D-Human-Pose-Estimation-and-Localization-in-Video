@@ -120,9 +120,11 @@ class cover():
             AB = self.body_vector[x][c]
             AP = self.data_pos[x][v] - self.body_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
-            L = self.body_norm[x][c]
-            dis = cross / L
-            if dis < 200:
+            LAB = self.body_norm[x][c]
+            LAP = torch.norm(AP,2)
+            dis = cross / LAB
+            k = torch.sum(AP*AB)/LAB/LAB
+            if dis < 200 and 0<k<1:
                 self.record[x][v] = 1
             
 
@@ -143,9 +145,11 @@ class cover():
             AB = self.leg_vector[x][c]
             AP = self.data_pos[x][v] - self.leg_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
-            L = self.leg_norm[x][c]
-            dis = cross / L
-            if dis < 80:
+            LAB = self.leg_norm[x][c]
+            LAP = torch.norm(AP,2)
+            dis = cross / LAB
+            k = torch.sum(AP*AB)/LAB/LAB
+            if dis < 80 and 0<k<1:
                 self.record[x][v] = 1
     
     def get_arm_cases(self):
@@ -165,10 +169,11 @@ class cover():
             AB = self.arm_vector[x][c]
             AP = self.data_pos[x][v] - self.arm_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
-            L = self.arm_norm[x][c]
-            dis = cross / L
-
-            if dis < 50:
+            LAB = self.arm_norm[x][c]
+            LAP = torch.norm(AP,2)
+            dis = cross / LAB
+            k = torch.sum(AP*AB)/LAB/LAB
+            if dis < 50 and 0<k<1:
                 self.record[x][v] = 1
 
     def run(self):
@@ -197,4 +202,3 @@ class cover():
         # cover_std -> [n,x,32]
 
         return self.record.reshape(self.x,self.n,self.m).transpose(0,1)
-    
