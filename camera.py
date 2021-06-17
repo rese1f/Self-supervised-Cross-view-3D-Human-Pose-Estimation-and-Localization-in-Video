@@ -119,13 +119,22 @@ class Camera:
         x = dataShape[0]
         n = dataShape[1]
 
-        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, 32, 1), dtype=np.float16))), dim=3).reshape(x, n,
-                                                                                                                32, 4,
-                                                                                                                1)
+        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, 32, 1), dtype=np.float16))), dim=3).reshape(x, n, 32, 4, 1)
 
-        datasT = torch.matmul(self.exmat, torch.transpose(datasInHC, 0, 1))
+
+        datasT = torch.transpose(datasInHC,0,1);
+        # 交换person与frame维度
+
+        for i in range(self.frame):
+            datasT[i] = torch.matmul(self.exmat[i],datasT[i]);
+            i += 1;
+        
+        #datasT = torch.matmul(self.exmat,datasT);
+        #3维的广播方法不可用，即[frame,4,4]*[frame,32,4,1]
+        #正在尝试[frame,32,4,4]*[frame,32,4,1]
 
         # datasT = torch.matmul(self.inmat,datasT);
+        # 旧版本操作，新版本中该操作移动至camera_transform_c2s()
 
         datasT = torch.transpose(datasT, 0, 1).reshape(x, n, 32, 4)[:, :, :, :3]
 
