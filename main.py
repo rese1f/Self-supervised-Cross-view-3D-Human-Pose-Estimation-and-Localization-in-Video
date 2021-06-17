@@ -54,10 +54,11 @@ class main:
         self.data_3d_std = torch.stack([i[:self.frame, :, :] for i in self.data_3d_std])
         print("You've load {} successfully".format(data_path_list))
 
+        return ','.join(data_path_list)
 
     def main(self):
         
-        self.data_preprocess(data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"])
+        filename = self.data_preprocess(data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"])
 
         collision_handling_process = col_eli(self.data_3d_std)
         self.data_3d_std = collision_handling_process.collision_eliminate()
@@ -72,8 +73,11 @@ class main:
         self.data_2d_std[:,:,:,1] = self.data_2d_std[:,:,:,2]
         self.data_2d_std[:,:,:,2] = self.cover_std
 
-        visualize_process_ca1 = visc(data = self.data_2d_std,save_name="test_ac.gif")
-        visualize_process_ca1.animate()
+        data = np.array(self.data_2d_std)
+        scio.savemat(self.output_path+filename,{"data":data})
+
+        #visualize_process_ca1 = visc(data = self.data_2d_std,save_name="test_ac.gif")
+        #visualize_process_ca1.animate()
 
 
 if __name__ == '__main__':

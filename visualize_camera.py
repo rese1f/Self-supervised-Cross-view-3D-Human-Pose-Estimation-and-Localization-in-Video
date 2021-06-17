@@ -109,7 +109,21 @@ class visualize_2d:
         Produce animation and save it
         '''
         anim = FuncAnimation(self.fig, self.update, self.frame, interval=1)
-        #plt.show()
-        anim.save(self.save_name, writer='pillow', fps=165)
+        plt.show()
+        #anim.save(self.save_name, writer='pillow', fps=165)
 
         return
+
+if __name__ == "__main__":
+    
+    
+    filename = 'S1_Discussion.mat,S1_Greeting.mat,S1_Purchases 1.mat'
+
+
+
+    con = ConfigParser()
+    con.read('configs.ini')
+    output_path = con.get('path', 'output_path')
+    data = torch.tensor(scio.loadmat(output_path+filename)['data'])
+    vis = visualize_2d(data)
+    vis.animate()
