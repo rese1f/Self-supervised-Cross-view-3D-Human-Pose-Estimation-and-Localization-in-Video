@@ -123,11 +123,13 @@ class cover():
             AP = self.data_pos[x][v] - self.body_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
             LAB = self.body_norm[x][c]
-            LAP = torch.norm(AP,2)
             dis = cross / LAB
-            k = torch.sum(AP*AB)/LAB/LAB
-            if dis < 200 and 0<k<1:
-                self.record[x][v] = 1
+            
+            if dis < 200:
+                LAP = torch.norm(AP,2)
+                k = torch.sum(AP*AB)/LAB/LAB
+                if 0 < k < 1:
+                    self.record[x][v] = 1
             
 
     def get_leg_cases(self):
@@ -148,11 +150,14 @@ class cover():
             AP = self.data_pos[x][v] - self.leg_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
             LAB = self.leg_norm[x][c]
-            LAP = torch.norm(AP,2)
             dis = cross / LAB
-            k = torch.sum(AP*AB)/LAB/LAB
-            if dis < 80 and 0<k<1:
-                self.record[x][v] = 1
+
+            if dis < 80:
+                LAP = torch.norm(AP,2)
+                k = torch.sum(AP*AB)/LAB/LAB
+                if 0 < k < 1:
+                    self.record[x][v] = 1
+            
     
     def get_arm_cases(self):
         cases = (self.arm_depth.expand(self.x,3*self.m,self.arm_depth.shape[2])-self.data_depth < 0).nonzero()
@@ -172,11 +177,13 @@ class cover():
             AP = self.data_pos[x][v] - self.arm_endpoint[x][c]
             cross = torch.abs(AB[0]*AP[1]-AB[1]*AP[0])
             LAB = self.arm_norm[x][c]
-            LAP = torch.norm(AP,2)
             dis = cross / LAB
-            k = torch.sum(AP*AB)/LAB/LAB
-            if dis < 50 and 0<k<1:
-                self.record[x][v] = 1
+            
+            if dis < 50:
+                LAP = torch.norm(AP,2)
+                k = torch.sum(AP*AB)/LAB/LAB
+                if 0 < k < 1:
+                    self.record[x][v] = 1
 
     def run(self):
         '''
