@@ -68,8 +68,12 @@ class main:
         cov = cover(self.data_2d_std, self.head_index, self.body_index, self.leg_index, self.arm_index)
         self.cover_std = cov.run()
 
-        #visualize_process_ca1 = visc(self.data_2d_std, save_name='after.gif')
-        #visualize_process_ca1.animate()
+        self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)
+        self.data_2d_std[:,:,:,1] = self.data_2d_std[:,:,:,2]
+        self.data_2d_std[:,:,:,2] = self.cover_std
+
+        visualize_process_ca1 = visc(self.data_2d_std)
+        visualize_process_ca1.animate()
 
 
 if __name__ == '__main__':
