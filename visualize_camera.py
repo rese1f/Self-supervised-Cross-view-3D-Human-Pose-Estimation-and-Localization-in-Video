@@ -4,20 +4,17 @@ import scipy.io as scio
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
-from tqdm import tqdm
 import random_function as rf
 import torch
 
 
 class visualize_2d:
-    def __init__(self, data=None, data_path_list=None, configs='configs.ini', radius=2000, if_box=True,
-                 save_name='test.gif'):
+    def __init__(self, data=None, data_path_list=None, configs='configs.ini', save_name='test.gif'):
         con = ConfigParser()
         con.read('configs.ini')
         self.vertex_number = con.getint('skeleton', 'vertex_number')
         self.edge_number = con.getint('skeleton', 'edge_number')
-        self.structure = np.reshape([int(i) for i in con.get('skeleton', 'structure').split(',')],
-                                    (self.edge_number, 3))
+        self.structure = np.reshape([int(i) for i in con.get('skeleton', 'structure').split(',')],(self.edge_number, 3))
 
         if data_path_list is not None:
             self.data = [torch.tensor(scio.loadmat(i)['data']) for i in data_path_list]
@@ -32,17 +29,11 @@ class visualize_2d:
         self.ax = self.fig.add_subplot(111)
         self.ax.set_xlabel("x")
         self.ax.set_ylabel("y")
-        #self.radius = radius
-        #self.x0 = self.data[0][0, 0, 0]
-        #self.y0 = self.data[0][0, 0, 1]
-        #self.z0 = self.data[0][0, 0, 2]
-
+        
         self.save_name = save_name
 
         np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
-        if __name__ == '__main__':
-            self.pbar = tqdm(total=self.frame)
 
     def update(self, frame: int):
         """
@@ -50,30 +41,29 @@ class visualize_2d:
         """
         plt.cla()
 
-        leftColor, rightColor, middleColor = "#3498db", "#e74c3c", "#000520"
         for data in self.data:
             for i in self.structure:
-                if data[frame, i[0], 1] > 0 and data[frame, i[1], 1] > 0:
-                    x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
-                    y = torch.stack((data[frame, i[0], 2], data[frame, i[1], 2]), 0)
-                    if i[2] == 0:
-                        self.ax.plot(x, y, lw=2, c=rightColor)
-                    elif i[2] == 1:
-                        self.ax.plot(x, y, lw=2, c=leftColor)
-                    else:
-                        self.ax.plot(x, y, lw=2, c=middleColor)
+                x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
+                y = torch.stack((data[frame, i[0], 1], data[frame, i[1], 1]), 0)
+                self.ax.plot(x, y, lw=2, color="b")
+            
+            for j in range(self.vertex_number):
+                x = data[frame,j,0]
+                y = data[frame,j,1]
+                c = data[frame,j,2]
+                if c == 0:
+                    self.ax.plot(x,y,'o',color="y")
+                elif c == 1:
+                    self.ax.plot(x,y,'o',color="g")
 
-        fx = 1527.4;
-        fy = 1529.2;
-        cx = 957.1;
-        cy = 529.8;    
+        fx = 1527.4
+        fy = 1529.2
+        cx = 957.1
+        cy = 529.8    
         
         self.ax.set_xlim([cx-fx,cx+fx])
         self.ax.set_ylim([cy-fy,cy+fy])
         
-        if __name__ == '__main__':
-            self.pbar.update(1)
-
         return
     '''
     def bonding_box(self, x_max, x_min, y_max, y_min, z_max, z_min):
@@ -120,6 +110,6 @@ class visualize_2d:
         '''
         anim = FuncAnimation(self.fig, self.update, self.frame, interval=1)
         plt.show()
-        # anim.save(self.save_name, writer='pillow', fps=165)
+        anim.save(self.save_name, writer='pillow', fps=165)
 
         return
