@@ -15,14 +15,14 @@ class Camera:
         self.frame = frames
         # x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
-        self.pos_initial = np.array([3500., 0., 1500.])
+        self.pos_initial = np.array([0., -3500., 1500.])
 
         x_default = np.array([self.pos_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         y_default = np.array([self.pos_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
         z_default = np.array([self.pos_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
         self.camera_pos = np.concatenate((np.concatenate((x_default, y_default), 1), z_default), 1)
 
-        self.dir_initial = np.array([0, 0, -np.pi / 2])
+        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0])
 
         dir_x_default = np.array([self.dir_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         dir_y_default = np.array([self.dir_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
@@ -92,7 +92,7 @@ class Camera:
         * NOT COMPLETED
         '''
 
-        self.inmat = torch.tensor(np.array([[fx, u, s], [0, 1, 0], [0, v, fy]]))
+        self.inmat = torch.tensor(np.array([[fx, s, u], [0, fy, v], [0, 0, 1]]))
         # self.inmat[0,0] = fx;
         # self.inmat[2,2] = fy;
         # self.inmat[0,1] = u;
@@ -137,6 +137,7 @@ class Camera:
         # 旧版本操作，新版本中该操作移动至camera_transform_c2s()
 
         datasT = torch.transpose(datasT, 0, 1).reshape(x, n, 32, 4)[:, :, :, :3]
+        #datasT[:,:,:,1] = - datasT[:,:,:,1]
 
         return datasT
 
@@ -146,7 +147,7 @@ class Camera:
         '''
         data = data.reshape([data.shape[0], data.shape[1], 32, 3, 1])
         data = torch.matmul(self.inmat, data);
-        data = data / torch.abs(torch.unsqueeze(data[:, :, :, 1], 3))
+        data = data / torch.abs(torch.unsqueeze(data[:, :, :, 2], 3))
         data = data.reshape([data.shape[0], data.shape[1], 32, 3])
 
         return data
