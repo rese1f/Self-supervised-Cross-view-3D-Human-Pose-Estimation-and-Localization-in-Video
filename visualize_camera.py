@@ -9,19 +9,14 @@ import torch
 
 
 class visualize_2d:
-    def __init__(self, data=None,data_path_list=None, configs='configs.ini', save_name='test_ac.gif'):
+    def __init__(self, filename:str, configs='configs.ini', save_name='test_ac.gif'):
         con = ConfigParser()
         con.read('configs.ini')
         self.vertex_number = con.getint('skeleton', 'vertex_number')
         self.edge_number = con.getint('skeleton', 'edge_number')
         self.structure = np.reshape([int(i) for i in con.get('skeleton', 'structure').split(',')],(self.edge_number, 3))
-
-        if data_path_list is not None:
-            self.data = [torch.tensor(scio.loadmat(i)['data']) for i in data_path_list]
-            self.data = [data.reshape(data.shape[0], self.vertex_number, 3) for data in self.data]
-
-        if data is not None:
-            self.data = data
+        output_path = con.get('path', 'output_path')
+        self.data = torch.tensor(scio.loadmat(output_path+filename)['data'])
 
         self.frame = np.min([self.data[i].shape[0] for i in range(len(self.data))])
 
@@ -45,17 +40,21 @@ class visualize_2d:
             for i in self.structure:
                 x = torch.stack((data[frame, i[0], 0], data[frame, i[1], 0]), 0)
                 y = torch.stack((data[frame, i[0], 1], data[frame, i[1], 1]), 0)
-                self.ax.plot(x, y, lw=2, color="y",alpha=0.5)
+                self.ax.plot(x, y, lw=2, color="b",alpha=0.2)
             
             for j in range(self.vertex_number):
                 x = data[frame,j,0]
                 y = data[frame,j,1]
                 c = data[frame,j,2]
-                if c == 0:
-                    self.ax.plot(x,y,'.',color="g",alpha=0.2)
-                elif c == 1:
-                    self.ax.plot(x,y,'.',color="r",alpha=0.2)
 
+                if c == 0:
+                    self.ax.plot(x, y,'.',color='g',alpha=1)
+
+                if c == 1:
+                    self.ax.plot(x,y,'.',color="r",alpha=1)
+
+
+                    
         fx = 1527.4/2
         fy = 1529.2/2
         cx = 957.1
@@ -64,45 +63,6 @@ class visualize_2d:
         self.ax.set_xlim([cx-fx,cx+fx])
         self.ax.set_ylim([cy-fy,cy+fy])
         
-        return
-    '''
-    def bonding_box(self, x_max, x_min, y_max, y_min, z_max, z_min):
-        """
-        Draw the bonding_box if need
-        """
-        bcolor = "#3ade70"
-        vertex = torch.stack([
-            torch.stack([x_max, y_max, z_max]),
-            torch.stack([x_max, y_max, z_min]),
-            torch.stack([x_max, y_min, z_max]),
-            torch.stack([x_max, y_min, z_min]),
-            torch.stack([x_min, y_max, z_max]),
-            torch.stack([x_min, y_max, z_min]),
-            torch.stack([x_min, y_min, z_max]),
-            torch.stack([x_min, y_min, z_min]),
-        ])
-        lines = torch.stack([
-            torch.stack([vertex[0], vertex[2]]),
-            torch.stack([vertex[0], vertex[4]]),
-            torch.stack([vertex[1], vertex[5]]),
-            torch.stack([vertex[1], vertex[3]]),
-            torch.stack([vertex[2], vertex[3]]),
-            torch.stack([vertex[2], vertex[6]]),
-            torch.stack([vertex[3], vertex[7]]),
-            torch.stack([vertex[4], vertex[5]]),
-            torch.stack([vertex[4], vertex[6]]),
-            torch.stack([vertex[5], vertex[7]]),
-            torch.stack([vertex[6], vertex[7]]),
-            torch.stack([vertex[0], vertex[1]]),
-        ])
-        for line in lines:
-            x = torch.stack((line[0, 0], line[1, 0]), 0)
-            y = torch.stack((line[0, 1], line[1, 1]), 0)
-            z = torch.stack((line[0, 2], line[1, 2]), 0)
-            self.ax.plot3D(x, y, z, lw=2, c=bcolor)
-
-        return
-    '''
 
     def animate(self):
         '''
@@ -114,16 +74,8 @@ class visualize_2d:
 
         return
 
-if __name__ == "__main__":
-    
-    
-    filename = 'S1_Discussion.mat,S1_Greeting.mat,S1_Purchases 1.mat'
 
-
-
-    con = ConfigParser()
-    con.read('configs.ini')
-    output_path = con.get('path', 'output_path')
-    data = torch.tensor(scio.loadmat(output_path+filename)['data'])
-    vis = visualize_2d(data)
-    vis.animate()
+if __name__ == '__main__':
+    filename = '1'
+    v = visualize_2d(filename)
+    v.animate()
