@@ -52,34 +52,38 @@ class main:
                 data = rf.random_rotate(data)
             self.data_3d_std.append(data)
         self.data_3d_std = torch.stack([i[:self.frame, :, :] for i in self.data_3d_std])
-        print("You've load {} successfully".format(data_path_list))
+        print("--Input Info: {}".format(data_path_list))
 
         return ','.join(data_path_list)
 
     def main(self):
         
-        filename = self.data_preprocess(data_path_list=["S1_Discussion.mat", "S1_Greeting.mat", "S1_Purchases 1.mat"])
+        filename = self.data_preprocess(input_num_min=3)
 
-        collision_handling_process = col_eli(self.data_3d_std)
-        self.data_3d_std = collision_handling_process.collision_eliminate()
+        #collision_handling_process = col_eli(self.data_3d_std)
+        #self.data_3d_std = collision_handling_process.collision_eliminate()
+
 
         camera_1 = Camera(self.frame)
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
-        
-        cov = cover(self.data_2d_std, self.head_index, self.body_index, self.leg_index, self.arm_index)
-        self.cover_std = cov.run()
 
-        self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)
-        self.data_2d_std[:,:,:,1] = self.data_2d_std[:,:,:,2]
+        cov = cover(self.data_2d_std)
+        
+        return
+
+        self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
         self.data_2d_std[:,:,:,2] = self.cover_std
 
         data = np.array(self.data_2d_std)
         scio.savemat(self.output_path+filename,{"data":data})
 
-        #visualize_process_ca1 = visc(data = self.data_2d_std,save_name="test_ac.gif")
-        #visualize_process_ca1.animate()
+        vis = visc(filename)
+        vis.animate()
+        
 
+        
 
 if __name__ == '__main__':
+
     test = main()
     test.main()
