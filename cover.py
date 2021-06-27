@@ -10,36 +10,32 @@ class cover():
         '''
         data_2d_std: [n,x,32,3] in (x,y,d)
         '''
-        #device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
-        #self.data = data_2d_std.to(device=device)
-        self.data = data_2d_std 
-        self.cross_cases = self.get_cross_cases(self.data)
-        print(self.cross_cases)
-        print(len(self.cross_cases))
+        self.data = data_2d_std
+        self.record = torch.zeros_like(self.data[:,:,:,0])
 
 
-    def get_cross_cases(self, data_2d_std):
+    def get_cross_cases(self):
         '''
         get the bonding in x-axis and then judge for the cross area
-        m * [frame, min, max, list(id)]
+        m * [frame, [xmin, xmax], list(id)]
         list[id] sorted in depth
         '''
-        x_info = data_2d_std[:,:,:,0]
+        x_info = self.data[:,:,:,0]
         
         # bound -> [x,n,2] + depth -> [x,n]
-        bound = torch.stack([torch.min(x_info,-1).values,torch.max(x_info,-1).values,torch.min(data_2d_std[:,:,:,2],-1).values],-1).transpose(0,1).numpy()
+        bound = torch.stack([torch.min(x_info,-1).values,torch.max(x_info,-1).values,torch.min(self.data[:,:,:,2],-1).values],-1).transpose(0,1).numpy()
 
         # cross area
         # for loop for single frame
 
-        cross_cases = list()
+        self.cross_cases = list()
         for i in range(len(bound)):
             x = bound[i]
             # sort for all the point
             v = np.sort(x[:,:2].flatten())
             # initial the left bound list, id set and cross result list
             left = v[0]
-            set, cross = list(), list()
+            set = list()
             # traversal for the sorted list as right bound
             for right in v:
                 index = (x==right).nonzero()
@@ -50,14 +46,43 @@ class cover():
                 else:
                     if (len(set) > 1):
                         set.sort()      
-                        cross.append([i,left,right,[int((j==x).nonzero()[0]) for j in set]])
+                        self.cross_cases.append([i,[left,right],[int((j==x).nonzero()[0]) for j in set]])
                     set.remove(d)
                 left = right
-            cross_cases.append(cross.copy())
-        return cross_cases
+        
+        return
+    
+
+    def generate_cover(self, frame, id):
+        '''
+        generate the cover area due to the id and frame
+        beta version: use bonding box
+        plan: use STAR model
+        '''
+        return torch.min(self.data[id,frame,:,1]),torch.max(self.data[id,frame,:,1])
+
 
     def get_cover_joint(self):
-        pass
+        self.get_cross_cases()
+        # case -> [frame, [xmin, xmax], list(id)]
+        for case in self.cross_cases:
+            frame = case[0]
+            xmin = case[1][0]
+            xmax = case[1][1]
+            # simplify the least depth to be the cover
+            cov = self.generate_cover(frame,case[2][0])
+            # for beta version, get the cover
+            ymin = cov[0]
+            ymax = cov[1]
+            # consider the covered joint
+            for id in case[2][1:]:
+                joint_x = self.data[id,frame,:,0]
+                joint_y = self.data[id,frame,:,1]
+                for i in range(self.data.shape[2]):
+                    if (xmin < joint_x[i] < xmax) and (ymin < joint_y[i] < ymax):
+                        self.record[id,frame,i] = 1
+
+        return self.record
 
 
     def convert(self, data):
