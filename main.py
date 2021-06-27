@@ -68,8 +68,9 @@ class main:
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
 
         cov = cover(self.data_2d_std)
+        self.cover_std = cov.get_cover_joint()
         
-        return
+
 
         self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
         self.data_2d_std[:,:,:,2] = self.cover_std
