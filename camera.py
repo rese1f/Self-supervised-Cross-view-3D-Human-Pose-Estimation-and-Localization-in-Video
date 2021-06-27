@@ -7,23 +7,34 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 
 class Camera:
 
-    def __init__(self, frames) -> None:
+    def __init__(self, data = None, frames = 10, tracking = 1) -> None:
         '''
         Constructing an object of Camera class, defining its frame number, default parameters
         '''
-
+        self.ifTracking = tracking
         self.frame = frames
         # x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
-        self.pos_initial = np.array([0., -3500., 1500.])
+        
+        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0]);
+        if data == None:
+            self.pos_initial = np.array([0., -3500., 1500.])
+            self.center = np.array([0., 0., 0.]);
+        elif tracking == 1:
+            Camera.__get_center(data = data);
+            self.pos_initial = self.center + [0., -3500., 1500.];
+        elif tracking == 0:
+            Camera.__get_center(data = data);
+            self.pos_initial = self.center + [0., -3500., 1500.];
+            self.center = np.array([0., 0., 0.]);
 
         x_default = np.array([self.pos_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         y_default = np.array([self.pos_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
         z_default = np.array([self.pos_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
         self.camera_pos = np.concatenate((np.concatenate((x_default, y_default), 1), z_default), 1)
 
-        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0])
 
+        
         dir_x_default = np.array([self.dir_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         dir_y_default = np.array([self.dir_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
         dir_z_default = np.array([self.dir_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
@@ -152,20 +163,71 @@ class Camera:
 
         return data
 
-    def get_rotation_center(self, data):
 
-        self.rotational_center = np.array([torch.sum(data[:, :, 15, 0]), torch.sum(data[:, :, 15, 1])]) / 3
+    def __get_center(self, data):
+
+        self.center = np.array([torch.sum(data[:, :, 15, 0]), torch.sum(data[:, :, 15, 1]), 0]) / 3
 
         return
 
-    def camMotion_rotation(self, data, center=None, radius=3000, angle=np.pi * 2):
+    def get_angle(frame,data):
+        if frame == None:
+            result = torch.zeros(3)
+            for i in range(3):
+                x = data[i]; y = data[(i+1)%3]; 
+                result[(i+2)%3] = torch.atan2(y,x);
+        else:
+            result = torch.zeros((frame,3))
+            for i in range(3):
+                x = data[:,i]; y = data[:,(i+1)%3]; 
+                result[:,(i+2)%3] = torch.atan2(y,x);
+        return result
+
+
+
+    def camMotion_linear_motion(self, velocity = 10, dir = np.array([1,0,0]), tracking = 0):
+        """
+        velocity: the speed of the camera, unit mm/frame
+        dir: the directional vector of the velocity, should be a unit vector
+        tracking: the parameter determine whether the camera will point at the center defined in __init__
+        the camera doing constant speed motion with a fixed direction
+        """
+        dir = dir/np.linalg.norm(dir)
+        frames = self.frame
+        self.camera_pos = torch.add(self.camera_pos,torch.mul(torch.tensor(dir*velocity),torch.tensor(np.linspace(0,frames,frames)).reshape(frames,1)));
+        if tracking != 0:
+            dirVec = torch.sub(self.center,self.camera_pos)
+            self.camera_arg = self.get_angle(frames,self.camera_pos)
+        
         return
+
+
+    def camMotion_rotation(self, data, radius=3000, angle=np.pi * 2):
+        '''
+        radius: the radius of rotation
+        angle: the entire arc the carmera travels
+        get 2d rotation around center with given radius and angle (the center is defined in __init__ )
+        '''
+        
+        frames = self.frame
+
+        x_2center = np.cos(np.linspace(0,angle,frames,dtype = np.float16).reshape(frames,1)) * radius;
+        y_2center = np.sin(np.linspace(0,angle,frames,dtype = np.float16).reshape(frames,1)) * radius;
+        z_2center = np.array([0] * frames, dtype=np.float16).reshape(frames, 1)
+        xyz_2center = np.concatenate((np.concatenate((x_2center, y_2center), 1), z_2center), 1)
+
+        self.camera_pos = torch.add(torch.tensor([self.center]*frames).reshape(frames,3), torch.tensor(xyz_2center));
+        self.camera_arg = self.get_angle(frames, torch.sub(self.center,self.camera_pos))
+
+        return
+
+
 
     def update_camera(self):
         '''
-        Updating the rigid-motion parameters and intrinsics parameters
-        * NOT COMPLETED
+        Updating the extrinsics matrix
         '''
+        Camera.__exmat_generator(self)
 
         pass
 
