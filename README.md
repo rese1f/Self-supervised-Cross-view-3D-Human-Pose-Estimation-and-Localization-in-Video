@@ -1,13 +1,12 @@
-# Dataexpand 1.8.8 Released
+# Dataexpand 1.9.2 Released
 
 ## Project Progress and Contribution Part
 
 -   Wenhao Chai: 
     -   Proceed features on `cover.py`.
 -   Jack Bai: 
-    -   Adding new features on `camera.py`.
-    -   Adding threshold values to `collision.py`
-    -   Adding ordered collision handling to `collision.py`
+    -   Helping Mu Xie with `camera.py`.
+    -   Adding sequential collision handling to `collision.py`
 -   Mu Xie:
     -   Completing features on `camera.py`.
 -   Xinyu Jin:
@@ -25,4 +24,7 @@ This is the flowchart of our algorithm about operations on *Human3.6M*. The infe
 
 ![4611623913154_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-17-082747.png)
 
-### 
+## A Serious Question About the Collision Elimination Process
+
+![有关碰撞问题的深入分析](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-28-085837.png)
+

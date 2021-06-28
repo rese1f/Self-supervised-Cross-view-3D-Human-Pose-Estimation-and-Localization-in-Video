@@ -427,9 +427,9 @@ class collision_eliminate:
         of length. This leads to a perfect match by conjecture.
 
         Args:
-            collision_cases_list: the list containing collision case vectors, each of
+            self.collision_cases_list: the list containing collision case vectors, each of
                 size [n, n, x].
-            bounding_box_vertexbased: The tensor of size [n, x, 8].
+            self.bounding_box_vertexbased: The tensor of size [n, x, 8].
 
         Returns:
             The answer of the best shift vector, which is an exact value.
