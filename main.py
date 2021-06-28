@@ -60,11 +60,10 @@ class main:
         
         filename = self.data_preprocess(input_num_min=3)
 
-        #collision_handling_process = col_eli(self.data_3d_std)
-        #self.data_3d_std = collision_handling_process.collision_eliminate()
+        # collision_handling_process = col_eli(self.data_3d_std)
+        # self.data_3d_std = collision_handling_process.collision_eliminate()
 
-
-        camera_1 = Camera(self.frame)
+        camera_1 = Camera(frames=self.frame)
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
 
         cov = cover(self.data_2d_std)

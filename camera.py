@@ -7,42 +7,59 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 
 class Camera:
 
-    def __init__(self, data = None, frames = 10, tracking = 1) -> None:
-        '''
-        Constructing an object of Camera class, defining its frame number, default parameters
-        '''
+    def __init__(self, data=None, frames=10, tracking=1) -> None:
+        """Initialization & Localization
+
+        Initialization part with introduction to all the local variables.
+
+        Args:
+            self: the object entity.
+            data: the data to use camera on.
+            frames: the number of frames.
+            tracking: flag to decide whether the camera aims on the center point or not.
+                true: yes, the camera will always aiming at the center point.
+                false: no, the camera will always keep the same direction.
+
+        Returns:
+            The ctor of a class will return nothing.
+
+        Raises:
+            NOError: no error occurred up to now
+        """
         self.ifTracking = tracking
         self.frame = frames
         # x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
 
-        
-        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0]);
+        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0])
+        # no data input
         if data == None:
             self.pos_initial = np.array([0., -3500., 1500.])
-            self.center = np.array([0., 0., 0.]);
+            self.center = np.array([0., 0., 0.])
+
+        # have data input, no tracking
         elif tracking == 1:
-            Camera.__get_center(data = data);
-            self.pos_initial = self.center + [0., -3500., 1500.];
+            Camera.__get_center(self, data=data)
+            self.pos_initial = self.center + [0., -3500., 1500.]
+
+        # have data input, have tracking
         elif tracking == 0:
-            Camera.__get_center(data = data);
-            self.pos_initial = self.center + [0., -3500., 1500.];
-            self.center = np.array([0., 0., 0.]);
+            Camera.__get_center(self, data=data)
+            self.pos_initial = self.center + [0., -3500., 1500.]
+            self.center = np.array([0., 0., 0.])
 
         x_default = np.array([self.pos_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         y_default = np.array([self.pos_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
         z_default = np.array([self.pos_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
         self.camera_pos = np.concatenate((np.concatenate((x_default, y_default), 1), z_default), 1)
 
-
-        
         dir_x_default = np.array([self.dir_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
         dir_y_default = np.array([self.dir_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
         dir_z_default = np.array([self.dir_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
 
         self.camera_arg = np.concatenate((np.concatenate((dir_x_default, dir_y_default), 1), dir_z_default), 1)
 
-        con = ConfigParser();
-        con.read('configs.ini');
+        con = ConfigParser()
+        con.read('configs.ini')
         self.fx = con.getfloat('camera_parameter', 'fx')
         self.fy = con.getfloat('camera_parameter', 'fy')
         self.u = con.getfloat('camera_parameter', 'u')
@@ -50,24 +67,36 @@ class Camera:
         self.s = con.getfloat('camera_parameter', 's')
 
         '''
-        Gernerate extrinsics and intrinsics camera matrix from its default parameter
+        Generate extrinsic and intrinsic camera matrix from its default parameter
         These matrix could be updated later
         '''
         Camera.__exmat_generator(self)
         Camera.__inmat_generator(self, self.fx, self.fy, self.u, self.v, self.s)
 
-        pass
+        return
 
     def __exmat_generator(self):
-        '''
-        Generate extrinsics matrix, used for transform the object in homogeneous world coordinate into homogeneous camera coordinate
+        """Generate the extrinsic matrix for the camera.
 
-        H_o2k = [ R  T ]
-                [ 0  1 ]  used for homogeneous coordinate
+        Develop the extrinsic matrix for the camera, which is used for transforming the object in the world coordinate
+        system into the homogeneous camera coordinate system. Note that the intermediate variable H_o2k (from outside
+        coordinate system to the camera coordinate system) has the size
+        [ R T    where R is the rotational matrix, calculated by the camera orientation, with R_z * R_y * R_x.
+          0 1 ]  T is the translational matrix, calculated by -R*(-1) * X, where X is the camera position in the
+                    world coordinate.
 
-        R is rotational matrix calculated from camera orination, Rz*Ry*Rx
-        T is -R^-1*X ; X here is camera position in world coordinate
-        '''
+        Args:
+            self.frame:
+            self.camera_pos: 1
+            self.camera_arg: 1
+
+        Returns:
+            self.exmat: of size
+
+        Raises:
+            NOError: no error occurred up to now
+        """
+
         for i in range(self.frame):
             posCamera = self.camera_pos[i]
             argCamera = self.camera_arg[i]
@@ -85,15 +114,15 @@ class Camera:
 
             T = - torch.mm(R, torch.tensor(np.array(posCamera, dtype=np.float16).reshape(3, 1)))
 
-            H_ok = torch.cat((R, T), 1)
-            H_ok = torch.cat((H_ok, torch.tensor([[0., 0., 0., 1.]])), 0)
+            H_o2k = torch.cat((R, T), 1)
+            H_o2k = torch.cat((H_o2k, torch.tensor([[0., 0., 0., 1.]])), 0)
 
             if i == 0:
-                self.exmat = H_ok
+                self.exmat = H_o2k
             elif i == 1:
-                self.exmat = torch.stack((self.exmat, H_ok))
+                self.exmat = torch.stack((self.exmat, H_o2k))
             else:
-                self.exmat = torch.cat((self.exmat, H_ok.reshape(1, 4, 4)), 0)
+                self.exmat = torch.cat((self.exmat, H_o2k.reshape(1, 4, 4)), 0)
 
         return
 
@@ -137,7 +166,7 @@ class Camera:
         # 交换person与frame维度
 
         for i in range(self.frame):
-            datasT[i] = torch.matmul(self.exmat[i],datasT[i]);
+            datasT[i] = torch.matmul(self.exmat[i], datasT[i]);
             i += 1;
         
         #datasT = torch.matmul(self.exmat,datasT);
@@ -163,12 +192,15 @@ class Camera:
 
         return data
 
-
     def __get_center(self, data):
+        slice1 = data[:, :, 15, 0]
+        slice2 = data[:, :, 15, 1]
 
-        self.center = np.array([torch.sum(data[:, :, 15, 0]), torch.sum(data[:, :, 15, 1]), 0]) / 3
+        sum1 = torch.sum(slice1)
+        sum2 = torch.sum(slice2)
 
-        return
+        self.center = np.array([sum1, sum2, 0]) / 3
+        pass
 
     def get_angle(frame,data):
         if frame == None:
