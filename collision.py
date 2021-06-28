@@ -270,6 +270,7 @@ class collision_eliminate:
                 vertex_coordination_x_1 = self.bounding_box_vertexbased[permutation[1], :, i]
                 vertex_coordination_y_1 = self.bounding_box_vertexbased[permutation[1], :, i + 1]
 
+            """Rudiment
             excluded_flag_tensor = torch.ones(self.n, self.n, self.x)
             distance_tensor = self.find_central_distance()
 
@@ -282,6 +283,10 @@ class collision_eliminate:
                     excluded_flag_tensor[permutation[0], permutation[1], frame] = True  # exclude it
                 else:
                     excluded_flag_tensor[permutation[0], permutation[1], frame] = False  # do not exclude it
+            """
+
+            # Advanced
+            excluded_flag_tensor = self.find_central_distance() > 1.1
 
             # if the vertex is not pre-excluded and in the range
             for frame in range(self.x):

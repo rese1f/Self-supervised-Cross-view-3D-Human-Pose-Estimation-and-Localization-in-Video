@@ -64,6 +64,10 @@ class main:
         collision_handling_process = col_eli(self.data_3d_std)
         self.data_3d_std = collision_handling_process.collision_eliminate()
 
+        # visualization after collision handling
+        vis_col = vis(self.data_3d_std, save_name='col.gif')
+        vis_col.animate()
+
         camera_1 = Camera(frames=self.frame)
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
 
@@ -76,6 +80,7 @@ class main:
         data = np.array(self.data_2d_std)
         scio.savemat(self.output_path+filename,{"data":data})
 
+        # visualization after camera switch
         # vis = visc(filename)
         # vis.animate()
         
