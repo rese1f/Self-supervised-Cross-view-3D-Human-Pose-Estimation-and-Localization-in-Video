@@ -206,47 +206,73 @@ class Camera:
         datasT = torch.transpose(datasT, 0, 1).reshape(x, n, 32, 4)[:, :, :, :3]
         # datasT[:,:,:,1] = - datasT[:,:,:,1]
 
-        print(datasT.shape)
-
         return datasT
 
     def camera_transform_c2s(self, data):
-        '''
-        Transform the tensor into sensor coordinate and eliminate the depth demention
-        '''
+        """Use the intrinsic matrix to switch the graph from camera coordinate to pixel coordinate
+
+        Transform the tensor in homogeneous camera coordinate into euclidean
+        equivalent to pixel coordinate (2d to 2d).
+
+        Args:
+            data: the 3-D coordinates of the raw data, i.e. data_cluster, data_3d, all of size [n, x, 32, 3]
+
+        Returns:
+            data: of the same size as input data, i.e. [n, x, 32, 3]
+
+        Raises:
+            NOError: no error occurred up to now
+        """
+        print(data.shape)
         data = data.reshape([data.shape[0], data.shape[1], 32, 3, 1])
-        data = torch.matmul(self.inmat, data);
+        data = torch.matmul(self.inmat, data)
         data = data / torch.abs(torch.unsqueeze(data[:, :, :, 2], 3))
         data = data.reshape([data.shape[0], data.shape[1], 32, 3])
 
         return data
 
     def __get_center(self, data):
+        """Get the center of all the users
+
+        Get the center coordinates of all the humans in the plot. Note that the center point is on the horizontal
+        plane, so it has a z-value of 0.
+
+        Args:
+            data: the 3-D coordinates of the raw data, i.e. data_cluster, data_3d, all of size [n, x, 32, 3]
+
+        Returns:
+            datas: of the same size as input data, i.e. [n, x, 32, 3]
+
+        Raises:
+            NOError: no error occurred up to now
+        """
         slice1 = data[:, :, 15, 0]
         slice2 = data[:, :, 15, 1]
-
         sum1 = torch.sum(slice1)
         sum2 = torch.sum(slice2)
 
         self.center = np.array([sum1, sum2, 0]) / 3
-        pass
+        return
 
-    def get_angle(frame,data):
-        if frame == None:
+    def get_angle(self, frame, data):
+        """
+        Get the angle
+        """
+        if frame is None:
             result = torch.zeros(3)
             for i in range(3):
-                x = data[i]; y = data[(i+1)%3]; 
-                result[(i+2)%3] = torch.atan2(y,x);
+                x = data[i]
+                y = data[(i+1) % 3]
+                result[(i+2) % 3] = torch.atan2(y, x)
         else:
-            result = torch.zeros((frame,3))
+            result = torch.zeros((frame, 3))
             for i in range(3):
-                x = data[:,i]; y = data[:,(i+1)%3]; 
-                result[:,(i+2)%3] = torch.atan2(y,x);
+                x = data[:, i]
+                y = data[:, (i+1) % 3]
+                result[:, (i+2) % 3] = torch.atan2(y, x)
         return result
 
-
-
-    def camMotion_linear_motion(self, velocity = 10, dir = np.array([1,0,0]), tracking = 0):
+    def cam_motion_linear_motion(self, velocity=10, dir=np.array([1, 0, 0]), tracking=0):
         """
         velocity: the speed of the camera, unit mm/frame
         dir: the directional vector of the velocity, should be a unit vector
@@ -262,14 +288,12 @@ class Camera:
         
         return
 
-
-    def camMotion_rotation(self, data, radius=3000, angle=np.pi * 2):
-        '''
+    def cam_motion_rotation(self, data, radius=3000, angle=np.pi * 2):
+        """
         radius: the radius of rotation
         angle: the entire arc the carmera travels
         get 2d rotation around center with given radius and angle (the center is defined in __init__ )
-        '''
-        
+        """
         frames = self.frame
 
         x_2center = np.cos(np.linspace(0,angle,frames,dtype = np.float16).reshape(frames,1)) * radius;
@@ -282,12 +306,10 @@ class Camera:
 
         return
 
-
-
     def update_camera(self):
-        '''
-        Updating the extrinsics matrix
-        '''
+        """
+        Updating the extrinsic matrix
+        """
         Camera.__exmat_generator(self)
 
         pass
