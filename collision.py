@@ -159,7 +159,8 @@ class collision_eliminate:
             self.bounding_box: The tensor of size [n, x, 4].
 
         Returns:
-            The distance tensor of size [n, n, x] for each frame
+            The distance tensor of size [n, n, x] for each frame. Note that each element in the tensor means the
+            distance between the two persons.
 
         Raises:
             NOError: no error occurred up to now
@@ -245,12 +246,9 @@ class collision_eliminate:
         adjacency_matrix_tensor = torch.zeros(self.n, self.n, self.x)
 
         # find all the possibilities and store them into one list
-
-        # TODO: pre-exclude cases whether the two persons have a distance greater than 1 meter.
         permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
         # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
         for permutation in permutation_list:
-
             # find the box range of both items
             x_range_max_0 = self.bounding_box[permutation[0], :, 0]
             y_range_max_0 = self.bounding_box[permutation[0], :, 1]
@@ -272,17 +270,30 @@ class collision_eliminate:
                 vertex_coordination_x_1 = self.bounding_box_vertexbased[permutation[1], :, i]
                 vertex_coordination_y_1 = self.bounding_box_vertexbased[permutation[1], :, i + 1]
 
-                # iterate through each frame
-                for frame in range(self.x):
-                    # if the vertex is in the range
-                    if (
-                            (x_range_max_0[frame] > vertex_coordination_x_1[frame] > x_range_min_0[frame] and
-                             y_range_max_0[frame] > vertex_coordination_y_1[frame] > y_range_min_0[frame]) or
-                            (x_range_max_1[frame] > vertex_coordination_x_0[frame] > x_range_min_1[frame] and
-                             y_range_max_1[frame] > vertex_coordination_y_0[frame] > y_range_min_1[frame])
-                    ):
-                        # mark the frame
-                        adjacency_matrix_tensor[permutation][frame] = 1
+            excluded_flag_tensor = torch.ones(self.n, self.n, self.x)
+            distance_tensor = self.find_central_distance()
+
+            # pre-exclude cases where the two persons have a distance greater than 1 meter.
+            for frame in range(self.x):
+                # create a flag tensor to see whether the case is ruled out. if flag == true then ruled out, and
+                #   thus there's no need to check whether it's in the range any more.
+                # note that distance_tensor has the size [n, n, x]
+                if distance_tensor[permutation[0], permutation[1], frame] > 1.052:  # unit: meter
+                    excluded_flag_tensor[permutation[0], permutation[1], frame] = True  # exclude it
+                else:
+                    excluded_flag_tensor[permutation[0], permutation[1], frame] = False  # do not exclude it
+
+            # if the vertex is not pre-excluded and in the range
+            for frame in range(self.x):
+                if (
+                        (excluded_flag_tensor[permutation[0], permutation[1], frame] is False) and
+                        (x_range_max_0[frame] > vertex_coordination_x_1[frame] > x_range_min_0[frame] and
+                         y_range_max_0[frame] > vertex_coordination_y_1[frame] > y_range_min_0[frame]) or
+                        (x_range_max_1[frame] > vertex_coordination_x_0[frame] > x_range_min_1[frame] and
+                         y_range_max_1[frame] > vertex_coordination_y_0[frame] > y_range_min_1[frame])
+                ):
+                    # mark the frame
+                    adjacency_matrix_tensor[permutation][frame] = 1
 
         self.collision_cases_list = adjacency_matrix_tensor  # [n, n, x]
         return
