@@ -163,42 +163,50 @@ class Camera:
         return
 
     def camera_transform_w2c(self, data_3d):
-        """
-        n: 人数;
-        x: 帧数;
-        data_cluster: [n,x,32,3];
-        in_camera_data_cluster: 固定的内参矩阵 [3,3];
-        ex_camera_data_cluster: 随帧数变化的外参矩阵 [x,3,4];
-        return: [n,x,32,2];
+        """Use the extrinsic matrix to switch the graph from world coordinate to camera coordinate
 
-        Transform the tensor in homogeneous 3d world coordinate into euclidiean
-        equivlant ot 3d camera coordinate (homogeneous 2d coordinate)
+        Transform the tensor in homogeneous 3d world coordinate into euclidean
+        equivalent to 3d camera coordinate (homogeneous 2d coordinate).
 
+        Args:
+            data_3d: the 3-D coordinates of the raw data, i.e. data_cluster, of size [n, x, 32, 3]
+
+        Variables:
+            n: the number of people
+            x: the number of frames
+
+        Returns:
+            datasT: of size [n, x, 32, 3]
+
+        Raises:
+            NOError: no error occurred up to now
         """
 
         dataShape = data_3d.size()
         x = dataShape[0]
         n = dataShape[1]
 
-        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, 32, 1), dtype=np.float16))), dim=3).reshape(x, n, 32, 4, 1)
+        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, 32, 1), dtype=np.float16))), dim=3)\
+            .reshape(x, n, 32, 4, 1)
 
-
-        datasT = torch.transpose(datasInHC,0,1);
         # 交换person与frame维度
+        datasT = torch.transpose(datasInHC, 0, 1);
 
         for i in range(self.frame):
-            datasT[i] = torch.matmul(self.exmat[i], datasT[i]);
-            i += 1;
+            datasT[i] = torch.matmul(self.exmat[i], datasT[i])
+            i += 1
         
-        #datasT = torch.matmul(self.exmat,datasT);
-        #3维的广播方法不可用，即[frame,4,4]*[frame,32,4,1]
-        #正在尝试[frame,32,4,4]*[frame,32,4,1]
+        # datasT = torch.matmul(self.exmat,datasT);
+        # 3维的广播方法不可用，即[frame,4,4]*[frame,32,4,1]
+        # 正在尝试[frame,32,4,4]*[frame,32,4,1]
 
         # datasT = torch.matmul(self.inmat,datasT);
         # 旧版本操作，新版本中该操作移动至camera_transform_c2s()
 
         datasT = torch.transpose(datasT, 0, 1).reshape(x, n, 32, 4)[:, :, :, :3]
-        #datasT[:,:,:,1] = - datasT[:,:,:,1]
+        # datasT[:,:,:,1] = - datasT[:,:,:,1]
+
+        print(datasT.shape)
 
         return datasT
 
