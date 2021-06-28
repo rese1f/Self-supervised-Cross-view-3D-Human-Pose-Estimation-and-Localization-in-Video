@@ -61,16 +61,14 @@ class main:
         
         filename = self.data_preprocess(input_num_min=3)
 
-        # collision_handling_process = col_eli(self.data_3d_std)
-        # self.data_3d_std = collision_handling_process.collision_eliminate()
+        collision_handling_process = col_eli(self.data_3d_std)
+        self.data_3d_std = collision_handling_process.collision_eliminate()
 
         camera_1 = Camera(frames=self.frame)
         self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
 
         cov = cover(self.data_2d_std)
         self.cover_std = cov.get_cover_joint()
-        
-
 
         self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
         self.data_2d_std[:,:,:,2] = self.cover_std
@@ -78,13 +76,10 @@ class main:
         data = np.array(self.data_2d_std)
         scio.savemat(self.output_path+filename,{"data":data})
 
-        vis = visc(filename)
-        vis.animate()
-        
-
+        # vis = visc(filename)
+        # vis.animate()
         
 
 if __name__ == '__main__':
-
     test = main()
     test.main()

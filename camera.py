@@ -89,7 +89,7 @@ class Camera:
         Args:
             self.frame: the number of frames in the animation.
             self.camera_pos: the position of the camera.
-            self.camera_arg: 1
+            self.camera_arg: the tri-rotation arguments of the camera (incl. x, y, z axes)
 
         Returns:
             self.exmat: of size [x, 4, 4], where x is the number of frames (self.frames), so it's frame-dependent.
@@ -223,7 +223,6 @@ class Camera:
         Raises:
             NOError: no error occurred up to now
         """
-        print(data.shape)
         data = data.reshape([data.shape[0], data.shape[1], 32, 3, 1])
         data = torch.matmul(self.inmat, data)
         data = data / torch.abs(torch.unsqueeze(data[:, :, :, 2], 3))
