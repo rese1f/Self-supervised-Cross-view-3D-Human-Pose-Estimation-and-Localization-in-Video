@@ -32,6 +32,9 @@ class collision_eliminate:
         self.con.read('configs.ini')
 
     def test_bounding_box(self):
+        """
+        Test function for bounding box; will print success if the bounding box passes the test.
+        """
         test_path_list = ['../Dataexpand_dataset/S1_Directions.mat', '../Dataexpand_dataset/S1_Greeting.mat']
         # try animating the boxes inside 2 dimensions
         v_2d = vis_col(data=self.data_cluster_2d, data_path_list=test_path_list, save_name='2d.gif')
@@ -112,7 +115,7 @@ class collision_eliminate:
         output should be [x, 2], but because we have 2 dimensions we gain [x, 4]. By
         iterating through n people we get [n, x, 4].
 
-        Args:
+        Variables:
             data_cluster: The tensor of size [n, x, 32, 3], where
                 n: number of people;
                 x: number of frames;
@@ -153,7 +156,7 @@ class collision_eliminate:
         as [n, n] is the upper-triangular adjacency matrix of the people.
 
         Args:
-            bounding_box: The tensor of size [n, x, 4].
+            self.bounding_box: The tensor of size [n, x, 4].
 
         Returns:
             The distance tensor of size [n, n, x] for each frame
@@ -227,8 +230,8 @@ class collision_eliminate:
         utilized in visualize.py, to gain a result tensor of size [n, n, x].
 
         Args:
-            bounding_box: The tensor of size [n, x, 4].
-            bounding_box_vertexbased: The tensor of size [n, x, 8].
+            self.bounding_box: The tensor of size [n, x, 4].
+            self.bounding_box_vertexbased: The tensor of size [n, x, 8].
 
         Returns:
             All the collision cases, as a list of tensor of size [n, n, x]. Inside the tensor all values
@@ -242,8 +245,9 @@ class collision_eliminate:
         adjacency_matrix_tensor = torch.zeros(self.n, self.n, self.x)
 
         # find all the possibilities and store them into one list
-        permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
 
+        # TODO: pre-exclude cases whether the two persons have a distance greater than 1 meter.
+        permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
         # iterate through the list of [0, 1], [0, 2], [1, 2] and find the collision cases
         for permutation in permutation_list:
 
@@ -483,7 +487,7 @@ class collision_eliminate:
         """
         Outmost wrapper function for collision elimination
         """
-        for epoch in range(2):
+        for epoch in range(1):
             print("Entering collision elimination epoch {}".format(epoch))
             self.collision_eliminate_routine()
 
