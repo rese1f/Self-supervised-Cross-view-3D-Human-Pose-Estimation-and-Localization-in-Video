@@ -24,7 +24,8 @@ class Camera:
             The ctor of a class will return nothing.
 
         Raises:
-            NOError: no error occurred up to now
+            TypeError: do NOT change "if data is None" to "if data == None", because "is" is often used in "if"
+                statement.
         """
         self.ifTracking = tracking
         self.frame = frames
@@ -32,7 +33,7 @@ class Camera:
 
         self.dir_initial = np.array([-np.pi / 2, -np.pi, 0])
         # no data input
-        if data == None:
+        if data is None:
             self.pos_initial = np.array([0., -3500., 1500.])
             self.center = np.array([0., 0., 0.])
 
@@ -86,12 +87,12 @@ class Camera:
                     world coordinate.
 
         Args:
-            self.frame:
-            self.camera_pos: 1
+            self.frame: the number of frames in the animation.
+            self.camera_pos: the position of the camera.
             self.camera_arg: 1
 
         Returns:
-            self.exmat: of size
+            self.exmat: of size [x, 4, 4], where x is the number of frames (self.frames), so it's frame-dependent.
 
         Raises:
             NOError: no error occurred up to now
@@ -127,17 +128,37 @@ class Camera:
         return
 
     def __inmat_generator(self, fx=1527.4, fy=1529.2, u=957.1, v=529.8, s=0):
-        '''
-        Generate intrinsics matrix
-        * NOT COMPLETED
-        '''
+        """Generate the intrinsic matrix for the camera.
+
+        Develop the intrinsic matrix for the camera, which is used for transforming the object in the camera coordinate
+        system into the homogeneous pixel coordinate system. Note that the K matrix has size
+        [ f_x, s,   x_0 (u) ]
+        [ 0,   f_y, y_0 (v) ]
+        [ 0,   0,   1       ]
+        For more details you can check the private blog concerning this project at http://jackgetup.com/.
+
+        Args:
+            self:
+            fx: the x-axis focal distance
+            fy: the y-axis focal distance
+            u: coordinate tilt in the x direction
+            v: coordinate tilt in the y direction
+            s: the corresponds of the principle point
+
+        Returns:
+            self.inmat: of size [3, 3], not frame-dependent
+
+        Raises:
+            NOError: no error occurred up to now
+        """
+
+        # TODO: The distortions need to be added.
 
         self.inmat = torch.tensor(np.array([[fx, s, u], [0, fy, v], [0, 0, 1]]))
-        # self.inmat[0,0] = fx;
-        # self.inmat[2,2] = fy;
-        # self.inmat[0,1] = u;
-        # self.inmat[2,1] = v;
-        # self.inmat
+        # self.inmat[0,0] = fx
+        # self.inmat[2,2] = fy
+        # self.inmat[0,1] = u
+        # self.inmat[2,1] = v
 
         return
 

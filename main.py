@@ -9,6 +9,7 @@ from camera import Camera
 from visualize_camera import visualize_2d as visc
 from cover import cover
 
+
 class main:
     def __init__(self):
 
