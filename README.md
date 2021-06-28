@@ -1,9 +1,9 @@
-# Dataexpand 1.6.3 Released
+# Dataexpand 1.8.8 Released
 
 ## Project Progress and Contribution Part
 
 -   Wenhao Chai: 
-    -   Fixing bugs on `cover.py` - dealing with sheltering (depth covering).
+    -   Proceed features on `cover.py`.
 -   Jack Bai: 
     -   Adding new features on `camera.py`.
     -   Adding threshold values to `collision.py`
