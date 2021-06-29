@@ -3,6 +3,7 @@
 ## Project Progress and Contribution Part
 
 -   Wenhao Chai: 
+    -   Prepare to validate existing algorithms on new datasets.
     -   Proceed features on `cover.py`.
 -   Jack Bai: 
     -   Helping Mu Xie with `camera.py`.
