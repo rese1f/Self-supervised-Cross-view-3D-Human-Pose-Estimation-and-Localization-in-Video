@@ -1,13 +1,15 @@
 import numpy as np
 import torch
 from configparser import ConfigParser
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 class Camera:
 
-    def __init__(self, data=None, frames=10, tracking=1) -> None:
+    def __init__(self, data=None, frames=10, tracking=1, type = "phone") -> None:
         """Initialization & Localization
 
         Initialization part with introduction to all the local variables.
@@ -27,52 +29,21 @@ class Camera:
             TypeError: do NOT change "if data is None" to "if data == None", because "is" is often used in "if"
                 statement.
         """
+
         self.ifTracking = tracking
         self.frame = frames
-        # x_default = np.linspace(-200,200,frames,dtype = np.float16).reshape(frames,1);
+        
+        try:
+            Camera.__get_center(self,data)
+        except:
+            print("data needed")
+            pass
 
-        self.dir_initial = np.array([-np.pi / 2, -np.pi, 0])
-        # no data input
-        if data is None:
-            self.pos_initial = np.array([0., -3500., 1500.])
-            self.center = np.array([0., 0., 0.])
-
-        # have data input, no tracking
-        elif tracking == 1:
-            Camera.__get_center(self, data=data)
-            self.pos_initial = self.center + [0., -3500., 1500.]
-
-        # have data input, have tracking
-        elif tracking == 0:
-            Camera.__get_center(self, data=data)
-            self.pos_initial = self.center + [0., -3500., 1500.]
-            self.center = np.array([0., 0., 0.])
-
-        x_default = np.array([self.pos_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
-        y_default = np.array([self.pos_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
-        z_default = np.array([self.pos_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
-        self.camera_pos = np.concatenate((np.concatenate((x_default, y_default), 1), z_default), 1)
-
-        dir_x_default = np.array([self.dir_initial[0]] * frames, dtype=np.float16).reshape(frames, 1)
-        dir_y_default = np.array([self.dir_initial[1]] * frames, dtype=np.float16).reshape(frames, 1)
-        dir_z_default = np.array([self.dir_initial[2]] * frames, dtype=np.float16).reshape(frames, 1)
-
-        self.camera_arg = np.concatenate((np.concatenate((dir_x_default, dir_y_default), 1), dir_z_default), 1)
-
-        con = ConfigParser()
-        con.read('configs.ini')
-        self.fx = con.getfloat('camera_parameter', 'fx')
-        self.fy = con.getfloat('camera_parameter', 'fy')
-        self.u = con.getfloat('camera_parameter', 'u')
-        self.v = con.getfloat('camera_parameter', 'v')
-        self.s = con.getfloat('camera_parameter', 's')
-
-        '''
-        Generate extrinsic and intrinsic camera matrix from its default parameter
-        These matrix could be updated later
-        '''
-        Camera.__exmat_generator(self)
-        Camera.__inmat_generator(self, self.fx, self.fy, self.u, self.v, self.s)
+        if type == "phone":
+            Camera.phone(self,data,np.array([[8000,8000,0],[8000,8000,0]],dtype=np.float16))
+        elif type == "monitor":
+            pass
+        #Camera.__visc(self)
 
         return
 
@@ -112,6 +83,7 @@ class Camera:
 
             R = torch.mm(Rz, Ry)
             R = torch.mm(R, Rx)
+            self.R = R
 
             T = - torch.mm(R, torch.tensor(np.array(posCamera, dtype=np.float16).reshape(3, 1)))
 
@@ -185,9 +157,10 @@ class Camera:
         dataShape = data_3d.size()
         x = dataShape[0]
         n = dataShape[1]
+        y = dataShape[2]
 
-        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, 32, 1), dtype=np.float16))), dim=3)\
-            .reshape(x, n, 32, 4, 1)
+        datasInHC = torch.cat((data_3d, torch.tensor(np.ones((x, n, y, 1), dtype=np.float16))), dim=3)\
+            .reshape(x, n, y, 4, 1)
 
         # 交换person与frame维度
         datasT = torch.transpose(datasInHC, 0, 1);
@@ -195,16 +168,9 @@ class Camera:
         for i in range(self.frame):
             datasT[i] = torch.matmul(self.exmat[i], datasT[i])
             i += 1
-        
-        # datasT = torch.matmul(self.exmat,datasT);
-        # 3维的广播方法不可用，即[frame,4,4]*[frame,32,4,1]
-        # 正在尝试[frame,32,4,4]*[frame,32,4,1]
 
-        # datasT = torch.matmul(self.inmat,datasT);
-        # 旧版本操作，新版本中该操作移动至camera_transform_c2s()
-
-        datasT = torch.transpose(datasT, 0, 1).reshape(x, n, 32, 4)[:, :, :, :3]
-        # datasT[:,:,:,1] = - datasT[:,:,:,1]
+        datasT = torch.transpose(datasT, 0, 1).reshape(x, n, y, 4)[:, :, :, :3]
+        datasT[:, :, :, 2] =  - datasT[:, :, :, 2]
 
         return datasT
 
@@ -245,30 +211,35 @@ class Camera:
         Raises:
             NOError: no error occurred up to now
         """
-        slice1 = data[:, :, 15, 0]
-        slice2 = data[:, :, 15, 1]
+        slice1 = data[:, 0, 15, 0]
+        slice2 = data[:, 0, 15, 1]
         sum1 = torch.sum(slice1)
         sum2 = torch.sum(slice2)
 
         self.center = np.array([sum1, sum2, 0]) / 3
+        print(self.center)
         return
 
-    def get_angle(self, frame, data):
+    def get_angle(frame, data):
         """
         Get the angle
         """
         if frame is None:
             result = torch.zeros(3)
-            for i in range(3):
-                x = data[i]
-                y = data[(i+1) % 3]
-                result[(i+2) % 3] = torch.atan2(y, x)
+            x = data[0]
+            y = data[1]
+            z = data[2]
+            l = torch.sqrt(torch.add(torch.mul(x,x), torch.mul(y,y)))
+            result[2] = torch.atan2(y, x)
+            result[1] = (torch.add(torch.atan2(z, l),torch.tensor(np.pi/2)))
         else:
             result = torch.zeros((frame, 3))
-            for i in range(3):
-                x = data[:, i]
-                y = data[:, (i+1) % 3]
-                result[:, (i+2) % 3] = torch.atan2(y, x)
+            
+            x = data[:, 0]; y = data[:, 1]; z = data[:, 2]
+            l = torch.sqrt(torch.add(torch.mul(x,x), torch.mul(y,y)))
+            result[:, 2] = (torch.add(torch.atan2(y, x),torch.tensor(-np.pi/2)))
+            result[:, 0] = (torch.add(torch.atan2(z, l),torch.tensor(np.pi/2)))
+        
         return result
 
     def cam_motion_linear_motion(self, velocity=10, dir=np.array([1, 0, 0]), tracking=0):
@@ -283,7 +254,27 @@ class Camera:
         self.camera_pos = torch.add(self.camera_pos,torch.mul(torch.tensor(dir*velocity),torch.tensor(np.linspace(0,frames,frames)).reshape(frames,1)));
         if tracking != 0:
             dirVec = torch.sub(self.center,self.camera_pos)
-            self.camera_arg = self.get_angle(frames,self.camera_pos)
+            self.camera_arg = self.get_angle(frames,dirVec)
+        else:
+            dirVec = torch.sub(torch.tensor(self.center),self.camera_pos[0])
+            self.camera_arg[:,:] = Camera.get_angle(dirVec)
+        
+        return
+
+    def cam_motion_linear_motion2(self, sta_point, end_point, tracking = 0):
+        """
+        sta_point & end_point: ndarray(float16) of start and end point
+        tracking: the parameter determine whether the camera will point at the center defined in __init__
+        the camera doing constant speed motion with known start and end point
+        """
+        frames = self.frame
+        self.camera_pos = torch.tensor(np.linspace(sta_point, end_point, frames));
+        if tracking != 0:
+            dirVec = torch.sub(torch.tensor(self.center),self.camera_pos)
+            self.camera_arg = Camera.get_angle(frames,dirVec)
+        else:
+            dirVec = torch.sub(torch.tensor(self.center),self.camera_pos[0])
+            self.camera_arg[:,:] = Camera.get_angle(dirVec)
         
         return
 
@@ -305,6 +296,42 @@ class Camera:
 
         return
 
+    def __read_parameter(self,type = "phone"):
+        con = ConfigParser();
+        con.read('configs.ini');
+        self.fx = con.getfloat('camera_parameter', 'fx')
+        self.fy = con.getfloat('camera_parameter', 'fy')
+        self.u = con.getfloat('camera_parameter', 'u')
+        self.v = con.getfloat('camera_parameter', 'v')
+        self.s = con.getfloat('camera_parameter', 's')
+
+        return
+
+    def phone(self, data, pointList = None, motionType = "line"):
+        if pointList is None:
+            start = np.array(self.center) + np.append(np.random.randint(-10000,10000,size = (2)),np.array([1300]));
+            end = np.array(self.center) + np.append(np.random.randint(-10000,10000,size = (2)),np.array([1300]));
+        else:
+            start = pointList[0];
+            end = pointList[1];
+
+        print(start)
+        print(end)
+
+        if motionType == "line":
+            Camera.cam_motion_linear_motion2(self, sta_point = start, end_point = end, tracking = self.ifTracking);
+        elif motionType == "circle":
+            pass
+        else:
+            pass
+
+        Camera.__read_parameter(self,"phone")
+        Camera.__exmat_generator(self)
+        Camera.__inmat_generator(self, self.fx, self.fy, self.u, self.v, self.s)
+
+
+        return
+
     def update_camera(self):
         """
         Updating the extrinsic matrix
@@ -313,4 +340,30 @@ class Camera:
 
         pass
 
+    def __visc(self):
+        """
+        A function with TONS OF BUGS, plz DO NOT use it
+        """
 
+
+        ax = plt.figure().add_subplot(projection='3d')
+        dir = np.array(torch.matmul(self.R,torch.tensor(np.array([0,0,1000]*self.frame,\
+            dtype = np.float16)).reshape(self.frame,3,1)).reshape(self.frame,3))
+        pos = np.array(self.camera_pos)
+        x = torch.stack((torch.tensor(pos[:, 0]), torch.tensor(pos[:, 0] + dir[:, 0])), 0)
+        y = torch.stack((torch.tensor(pos[:, 1]), torch.tensor(pos[:, 1] + dir[:, 1])), 0)
+        z = torch.stack((torch.tensor(pos[:, 2]), torch.tensor(pos[:, 2] + dir[:, 2])), 0)
+        
+        
+        """
+        ax.quiver(pos[:,0], pos[:,1], pos[:,2],\
+            dir[:,0],\
+            dir[:,1],\
+            dir[:,2],\
+            length=0.1)
+        """
+        #ax.quiver(pos[:,0], pos[:,1], pos[:,2], dir,length=0.1)
+        ax.plot3D(x, y, z, lw=2)
+
+        plt.show()
+        return
