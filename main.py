@@ -27,11 +27,9 @@ class main:
         self.random_rotate = con.getboolean('random_optional', 'random_rotate')
         self.bonding_point = [int(i) for i in con.get('skeleton', 'bonding_point').split(',')]
         self.vertex_number = con.getint('skeleton', 'vertex_number')
-        self.head_index = con.getint('skeleton', 'head')
-        self.body_index = [int(i) for i in con.get('skeleton', 'body').split(',')]
-        self.leg_index = [int(i) for i in con.get('skeleton', 'leg').split(',')]
-        self.arm_index = [int(i) for i in con.get('skeleton', 'arm').split(',')]
-        
+        self.need_select_joint = con.getboolean('skeleton', 'need_select_joint')
+        self.select_joint = [int(i) for i in con.get('skeleton', 'select_joint').split(',')]
+
 
     def data_preprocess(self, data_path_list=None, input_num_min=2, input_num_max=4, translate_distance=1000):
         if self.random_data_source:
@@ -53,32 +51,31 @@ class main:
                 data = rf.random_rotate(data)
             self.data_3d_std.append(data)
         self.data_3d_std = torch.stack([i[:self.frame, :, :] for i in self.data_3d_std])
+        if self.need_select_joint:
+            self.data_3d_std = self.data_3d_std[:,:,self.select_joint,:]
+
         print("--Input Info: {}".format(data_path_list))
 
         return ','.join(data_path_list)
 
     def main(self):
         
-        filename = self.data_preprocess(input_num_min=3)
+        filename = self.data_preprocess(input_num_min=1, input_num_max=1)
 
-        collision_handling_process = col_eli(self.data_3d_std)
-        self.data_3d_std = collision_handling_process.collision_eliminate()
+        #collision_handling_process = col_eli(self.data_3d_std)
+        #self.data_3d_std = collision_handling_process.collision_eliminate()
 
-        # visualization after collision handling
-        vis_col = vis(self.data_3d_std, save_name='col.gif')
-        vis_col.animate()
+        # camera_1 = Camera(frames=self.frame)
+        # self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
 
-        camera_1 = Camera(frames=self.frame)
-        self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
+        # cov = cover(self.data_2d_std)
+        # self.cover_std = cov.get_cover_joint()
 
-        cov = cover(self.data_2d_std)
-        self.cover_std = cov.get_cover_joint()
+        # self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
+        # self.data_2d_std[:,:,:,2] = self.cover_std
 
-        self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
-        self.data_2d_std[:,:,:,2] = self.cover_std
-
-        data = np.array(self.data_2d_std)
-        scio.savemat(self.output_path+filename,{"data":data})
+        # data = np.array(self.data_2d_std)
+        # scio.savemat(self.output_path+filename,{"data":data})
 
         # visualization after camera switch
         # vis = visc(filename)
