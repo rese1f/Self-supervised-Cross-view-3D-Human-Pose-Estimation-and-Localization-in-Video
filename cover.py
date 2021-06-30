@@ -8,7 +8,7 @@ from star.pytorch.star import STAR
 class cover():
     def __init__(self, data_2d_std):
         '''
-        data_2d_std: [n,x,32,3] in (x,y,d)
+        data_2d_std: [n,x,17,3] in (x,y,d)
         '''
         self.data = data_2d_std
         self.record = torch.zeros_like(self.data[:,:,:,0])
@@ -83,37 +83,3 @@ class cover():
                         self.record[id,frame,i] = 1
 
         return self.record
-
-
-    def convert(self, data):
-        '''
-        convert the Human3.6M to the STAR in single frame and single person
-        data: [32,3]
-        return: [24,3]
-        '''
-        return torch.stack([
-            data[0,:],
-            0.8*data[6,:]+0.2*data[7,:],
-            0.8*data[1,:]+0.2*data[2,:],
-            0.5*data[0,:]+0.5*data[12,:],
-            data[4,:],
-            data[2,:],
-            0.9*data[12,:]+0.1*data[0,:],
-            data[8,:],
-            data[3,:],
-            data[12,:],
-            data[10,:],
-            data[5,:],
-            data[13,:],
-            0.5*data[12,:]+0.5*data[17,:],
-            0.5*data[12,:]+0.5*data[25,:],
-            data[14,:],
-            data[17,:],
-            data[25,:],
-            data[18,:],
-            data[26,:],
-            data[20,:],
-            data[27,:],
-            data[22,:],
-            data[31,:]
-        ])
