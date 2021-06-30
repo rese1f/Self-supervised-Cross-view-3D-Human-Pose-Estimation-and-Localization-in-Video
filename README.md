@@ -22,9 +22,21 @@ This is the flowchart of our algorithm about operations on *Human3.6M*. The infe
 
 ## Vertex Layout of *Human3.6M* Dataset
 
-![4611623913154_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-17-082747.png)
+### Graphical Layout (Left *Complete*, Right *Simple*)
 
-## A Serious Question About the Collision Elimination Process
+<center class="half">    <img src="http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-17-082747.png" width="300"/><img src="http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091119.png" width="450"/></center>
 
-![有关碰撞问题的深入分析](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-28-085837.png)
+### Mapping Between The Two Sets
+
+![image-20210630171302068](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091302.png)
+
+Please refer to [this website](https://www.stubbornhuang.com/529/) for more details.
+
+## Vertex Layout of the *STAR* Model
+
+![WechatIMG572](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091732.png)
+
+## Logic of VideoPose3D Project
+
+![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091845.png)
 
