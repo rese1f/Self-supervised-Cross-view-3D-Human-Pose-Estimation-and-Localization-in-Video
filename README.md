@@ -1,8 +1,9 @@
-# Dataexpand 1.9.2 Released
+# Dataexpand 1.9.4 Released
 
 ## Project Progress and Contribution Part
 
 -   Wenhao Chai: 
+    -   Rebulid the project and the argument inputs.
     -   Prepare to validate existing algorithms on new datasets.
     -   Proceed features on `cover.py`.
 -   Jack Bai: 
