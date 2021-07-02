@@ -40,7 +40,7 @@ class Camera:
             pass
 
         if type == "phone":
-            Camera.phone(self,data,np.array([[8000,8000,0],[8000,8000,0]],dtype=np.float16))
+            Camera.phone(self,data)
         elif type == "monitor":
             pass
         #Camera.__visc(self)
@@ -83,6 +83,7 @@ class Camera:
 
             R = torch.mm(Rz, Ry)
             R = torch.mm(R, Rx)
+            R = R.transpose(0,1)
             self.R = R
 
             T = - torch.mm(R, torch.tensor(np.array(posCamera, dtype=np.float16).reshape(3, 1)))
@@ -127,10 +128,6 @@ class Camera:
         # TODO: The distortions need to be added.
 
         self.inmat = torch.tensor(np.array([[fx, s, u], [0, fy, v], [0, 0, 1]]))
-        # self.inmat[0,0] = fx
-        # self.inmat[2,2] = fy
-        # self.inmat[0,1] = u
-        # self.inmat[2,1] = v
 
         return
 
@@ -170,7 +167,7 @@ class Camera:
             i += 1
 
         datasT = torch.transpose(datasT, 0, 1).reshape(x, n, y, 4)[:, :, :, :3]
-        datasT[:, :, :, 2] =  - datasT[:, :, :, 2]
+        #datasT[:, :, :, 2] =  - datasT[:, :, :, 2]
 
         return datasT
 
@@ -211,8 +208,8 @@ class Camera:
         Raises:
             NOError: no error occurred up to now
         """
-        slice1 = data[:, 0, 15, 0]
-        slice2 = data[:, 0, 15, 1]
+        slice1 = data[:, 0, 10, 0]
+        slice2 = data[:, 0, 10, 1]
         sum1 = torch.sum(slice1)
         sum2 = torch.sum(slice2)
 
@@ -237,8 +234,9 @@ class Camera:
             
             x = data[:, 0]; y = data[:, 1]; z = data[:, 2]
             l = torch.sqrt(torch.add(torch.mul(x,x), torch.mul(y,y)))
-            result[:, 2] = (torch.add(torch.atan2(y, x),torch.tensor(-np.pi/2)))
-            result[:, 0] = (torch.add(torch.atan2(z, l),torch.tensor(np.pi/2)))
+            result[:, 2] = (torch.add(torch.atan2(y, x),torch.tensor(np.pi/2)))
+            result[:, 0] =  torch.tensor(np.pi/2)# (torch.sub(torch.tensor(np.pi/2),torch.atan2(z, l)))
+            print(result)
         
         return result
 
@@ -314,9 +312,6 @@ class Camera:
         else:
             start = pointList[0];
             end = pointList[1];
-
-        print(start)
-        print(end)
 
         if motionType == "line":
             Camera.cam_motion_linear_motion2(self, sta_point = start, end_point = end, tracking = self.ifTracking);
