@@ -25,8 +25,6 @@ class main:
         self.random_data_timeline = con.getboolean('random_optional', 'random_data_timeline')
         self.random_translate = con.getboolean('random_optional', 'random_translate')
         self.random_rotate = con.getboolean('random_optional', 'random_rotate')
-        self.bonding_point = [int(i) for i in con.get('skeleton', 'bonding_point').split(',')]
-        self.vertex_number = con.getint('skeleton', 'vertex_number')
         self.need_select_joint = con.getboolean('skeleton', 'need_select_joint')
         self.select_joint = [int(i) for i in con.get('skeleton', 'select_joint').split(',')]
 
@@ -44,7 +42,7 @@ class main:
         
         self.data_3d_std = []
         for data in self.data:
-            data = data.reshape(data.shape[0], test.vertex_number, 3)
+            data = data.reshape(data.shape[0], data.shape[1]//3, 3)
             if self.random_translate:
                 data = rf.random_translate(data, translate_distance)
             if self.random_rotate:
@@ -65,14 +63,16 @@ class main:
         #collision_handling_process = col_eli(self.data_3d_std)
         #self.data_3d_std = collision_handling_process.collision_eliminate()
 
-        # camera_1 = Camera(frames=self.frame)
-        # self.data_2d_std = camera_1.camera_transform_w2c(self.data_3d_std)
+        camera = Camera(data = self.data_3d_std,frames=self.frame)
+        self.data_2d_std = camera.camera_transform_w2c(self.data_3d_std)
 
-        # cov = cover(self.data_2d_std)
-        # self.cover_std = cov.get_cover_joint()
+        cov = cover(self.data_2d_std)
+        self.cover_std = cov.get_cover_joint()
 
-        # self.data_2d_std = camera_1.camera_transform_c2s(self.data_2d_std)        
-        # self.data_2d_std[:,:,:,2] = self.cover_std
+        self.data_2d_std = camera.camera_transform_c2s(self.data_2d_std)        
+        self.data_2d_std[:,:,:,2] = self.cover_std
+
+        print(self.data_2d_std)
 
         # data = np.array(self.data_2d_std)
         # scio.savemat(self.output_path+filename,{"data":data})

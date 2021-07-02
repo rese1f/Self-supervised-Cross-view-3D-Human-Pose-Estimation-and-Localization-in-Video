@@ -12,9 +12,8 @@ class visualize_2d:
     def __init__(self, filename:str, configs='configs.ini', save_name='test_ac.gif'):
         con = ConfigParser()
         con.read('configs.ini')
-        self.vertex_number = con.getint('skeleton', 'vertex_number')
-        self.edge_number = con.getint('skeleton', 'edge_number')
-        self.structure = np.reshape([int(i) for i in con.get('skeleton', 'structure').split(',')],(self.edge_number, 3))
+        self.structure = [int(i) for i in con.get('skeleton', 'structure').split(',')]
+        self.structure = np.reshape(self.structure,(len(self.structure)//3,3))
         output_path = con.get('path', 'output_path')
         self.data = torch.tensor(scio.loadmat(output_path+filename)['data'])
 
@@ -42,7 +41,7 @@ class visualize_2d:
                 y = torch.stack((data[frame, i[0], 1], data[frame, i[1], 1]), 0)
                 self.ax.plot(x, y, lw=2, color="b",alpha=0.2)
             
-            for j in range(self.vertex_number):
+            for j in range(self.data.shape[1]):
                 x = data[frame,j,0]
                 y = data[frame,j,1]
                 c = data[frame,j,2]

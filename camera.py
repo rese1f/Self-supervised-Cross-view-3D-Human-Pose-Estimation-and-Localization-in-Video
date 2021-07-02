@@ -186,11 +186,13 @@ class Camera:
         Raises:
             NOError: no error occurred up to now
         """
-        data = data.reshape([data.shape[0], data.shape[1], 32, 3, 1])
+        #data = data.reshape([data.shape[0], data.shape[1], 32, 3, 1])
+        data = torch.unsqueeze(data,4)
         data = torch.matmul(self.inmat, data)
         data = data / torch.abs(torch.unsqueeze(data[:, :, :, 2], 3))
-        data = data.reshape([data.shape[0], data.shape[1], 32, 3])
-
+        #data = data.reshape([data.shape[0], data.shape[1], 32, 3])\
+        data = torch.squeeze(data,-1)
+        
         return data
 
     def __get_center(self, data):
