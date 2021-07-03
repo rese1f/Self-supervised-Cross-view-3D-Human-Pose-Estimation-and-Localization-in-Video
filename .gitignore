@@ -140,3 +140,4 @@ output/
 
 # Data Storages
 *.mat
+*.npz
