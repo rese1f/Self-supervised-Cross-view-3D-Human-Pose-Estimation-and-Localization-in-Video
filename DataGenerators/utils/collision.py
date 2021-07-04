@@ -383,7 +383,7 @@ class collision_eliminate:
                   " only allows at most 5 people.")
             exit()
 
-        personal_shift_vector_candidate_list = [[], [], [], [], [], []]
+        personal_shift_vector_candidate_list = np.array([[], [], [], [], [], []])
         for person_number in range(self.n):
             # TEST CASES.
             # for person 0, we have shift 2.62, 3.17 (on frame 1654)
@@ -391,14 +391,14 @@ class collision_eliminate:
             # for person 2, we have shift 4.81, 2.75 (on frame 981)
             for counter in range(shift_vector_candidate_list.shape[0]):
                 if shift_vector_candidate_list[counter, 1] == person_number:
-                    personal_shift_vector_candidate_list[person_number].append\
-                        (shift_vector_candidate_list[counter, 0])
+                    np.append(personal_shift_vector_candidate_list[person_number],
+                              shift_vector_candidate_list[counter, 0])
 
         # pick 3 shift vectors for each person
         best_shift_vector = np.array([0, 0, 0])
         for person_number in range(self.n):
             # decide the absolute value
-            if personal_shift_vector_candidate_list[person_number] == []:  # no collisions
+            if personal_shift_vector_candidate_list.size == 0:  # no collisions
                 best_shift_vector[person_number] = 0
             else:  # has collisions, find the shift with the maximum absolute value
                 best_shift_value_positive = np.max(personal_shift_vector_candidate_list[person_number])
@@ -434,7 +434,8 @@ class collision_eliminate:
         """
 
         # initialize the candidates for the shift vector
-        shift_vector_candidate_list = np.array([])
+        shift_vector_candidate_list = np.ndarray((2, 2))
+        # print(shift_vector_candidate_list.shape) gives shape (2, 2)
 
         # find all the possibilities and store them into one list
         permutation_list = list(iter.combinations([i for i in range(self.n)], 2))  # [(0, 1), (0, 2), (1, 2)]
@@ -449,14 +450,13 @@ class collision_eliminate:
                     # e.g. [2.23 for shift, #1 for person
                     #      [-3.17 for shift, #2 for person]
                     shift_vector_candidate = self.find_shift_vector_candidate(permutation, frame)
+                    # print(shift_vector_candidate.shape) gives shape (2, 2)
 
-
-                    exit()
                     # add candidates into the list one by one
                     shift_vector_candidate_list = \
-                        np.concatenate((shift_vector_candidate_list, shift_vector_candidate), axis=0)
+                        np.concatenate((shift_vector_candidate, shift_vector_candidate_list), axis=0)
 
-            # print(shift_vector_candidate_list.shape) gives torch.Size([992, 2])
+            # print(shift_vector_candidate_list.shape) gives shape (x, 2)
 
         # determine the shift vector for each person
         best_shift_vector = self.determine_shift_vectors_for_each_person(shift_vector_candidate_list)
@@ -494,7 +494,6 @@ class collision_eliminate:
         self.decide_shift_vector()
         # print("the shape of best-shift vector (modified) is {}".format(self.best_shift_vector_modified.shape))
         np.add(self.data_cluster, self.best_shift_vector_modified)
-        exit()
 
         return
 
