@@ -57,10 +57,7 @@ optimizer = optim.Adam(model_pos_train.parameters(), lr=lr, amsgrad=True)
 lr_decay = args.lr_decay
 
 losses_3d_train = []
-losses_3d_train_eval = []
-losses_3d_valid = []
 
-epoch = 0
 initial_momentum = 0.1
 final_momentum = 0.001
 
@@ -73,8 +70,6 @@ train_dataset = DataLoader(dataset=dataset, batch_size=args.batch_size, shuffle=
 
 for epoch in tqdm(range(args.epochs)):
     epoch_loss_3d_train = 0
-    epoch_loss_traj_train = 0
-    epoch_loss_2d_train_unlabeled = 0
     N = 0
     model_pos_train.train()
 
@@ -120,9 +115,7 @@ for epoch in tqdm(range(args.epochs)):
         plt.figure()
         epoch_x = np.arange(3, len(losses_3d_train)) + 1
         plt.plot(epoch_x, losses_3d_train[3:], '--', color='C0')
-        plt.plot(epoch_x, losses_3d_train_eval[3:], color='C0')
-        plt.plot(epoch_x, losses_3d_valid[3:], color='C1')
-        plt.legend(['3d train', '3d train (eval)', '3d valid (eval)'])
+        plt.legend(['3d train'])
         plt.ylabel('MPJPE (m)')
         plt.xlabel('Epoch')
         plt.xlim((3, epoch))
