@@ -6,8 +6,9 @@ import os
 import numpy as np
 from tqdm import tqdm
 from operator import itemgetter
-
 from arguments import parse_args
+
+from camera_utils import *
 from utils.random_function import *
 
 
@@ -24,6 +25,11 @@ if not os.path.exists('output'):
     print('Creating output path...')
     os.makedirs('output')
 
+
+print('Loading camera...')
+# a dictionary to store the information of camera
+camera_metadata = suggest_metadata(args.camera)
+print(camera_metadata)
 
 print('Generating data...')
 
