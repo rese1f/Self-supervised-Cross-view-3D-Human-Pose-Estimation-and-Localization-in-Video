@@ -3,6 +3,7 @@
 # better run it in terminal
 
 import os
+import shutil
 import numpy as np
 from tqdm import tqdm
 from operator import itemgetter
@@ -23,6 +24,10 @@ dict_keys = dataset.keys()
 
 if not os.path.exists('output'):
     print('Creating output path...')
+    os.makedirs('output')
+else:
+    print('Cleaning output path...')
+    shutil.rmtree('output')
     os.makedirs('output')
 
 
@@ -59,14 +64,14 @@ for count in tqdm(range(args.number)):
     data_3d_std = col_eli_object.collision_eliminate()
 
     # data_3d_std = eliminate_collision(data_3d_std)
-    data_c_std = w2c(data_3d_std, camera_metadata, frame)
+    # data_c_std = w2c(data_3d_std, camera_metadata, frame)
     # data_2d_std = c2s(data_c_std, camera_metadata['inmat'])
-    
+    data_2d_std = np.zeros_like(data_3d_std)[:,:,:,:2]
     # saving data...
     # keys: list(str)
     # data_3d_std: array
     # data_2d_std: list(array)
 
-    # np.savez_compressed('output/'+str(count), keys=keys, data_3d_std=data_3d_std, data_2d_std=data_2d_std)
+    np.savez_compressed('output/'+str(count), keys=keys, data_3d_std=data_3d_std, data_2d_std=data_2d_std)
 
 print('Done.')

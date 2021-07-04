@@ -20,3 +20,10 @@ class MultiDataset(Dataset):
 
     def __len__(self):
         return self.len
+
+if __name__ == '__main__':
+    path = r'../DataGenerators/output'
+    dataset = MultiDataset(path)
+    A = dataset.__getitem__(0)
+    print(A[0].shape)
+    print(A[1].shape)

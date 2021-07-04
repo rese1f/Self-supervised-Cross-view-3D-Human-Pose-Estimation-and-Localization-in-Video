@@ -2,6 +2,13 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Training script')
+    
+    # General arguments
+    parser.add_argument('-j', '--joints-number', default=17, type=int, metavar='N', help='the number of joints')
+    parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH',
+                        help='checkpoint directory')
+    parser.add_argument('--export-training-curves', action='store_true', help='save training curves as .png images')
+    
 
     # Model arguments
     parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
@@ -12,6 +19,7 @@ def parse_args():
     parser.add_argument('-lrd', '--lr-decay', default=0.95, type=float, metavar='LR', help='learning rate decay per epoch')
     parser.add_argument('-arc', '--architecture', default='3,3,3', type=str, metavar='LAYERS', help='filter widths separated by comma')
     parser.add_argument('--causal', action='store_true', help='use causal convolutions for real-time processing')
+    parser.add_argument('--dense', action='store_true', help='use dense convolutions instead of dilated convolutions')
     parser.add_argument('-ch', '--channels', default=1024, type=int, metavar='N', help='number of channels in convolution layers')
 
     args = parser.parse_args()
