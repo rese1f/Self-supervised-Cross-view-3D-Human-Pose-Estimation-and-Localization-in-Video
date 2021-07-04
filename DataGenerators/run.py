@@ -29,7 +29,7 @@ if not os.path.exists('output'):
 print('Loading camera...')
 # a dictionary to store the information of camera
 camera_metadata = suggest_metadata(args.camera)
-print(camera_metadata)
+
 
 print('Generating data...')
 
@@ -52,9 +52,8 @@ for count in tqdm(range(args.number)):
     data_3d_std = np.array(data_3d_std, dtype=np.float32)
 
     # data_3d_std = eliminate_collision(data_3d_std)
-    
-    # data_c_std = w2c(data_3d_std, camera_metadata)
-    # data_2d_std = c2s(data_c_std)
+    data_c_std = w2c(data_3d_std, camera_metadata, frame)
+    # data_2d_std = c2s(data_c_std, camera_metadata['inmat'])
     
     # saving data...
     # keys: list(str)
