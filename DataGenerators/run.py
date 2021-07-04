@@ -8,7 +8,7 @@ from operator import itemgetter
 
 from arguments import parse_args
 from utils.random_function import *
-
+from utils.collision import collision_eliminate as col_eli
 
 args = parse_args()
 print(args)
