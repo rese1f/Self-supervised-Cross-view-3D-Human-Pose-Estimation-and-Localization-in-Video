@@ -50,8 +50,11 @@ for count in tqdm(range(args.number)):
         data = data[:frame]
         data_3d_std.append(data)
     data_3d_std = np.array(data_3d_std, dtype=np.float32)
+
+    # data_3d_std = eliminate_collision(data_3d_std)
     
-    
+    # data_c_std = w2c(data_3d_std, camera_metadata)
+    # data_2d_std = c2s(data_c_std)
     
     # saving data...
     # keys: list(str)
