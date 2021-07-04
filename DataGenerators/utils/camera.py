@@ -56,8 +56,23 @@ def T(endpoint, frame):
     
 def generate_exmat(T_mat, center, tracking):
     '''
-    input: location of camera by the time, tracking, center location
-    output: exmat of camera by the time
+    Generate the extrinsic matrix for the camera.
+
+    Develop the extrinsic matrix for the camera, which is used for transforming the object in the world coordinate
+    system into the homogeneous camera coordinate system. Note that the intermediate variable H_o2k (from outside
+    coordinate system to the camera coordinate system) has the size
+    [ R T    where R is the rotational matrix, calculated by the camera orientation, with R_z * R_y * R_x.
+      0 1 ]  T is the translational matrix, calculated by -R*(-1) * X, where X is the camera position in the
+                world coordinate.
+
+    Args:
+        self.camera_pos: the position of the camera.
+
+    Returns:
+        self.exmat: of size [x, 4, 4], where x is the number of frames (self.frames), so it's frame-dependent.
+
+    Raises:
+        NOError: no error occurred up to now
     '''
 
 
@@ -86,10 +101,22 @@ def w2c(data_3d_std, camera_metadata, frame):
 
 def c2s(data_c_std, inmat):
     '''
-    input: w2c, camera_inmat
-    output: data_2d_std
+    Use the intrinsic matrix to switch the graph from camera coordinate to pixel coordinate
+
+    Transform the tensor in homogeneous camera coordinate into euclidean
+    equivalent to pixel coordinate (2d to 2d).
+
+    Args:
+        data: the 3-D coordinates of the raw data, i.e. data_cluster, data_3d, all of size [n, x, 17, 3]
+
+    Returns:
+        data: of the same size as input data, i.e. [n, x, 17, 3]
+
+    Raises:
+        NOError: no error occurred up to now
     '''
     
-    data_2d_std = None
-    
+    data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis])
+    data_2d_std = (data / np.abs(data[:,:,:,np.newaxis,2])).squeeze()
+
     return data_2d_std
