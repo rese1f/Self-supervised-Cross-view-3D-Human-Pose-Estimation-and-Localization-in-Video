@@ -10,7 +10,7 @@ from arguments import parse_args
 
 from camera_utils import *
 from utils.random_function import *
-
+from utils.camera import *
 
 args = parse_args()
 print(args)
@@ -50,6 +50,7 @@ for count in tqdm(range(args.number)):
         data = data[:frame]
         data_3d_std.append(data)
     data_3d_std = np.array(data_3d_std, dtype=np.float32)
+    
     
     
     # saving data...
