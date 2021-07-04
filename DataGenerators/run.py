@@ -1,19 +1,19 @@
 # please run 'prepare_dataset.py' before this
 # this file aims to generate the multi-person and cross-view dataset mapping the 3D and 2D
+# better run it in terminal
 
-import torch
+import os
 import numpy as np
 from tqdm import tqdm
 from operator import itemgetter
-
 from arguments import parse_args
+
+from camera_utils import *
 from utils.random_function import *
 from utils.collision import collision_eliminate as col_eli
 
 args = parse_args()
 print(args)
-
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 print('Loading data...')
@@ -21,6 +21,15 @@ print('Loading data...')
 dataset = np.load('data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
 dict_keys = dataset.keys()
 
+if not os.path.exists('output'):
+    print('Creating output path...')
+    os.makedirs('output')
+
+
+print('Loading camera...')
+# a dictionary to store the information of camera
+camera_metadata = suggest_metadata(args.camera)
+print(camera_metadata)
 
 print('Generating data...')
 
@@ -41,4 +50,13 @@ for count in tqdm(range(args.number)):
         data = data[:frame]
         data_3d_std.append(data)
     data_3d_std = np.array(data_3d_std, dtype=np.float32)
-    #data_3d_std = torch.tensor(data_3d_std, device=device, dtype=torch.float32)
+    
+    
+    # saving data...
+    # keys: list(str)
+    # data_3d_std: array
+    # data_2d_std: list(array)
+
+    # np.savez_compressed('output/'+str(count), keys=keys, data_3d_std=data_3d_std, data_2d_std=data_2d_std)
+
+print('Done.')
