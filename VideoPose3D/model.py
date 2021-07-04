@@ -1,9 +1,4 @@
-# Copyright (c) 2018-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
+# this file is to define the model we used
 
 import torch.nn as nn
 
@@ -74,7 +69,7 @@ class TemporalModelBase(nn.Module):
         x = x.permute(0, 2, 1)
         x = x.view(sz[0], -1, self.num_joints_out, 3)
         
-        return x    
+        return x  
 
 class TemporalModel(TemporalModelBase):
     """
