@@ -3,15 +3,6 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Training script')
 
-    # General arguments
-    parser.add_argument('-d', '--dataset', default='h36m', type=str, metavar='NAME', help='target dataset')
-    parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH',
-                        help='checkpoint directory')
-    parser.add_argument('--checkpoint-frequency', default=10, type=int, metavar='N',
-                        help='create a checkpoint every N epochs')
-    parser.add_argument('-r', '--resume', default='', type=str, metavar='FILENAME',
-                        help='checkpoint to resume (file name)')
-
     # Model arguments
     parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
     parser.add_argument('-e', '--epochs', default=60, type=int, metavar='N', help='number of training epochs')
@@ -24,3 +15,5 @@ def parse_args():
     parser.add_argument('-ch', '--channels', default=1024, type=int, metavar='N', help='number of channels in convolution layers')
 
     args = parser.parse_args()
+
+    return args

@@ -13,13 +13,10 @@ class MultiDataset(Dataset):
     def __getitem__(self, index):
         single_file_path = self.file_list[index]
         data = np.load(single_file_path)
-        data_3d_std = torch.tensor(data['data_3d_std'], device='cuda')
-        data_2d_std = torch.tensor(data['data_2d_std'], device='cuda')
+        data_3d_std = data['data_3d_std']
+        data_2d_std = data['data_2d_std']
 
         return data_2d_std, data_3d_std
 
     def __len__(self):
         return self.len
-
-
-    
