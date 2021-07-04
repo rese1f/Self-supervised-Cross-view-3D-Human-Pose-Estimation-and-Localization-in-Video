@@ -16,7 +16,6 @@ from utils.camera import *
 args = parse_args()
 print(args)
 
-
 print('Loading data...')
 
 dataset = np.load('data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
@@ -51,6 +50,13 @@ for count in tqdm(range(args.number)):
         data = data[:frame]
         data_3d_std.append(data)
     data_3d_std = np.array(data_3d_std, dtype=np.float32)
+
+    # SCAFFOLD. eliminate collisions
+    # note that data_3d_std now is of type "numpy.ndarray", which can be created by np.array([...])
+    # 1. create the object from class col_eli
+    col_eli_object = col_eli(data_3d_std)
+    # 2. give back the value
+    data_3d_std = col_eli_object.collision_eliminate()
 
     # data_3d_std = eliminate_collision(data_3d_std)
     data_c_std = w2c(data_3d_std, camera_metadata, frame)
