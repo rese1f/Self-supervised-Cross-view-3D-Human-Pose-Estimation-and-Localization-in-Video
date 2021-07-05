@@ -19,6 +19,7 @@ class sequential_collision_elimination:
 
         # intermediate variable initialization
         self.data_2d_std = self.data_3d_std[:, :, :, 0:2]
+        self.data_3d_preview = self.data_3d_std
 
     # ***** has_collision() ***** #
     def find_bounding_box_2d(self, person, frame):
@@ -36,6 +37,7 @@ class sequential_collision_elimination:
     def bounding_box_is_overlapped(self, i, another_person, frame):
         bounding_box_2d_i = self.find_bounding_box_2d(i, frame)
         bounding_box_2d_another_person = self.find_bounding_box_2d(another_person, frame)
+        # if one vertex of 0 is in the box of 1, return true(overlapped) immediately
         for vertex in range(4):
             if (
                     bounding_box_2d_another_person[0, 0] < bounding_box_2d_i[vertex, 0] <
@@ -60,8 +62,22 @@ class sequential_collision_elimination:
         return flag
 
     # ***** find_shift_vector() ***** #
-    def find_shift_vector(self):
+    def decide_offset_of_i(self, i, another_person, frame):
         pass
+
+    def find_shift_vector(self):
+        shift_vector = np.array([0, 0, 0])
+        while True:
+            flag_collision = False
+            for another_person in range(i):
+                if self.bounding_box_is_overlapped_preview(i, another_person, frame):
+                    flag_collision = True
+                    shift_vector += self.decide_offset_of_i(i, another_person, frame)
+                    self.data_3d_preview = self.broadcast_add(self.data_3d_preview, shift_vector)
+                    continue
+            if flag_collision is False:
+                break
+        return shift_vector
 
     # ***** find_max_shift_vector() ***** #
     def find_max_shift_vector(self, shift_vector_list):
