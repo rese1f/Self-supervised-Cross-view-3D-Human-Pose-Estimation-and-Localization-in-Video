@@ -121,7 +121,7 @@ class sequential_collision_elimination:
         # : for broadcast; shift_vector should be 3-dimensional
         self.data_3d_preview[i, frame, :] += offset
 
-    def find_shift_vector(self):
+    def find_shift_vector(self, i, frame):
         shift_vector = np.array([0, 0, 0])
         # 监听开始
         while True:
@@ -140,12 +140,14 @@ class sequential_collision_elimination:
     # ***** find_max_shift_vector() ***** #
     def find_max_shift_vector(self, shift_vector_list):
         max_shift_vector = np.array([0, 0, 0])
+        for shift_vector in shift_vector_list:
+            if np.abs(shift_vector[1]) > np.abs(max_shift_vector[1]):
+                max_shift_vector = shift_vector
         return max_shift_vector
 
     # ***** broadcast_add() ***** #
-    def broadcast_add(self, i, max_shift_vector):
-        result_data_3d_std_for_i = self.data_3d_std[i]
-        return result_data_3d_std_for_i
+    def broadcast_add_data_3d_std(self, i, max_shift_vector):
+        self.data_3d_std[i, :, :] += max_shift_vector
 
     # ***** main routine ***** #
     def sequential_collision_eliminate_routine(self):
@@ -159,10 +161,12 @@ class sequential_collision_elimination:
             for frame in tqdm(range(0, self.x, 3)):
                 # if the frame of this person has collision with any other person
                 if self.has_collision(i, frame):
-                    np.append(shift_vector_list, self.find_shift_vector())
+                    shift_vector_list = np.vstack((shift_vector_list, self.find_shift_vector(i, frame)))
                 else:
-                    np.append(shift_vector_list, np.array([0, 0, 0]))
+                    shift_vector_list = np.vstack((shift_vector_list, np.array([0, 0, 0])))
+                # print(shift_vector_list)
+
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
-            self.data_3d_std[i] = self.broadcast_add(i, max_shift_vector)
+            self.broadcast_add_data_3d_std(i, max_shift_vector)  # broadcast add to self.data_3d_std
 
         return self.data_3d_std
