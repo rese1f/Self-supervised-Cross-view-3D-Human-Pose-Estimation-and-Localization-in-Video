@@ -1,8 +1,6 @@
 import numpy as np
 import itertools as iter
 
-from tqdm import tqdm
-
 """
     Note(Jack BAI). This script the approved script for collision elimination, and the old version
         (collision.py) is used to COMPARE with this one.
@@ -161,7 +159,7 @@ class sequential_collision_elimination:
 
             print("Eliminating person {}'s collision with all other persons".format(i))
             # frame-wise operation, with step size 3 for skipping to accelerate progress
-            for frame in tqdm(range(0, self.x, 3)):
+            for frame in range(0, self.x, 3):
                 # if the frame of this person has collision with any other person
                 if self.has_collision(i, frame):
                     shift_vector_list = np.vstack((shift_vector_list, self.find_shift_vector(i, frame)))
