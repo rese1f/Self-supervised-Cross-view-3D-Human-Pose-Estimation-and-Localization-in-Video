@@ -1,9 +1,15 @@
-# this file is to deal with the
-
 import numpy as np
 
+"""Note(Jack BAI):
+    This file is to deal with the camera part, incl. 
+    - converting the camera from 3D to 2D
+    - decide the extrinsic and intrinsic camera params.
+    - simulate the translational movements of the camera 
+"""
+
+
 def get_center(data_3d_std):
-    '''
+    """
     Get the center of all the users
 
     Get the center coordinates of all the humans in the plot. Note that the center point is on the horizontal
@@ -14,20 +20,18 @@ def get_center(data_3d_std):
 
     Returns:
         datas: of the same size as input data, i.e. [n, x, 17, 3]
-
-    Raises:
-        NOError: no error occurred up to now
-    '''
+    """
 
     center = np.array([np.sum(data_3d_std[:, 0, 10, 0]), np.sum(data_3d_std[:, 0, 10, 1]), 0]) / 3
     return center
 
 
 def get_endpoint(center, distance, height, cross):
-    '''
+    """
     input: distance, cross, center location, height
     output: two endpoint location
-    '''
+    """
+
     height = np.random.randint(height[0], height[1], 1)
 
     start_angle = np.random.random()*2*np.pi
@@ -45,17 +49,19 @@ def get_endpoint(center, distance, height, cross):
 
     return start, end
 
+
 def T(endpoint, frame):
-    '''
+    """
     input: two endpoint location, frame
     output: location of camera by the time
-    '''
+    """
+
     T_mat = np.linspace(endpoint[0], endpoint[1], frame)
     return T_mat
 
     
 def generate_exmat(T_mat, center, tracking):
-    '''
+    """
     Generate the extrinsic matrix for the camera.
 
     Develop the extrinsic matrix for the camera, which is used for transforming the object in the world coordinate
@@ -73,14 +79,15 @@ def generate_exmat(T_mat, center, tracking):
 
     Raises:
         NOError: no error occurred up to now
-    '''
+    """
 
 
 def w2c(data_3d_std, camera_metadata, frame):
-    '''
+    """
     input: camera_metadata, data_3d_std
     output: data_c_std
-    '''
+    """
+
     center = get_center(data_3d_std)
     print(center)
 
@@ -100,7 +107,7 @@ def w2c(data_3d_std, camera_metadata, frame):
     
 
 def c2s(data_c_std, inmat):
-    '''
+    """
     Use the intrinsic matrix to switch the graph from camera coordinate to pixel coordinate
 
     Transform the tensor in homogeneous camera coordinate into euclidean
@@ -111,10 +118,7 @@ def c2s(data_c_std, inmat):
 
     Returns:
         data: of the same size as input data, i.e. [n, x, 17, 3]
-
-    Raises:
-        NOError: no error occurred up to now
-    '''
+    """
     
     data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis])
     data_2d_std = (data / np.abs(data[:,:,:,np.newaxis,2])).squeeze()
