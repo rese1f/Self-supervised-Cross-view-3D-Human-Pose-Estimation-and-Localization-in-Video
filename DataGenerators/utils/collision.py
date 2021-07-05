@@ -1,11 +1,12 @@
 import torch
 import numpy as np
 import itertools as iter  # for permutation
+import tqdm
 from configparser import ConfigParser
 
 """
-    NOTE(Jack BAI). We utilize PEP-257 comment & programming standard here. Please 
-        follow this standard if you want to make changes or add things to this script.
+    NOTE(Jack BAI). This file is now under development using another file. Please utilize
+        the new file instead of this one.
 """
 
 
