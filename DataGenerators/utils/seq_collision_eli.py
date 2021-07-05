@@ -84,12 +84,12 @@ class sequential_collision_elimination:
                     bounding_box_2d_another_person_preview[0, 0] < bounding_box_2d_i_preview[vertex, 0] <
                     bounding_box_2d_another_person_preview[1, 0] and
                     bounding_box_2d_another_person_preview[2, 1] < bounding_box_2d_i_preview[vertex, 1] <
-                    bounding_box_2d_another_person_preview[3, 1]
+                    bounding_box_2d_another_person_preview[1, 1]
             ) or (
                     bounding_box_2d_i_preview[0, 0] < bounding_box_2d_another_person_preview[vertex, 0] <
                     bounding_box_2d_i_preview[1, 0] and
                     bounding_box_2d_i_preview[2, 1] < bounding_box_2d_another_person_preview[vertex, 1] <
-                    bounding_box_2d_i_preview[3, 1]
+                    bounding_box_2d_i_preview[1, 1]
             ):
                 return True
         return False
@@ -112,7 +112,7 @@ class sequential_collision_elimination:
             offset_value_1 = (y_i_max - y_another_person_min) * 1.7
             offset_value_2 = (y_i_min - y_another_person_max) * 1.7
 
-        if np.abs(offset_1) > np.abs(offset2):
+        if np.abs(offset_value_1) > np.abs(offset_value_2):
             offset = np.array([0, offset_value_1, 0])
         else:
             offset = np.array([0, offset_value_2, 0])
@@ -123,17 +123,19 @@ class sequential_collision_elimination:
         self.data_3d_preview[i, frame, :] += offset
 
     def find_shift_vector(self, i, frame):
-        shift_vector = np.array([0, 0, 0])
+        shift_vector = np.array([0, 0, 0], dtype=float)
         # start listening
         while True:
             flag_collision = False
             for another_person in range(i):
+                # FIXIT: here is a bug in self.bounding_box_is_overlapped_preview()!
                 if self.bounding_box_is_overlapped_preview(i, another_person, frame):
                     flag_collision = True
                     offset = self.decide_offset_of_i(i, another_person, frame)
                     shift_vector += offset
                     self.broadcast_add_preview(i, frame, offset)
                     continue
+            # if there is collision one collision with any other boxes, do col_eli again
             if flag_collision is False:
                 break
         return shift_vector
@@ -162,13 +164,13 @@ class sequential_collision_elimination:
             for frame in tqdm(range(0, self.x, 3)):
                 # if the frame of this person has collision with any other person
                 if self.has_collision(i, frame):
-                    # buggy: self.find_shift_vector
                     shift_vector_list = np.vstack((shift_vector_list, self.find_shift_vector(i, frame)))
                 else:
                     shift_vector_list = np.vstack((shift_vector_list, np.array([0, 0, 0])))
 
-            print(shift_vector_list)
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
+            # unit test
+            print("the max shift vector for person {} is {}".format(i,max_shift_vector))
             self.broadcast_add_data_3d_std(i, max_shift_vector)  # broadcast add to self.data_3d_std
 
         return self.data_3d_std
