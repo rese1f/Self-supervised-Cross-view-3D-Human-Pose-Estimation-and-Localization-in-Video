@@ -23,10 +23,10 @@ class sequential_collision_elimination:
 
     # ***** has_collision() ***** #
     def find_bounding_box_2d(self, person, frame):
-        # vertex 1---------- vertex 2
+        # vertex 0---------- vertex 1
         #    |                  |
         #    |                  |
-        # vertex 3---------- vertex 4
+        # vertex 2---------- vertex 3
         x_max = np.max(self.data_2d_std[person, frame, :, 0])
         x_min = np.min(self.data_2d_std[person, frame, :, 0])
         y_max = np.max(self.data_2d_std[person, frame, :, 1])
@@ -43,12 +43,12 @@ class sequential_collision_elimination:
                     bounding_box_2d_another_person[0, 0] < bounding_box_2d_i[vertex, 0] <
                     bounding_box_2d_another_person[1, 0] and
                     bounding_box_2d_another_person[2, 1] < bounding_box_2d_i[vertex, 1] <
-                    bounding_box_2d_another_person[3, 1]
+                    bounding_box_2d_another_person[1, 1]
                ) or (
                     bounding_box_2d_i[0, 0] < bounding_box_2d_another_person[vertex, 0] <
                     bounding_box_2d_i[1, 0] and
                     bounding_box_2d_i[2, 1] < bounding_box_2d_another_person[vertex, 1] <
-                    bounding_box_2d_i[3, 1]
+                    bounding_box_2d_i[1, 1]
                ):
                 return True
         return False
@@ -59,6 +59,7 @@ class sequential_collision_elimination:
         for another_person in range(i):
             if self.bounding_box_is_overlapped(i, another_person, frame):
                 flag = True
+                break
         return flag
 
     # ***** find_shift_vector() ***** #
@@ -123,7 +124,7 @@ class sequential_collision_elimination:
 
     def find_shift_vector(self, i, frame):
         shift_vector = np.array([0, 0, 0])
-        # 监听开始
+        # start listening
         while True:
             flag_collision = False
             for another_person in range(i):
@@ -161,11 +162,12 @@ class sequential_collision_elimination:
             for frame in tqdm(range(0, self.x, 3)):
                 # if the frame of this person has collision with any other person
                 if self.has_collision(i, frame):
+                    # buggy: self.find_shift_vector
                     shift_vector_list = np.vstack((shift_vector_list, self.find_shift_vector(i, frame)))
                 else:
                     shift_vector_list = np.vstack((shift_vector_list, np.array([0, 0, 0])))
-                # print(shift_vector_list)
 
+            print(shift_vector_list)
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
             self.broadcast_add_data_3d_std(i, max_shift_vector)  # broadcast add to self.data_3d_std
 
