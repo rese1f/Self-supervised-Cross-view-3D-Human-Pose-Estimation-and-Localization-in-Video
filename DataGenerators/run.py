@@ -19,7 +19,7 @@ print(args)
 
 print('Loading data...')
 
-dataset = np.load('data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
+dataset = np.load('data/data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
 dict_keys = dataset.keys()
 
 if not os.path.exists('output'):
@@ -36,9 +36,16 @@ print('Loading camera...')
 camera_metadata = suggest_metadata(args.camera)
 
 
-print('Generating data period 1...')
+print('Generating data...')
+
+# output_filename_3d = 'data_multi_3d_' + args.dataset + '.npz'
+output_filename_2d = 'data_multi_2d_' + args.dataset + '.npz'
+# output_3d = dict()
+output_2d = dict()
 
 for count in tqdm(range(args.number)):
+    # output_3d[count] = dict()
+    output_2d[count] = dict()
     # randomly get data from dataset
     keys = extract(dict_keys, args.min, args.max)
     sub_dataset = itemgetter(*keys)(dataset)
@@ -66,12 +73,15 @@ for count in tqdm(range(args.number)):
     # data_c_std = w2c(data_3d_std, camera_metadata, frame)
     # data_2d_std = c2s(data_c_std, camera_metadata['inmat'])
     data_2d_std = np.zeros_like(data_3d_std)[:,:,:,:2]
-    # saving data...
-    # keys: list(str)
-    # data_3d_std: array
-    # data_2d_std: list(array)
 
-    print("Generating data period 2...")
-    np.savez_compressed('output/'+str(count), keys=keys, data_3d_std=data_3d_std, data_2d_std=data_2d_std)
+
+    for i in range(len(keys)):
+        # output_3d[count][keys[i]]=data_3d_std[i]
+        output_2d[count][keys[i]]=data_2d_std[i]
+
+print('Saving data...')
+
+# np.savez_compressed('output/'+output_filename_3d, positions_3d=output_3d)
+np.savez_compressed('output/'+output_filename_2d, positions_2d=output_2d)
 
 print('Done.')

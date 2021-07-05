@@ -24,7 +24,7 @@ keypoints = metadata['keypoints']
 
 dataset_path = 'data/' + args.dataset
 file_list = glob(dataset_path + '/*.mat')
-output_filename = 'data_3d_' + args.dataset
+output_filename = 'data/data_3d_' + args.dataset
 
 
 print('Preparing dataset...')
