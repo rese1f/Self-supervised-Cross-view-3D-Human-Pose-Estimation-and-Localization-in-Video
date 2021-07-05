@@ -42,6 +42,12 @@ Please refer to [this website](https://www.stubbornhuang.com/529/) for more deta
 
 ![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091845.png)
 
+## A More Accurate Logic
+
+![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-05-132050.png)
+
+
+
 ## Pseudo-code For Collision Elimination Operations
 
 ![image-20210705130049360](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-05-050049.png)
