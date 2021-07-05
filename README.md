@@ -1,4 +1,4 @@
-# Dataexpand 1.9.4 Released
+# Dataexpand 1.9.7 Released
 
 ## Project Progress and Contribution Part
 
@@ -42,3 +42,8 @@ Please refer to [this website](https://www.stubbornhuang.com/529/) for more deta
 
 ![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091845.png)
 
+## Pseudo-code For Collision Elimination Operations
+
+![image-20210705130049360](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-05-050049.png)
+
+![image-20210705130100821](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-05-050101.png)

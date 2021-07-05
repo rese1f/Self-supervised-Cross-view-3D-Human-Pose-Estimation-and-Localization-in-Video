@@ -59,7 +59,7 @@ class collision_eliminate:
 
             # initialize the tensor plane
             tensor_plane = []
-
+git p
             # iterate through x
             for frame in range(self.x):
                 # candidate vertices for the box
