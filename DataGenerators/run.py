@@ -11,7 +11,7 @@ from arguments import parse_args
 
 from camera_utils import *
 from utils.random_function import *
-from utils.collision import collision_eliminate as col_eli
+from utils.seq_collision_eli import sequential_collision_elimination as col_eli
 from utils.camera import *
 
 args = parse_args()
@@ -61,9 +61,8 @@ for count in tqdm(range(args.number)):
     # 1. create the object from class col_eli
     col_eli_object = col_eli(data_3d_std)
     # 2. give back the value
-    data_3d_std = col_eli_object.collision_eliminate()
+    data_3d_std = col_eli_object.sequential_collision_eliminate_routine()
 
-    # data_3d_std = eliminate_collision(data_3d_std)
     # data_c_std = w2c(data_3d_std, camera_metadata, frame)
     # data_2d_std = c2s(data_c_std, camera_metadata['inmat'])
     data_2d_std = np.zeros_like(data_3d_std)[:,:,:,:2]
