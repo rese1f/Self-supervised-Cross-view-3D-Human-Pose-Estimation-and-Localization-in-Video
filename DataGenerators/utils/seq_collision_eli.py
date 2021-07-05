@@ -29,8 +29,8 @@ class sequential_collision_elimination:
         # vertex 3---------- vertex 4
         x_max = np.max(self.data_2d_std[person, frame, :, 0])
         x_min = np.min(self.data_2d_std[person, frame, :, 0])
-        y_max = np.max(self.data_2d_std[person, frame, :, 0])
-        y_min = np.min(self.data_2d_std[person, frame, :, 0])
+        y_max = np.max(self.data_2d_std[person, frame, :, 1])
+        y_min = np.min(self.data_2d_std[person, frame, :, 1])
         bounding_box_2d_vertexbased = np.array([[x_min, y_max], [x_max, y_max], [x_min, y_min], [x_max, y_min]])
         return bounding_box_2d_vertexbased
 
@@ -62,18 +62,76 @@ class sequential_collision_elimination:
         return flag
 
     # ***** find_shift_vector() ***** #
+    def find_bounding_box_2d_preview(self, person, frame):
+        # vertex 1---------- vertex 2
+        #    |                  |
+        #    |                  |
+        # vertex 3---------- vertex 4
+        x_max = np.max(self.data_3d_preview[person, frame, :, 0])
+        x_min = np.min(self.data_3d_preview[person, frame, :, 0])
+        y_max = np.max(self.data_3d_preview[person, frame, :, 1])
+        y_min = np.min(self.data_3d_preview[person, frame, :, 1])
+        bounding_box_2d_vertexbased = np.array([[x_min, y_max], [x_max, y_max], [x_min, y_min], [x_max, y_min]])
+        return bounding_box_2d_vertexbased
+
+    def bounding_box_is_overlapped_preview(self, i, another_person, frame):
+        bounding_box_2d_i_preview = self.find_bounding_box_2d_preview(i, frame)
+        bounding_box_2d_another_person_preview = self.find_bounding_box_2d_preview(another_person, frame)
+        # if one vertex of 0 is in the box of 1, return true(overlapped) immediately
+        for vertex in range(4):
+            if (
+                    bounding_box_2d_another_person_preview[0, 0] < bounding_box_2d_i_preview[vertex, 0] <
+                    bounding_box_2d_another_person_preview[1, 0] and
+                    bounding_box_2d_another_person_preview[2, 1] < bounding_box_2d_i_preview[vertex, 1] <
+                    bounding_box_2d_another_person_preview[3, 1]
+            ) or (
+                    bounding_box_2d_i_preview[0, 0] < bounding_box_2d_another_person_preview[vertex, 0] <
+                    bounding_box_2d_i_preview[1, 0] and
+                    bounding_box_2d_i_preview[2, 1] < bounding_box_2d_another_person_preview[vertex, 1] <
+                    bounding_box_2d_i_preview[3, 1]
+            ):
+                return True
+        return False
+
     def decide_offset_of_i(self, i, another_person, frame):
-        pass
+        # We rule that the invalid point must be shifted to due north (upper) or due south (down)
+
+        # decide which case it is in
+        y_i_max = np.max(self.data_3d_preview[i, frame, :, 1])
+        y_i_min = np.min(self.data_3d_preview[i, frame, :, 1])
+        y_another_person_max = np.max(self.data_3d_preview[another_person, frame, : ,1])
+        y_another_person_min = np.min(self.data_3d_preview[another_person, frame, : ,1])
+
+        # we always shift i, not the other person; create 2 possible offsets in different directions
+        if (y_i_max > y_another_person_max > y_i_min > y_another_person_min) or \
+                (y_another_person_max > y_i_max > y_another_person_min > y_i_min):
+            offset_value_1 = (y_i_min - y_another_person_max) * 1.7  # coefficient is 1.7
+            offset_value_2 = (y_i_max - y_another_person_min) * 1.7
+        else:
+            offset_value_1 = (y_i_max - y_another_person_min) * 1.7
+            offset_value_2 = (y_i_min - y_another_person_max) * 1.7
+
+        if np.abs(offset_1) > np.abs(offset2):
+            offset = np.array([0, offset_value_1, 0])
+        else:
+            offset = np.array([0, offset_value_2, 0])
+        return offset  # e.g. np.array([0, -2, 0])
+
+    def broadcast_add_preview(self, i, frame, offset):
+        # : for broadcast; shift_vector should be 3-dimensional
+        self.data_3d_preview[i, frame, :] += offset
 
     def find_shift_vector(self):
         shift_vector = np.array([0, 0, 0])
+        # 监听开始
         while True:
             flag_collision = False
             for another_person in range(i):
                 if self.bounding_box_is_overlapped_preview(i, another_person, frame):
                     flag_collision = True
-                    shift_vector += self.decide_offset_of_i(i, another_person, frame)
-                    self.data_3d_preview = self.broadcast_add(self.data_3d_preview, shift_vector)
+                    offset = self.decide_offset_of_i(i, another_person, frame)
+                    shift_vector += offset
+                    self.broadcast_add_preview(i, frame, offset)
                     continue
             if flag_collision is False:
                 break
