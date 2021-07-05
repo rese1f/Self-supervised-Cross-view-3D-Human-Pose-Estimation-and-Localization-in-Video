@@ -1,6 +1,7 @@
 import numpy as np
 import itertools as iter
-import tqdm
+
+from tqdm import tqdm
 
 """
     Note(Jack BAI). This script the approved script for collision elimination, and the old version
@@ -37,17 +38,19 @@ class sequential_collision_elimination:
         return result_data_3d_std_for_i
 
     def sequential_collision_eliminate_routine(self):
-        for i in range(self.n):
+        # the first person do NOT need any kind of shift
+        for i in range(1, self.n, 1):
             # the initial value of shift_vector_list is simply DON'T MOVE
             shift_vector_list = np.array([0, 0, 0])
-            for frame in range(0, self.x, 3):
+
+            print("Eliminating person {}'s collision with all other persons".format(i))
+            # frame-wise operation, with step size 3 for skipping to accelerate progress
+            for frame in tqdm(range(0, self.x, 3)):
                 if self.has_collision():
                     np.append(shift_vector_list, self.find_shift_vector())
                 else:
                     np.append(shift_vector_list, np.array([0, 0, 0]))
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
             self.result_data_3d_std[i] = self.broadcast_add(i, max_shift_vector)
-
-        print(np.array([1, 2, 3]))
 
         return self.result_data_3d_std

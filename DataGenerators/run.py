@@ -36,7 +36,7 @@ print('Loading camera...')
 camera_metadata = suggest_metadata(args.camera)
 
 
-print('Generating data...')
+print('Generating data period 1...')
 
 for count in tqdm(range(args.number)):
     # randomly get data from dataset
@@ -71,6 +71,7 @@ for count in tqdm(range(args.number)):
     # data_3d_std: array
     # data_2d_std: list(array)
 
+    print("Generating data period 2...")
     np.savez_compressed('output/'+str(count), keys=keys, data_3d_std=data_3d_std, data_2d_std=data_2d_std)
 
 print('Done.')
