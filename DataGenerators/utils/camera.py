@@ -25,6 +25,33 @@ def get_center(data_3d_std):
     center = np.array([np.sum(data_3d_std[:, 0, 10, 0]), np.sum(data_3d_std[:, 0, 10, 1]), 0]) / 3
     return center
 
+def get_angle(data):
+    """
+    Get the camera euclidean angle from given directional vector
+
+    Args:
+        frame: the total frame of the output array
+        data: directional vector data
+
+    Returns:
+
+        [frame,3] ndarray of euclidean angle
+    """
+    if len(data.shape()) == 1:
+        result = np.zeros(3)
+                
+        x = data[0]; y = data[1]; z = data[2]
+        result[2] = (np.add(np.atan2(y, x),np.pi/2))
+        result[0] =  np.pi/2
+    else:
+        result = np.zeros(data.shape(0), 3)
+                
+        x = data[:, 0]; y = data[:, 1]; z = data[:, 2]
+        result[:, 2] = (np.add(np.atan2(y, x),np.pi/2))
+        result[:, 0] =  np.pi/2
+            
+        
+    return result
 
 def get_endpoint(center, distance, height, cross):
     """
@@ -80,6 +107,39 @@ def generate_exmat(T_mat, center, tracking):
     Raises:
         NOError: no error occurred up to now
     """
+
+    for i in range(T_mat.shape(1)):
+        posCamera = T_mat[i]
+        if tracking is True:
+            argCamera = get_angle(np.subs(center - posCamera))
+        else:
+            argCamera = get_angle(np.subs(center - T_mat[0]))
+            pass
+
+        Rz = np.array(
+                [[np.cos(argCamera[2]), -np.sin(argCamera[2]), 0.], [np.sin(argCamera[2]), np.cos(argCamera[2]), 0.],
+                 [0., 0., 1.]], dtype=np.float16)
+        Ry = np.array([[np.cos(argCamera[1]), 0., np.sin(argCamera[1])], [0., 1., 0.],
+                                        [-np.sin(argCamera[1]), 0., np.cos(argCamera[1])]], dtype=np.float16)
+        Rx = np.array([[1., 0., 0.], [0., np.cos(argCamera[0]), -np.sin(argCamera[0])],
+                                        [0., np.sin(argCamera[0]), np.cos(argCamera[0])]], dtype=np.float16)
+
+        Rotation = np.matmul(Rz, Ry)
+        Rotation = np.matmul(Rotation, Rx)
+        Rotation = Rotation.transpose(0,1)
+            
+
+        Translation = - np.matmul(Rotation, np.array(posCamera, dtype=np.float16).reshape(3, 1))
+
+        H_o2k = np.concatenate((Rotation, Translation), 1)
+        H_o2k = np.concatenate((H_o2k, np.array([[0., 0., 0., 1.]])), 0)
+
+        if i == 0:
+            exmat = H_o2k.reshape(1, 4, 4)
+        else:
+            exmat = np.concatenate((exmat, H_o2k.reshape(1, 4, 4)), 0)
+
+    return exmat
 
 
 def w2c(data_3d_std, camera_metadata, frame):
