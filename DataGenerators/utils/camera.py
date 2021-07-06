@@ -107,7 +107,8 @@ def generate_exmat(T_mat, center, tracking):
     Raises:
         NOError: no error occurred up to now
     """
-
+    
+    exmat = [];
     for i in range(T_mat.shape(1)):
         posCamera = T_mat[i]
         if tracking is True:
