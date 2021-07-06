@@ -9,6 +9,7 @@
 
 import torch
 from torch.utils.data import DataLoader
+import torch.optim as optim
 
 from tqdm import tqdm
 import numpy as np
@@ -51,7 +52,8 @@ lr = args.learning_rate
 lr_decay = args.lr_decay
 initial_momentum = 0.1
 final_momentum = 0.001
-
+optimizer = optim.Adam(model.parameters(), Ir=lr, amsgrad=True)
+enable_cuda = torch.cuda.is_available()
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset)
@@ -61,4 +63,32 @@ train_iter = DataLoader(dataset, shuffle=True)
 
 for epoch in tqdm(range(args.epochs)):
     for sample in train_iter:
-        pass
+        # up-to-date, we use single view dataset
+        # [sample]
+        # list(
+        # list1(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
+        # list2(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
+        # ...
+        # )
+        for person in sample:
+            for view in person:
+                camera = view[0]
+                pose_2d = torch.from_numpy(view[1])
+                if enable_cuda:
+                    pose_2d = pose_2d.cuda()
+
+                optimizer.zero_grad()
+
+                # Predict 3D poses
+                predicted_3d_pos = model(pose_2d)
+
+                # loss.backward()
+
+                optimizer.step()
+
+            # pose_3d is used to evaluate model, if just for use, we set None
+            pose_3d = person[0]
+            if pose_3d:
+                pose_3d = torch.from_numpy(pose_3d)
+                if enable_cuda:
+                    pose_3d = pose_3d.cuda()
