@@ -13,7 +13,6 @@ from data_utils import *
 
 
 args = parse_args()
-print(args)
 
 
 print('Loading dataset...')

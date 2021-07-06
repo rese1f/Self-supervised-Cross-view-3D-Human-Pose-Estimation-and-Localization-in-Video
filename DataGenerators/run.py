@@ -5,7 +5,7 @@
 import os
 import shutil
 import numpy as np
-from tqdm import tqdmgi
+from tqdm import tqdm
 from operator import itemgetter
 from arguments import parse_args
 
