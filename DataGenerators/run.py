@@ -33,17 +33,16 @@ else:
 
 print('Loading camera...')
 # a dictionary to store the information of camera
-camera_metadata = suggest_metadata(args.camera)
+camera_metadata = [suggest_metadata(i) for i in args.camera]
 
 
 print('Generating data...')
 
 output_filename = 'data_multi_' + args.dataset + '.npz'
-dataset = dict()
+dataset_zip = dict()
 
 for count in tqdm(range(args.number)):
-    # output_3d[count] = dict()
-    dataset[count] = dict()
+    
     # randomly get data from dataset
     keys = extract(dict_keys, args.min, args.max)
     sub_dataset = itemgetter(*keys)(dataset)
@@ -68,37 +67,34 @@ for count in tqdm(range(args.number)):
     # 2. give back the value
     data_3d_std = col_eli_object.sequential_collision_eliminate_routine()
 
-    data_c_std = w2c(data_3d_std, camera_metadata, frame)
-    inmat = camera_metadata['inmat']
-    data_2d_std = c2s(data_c_std, inmat)
+    
+    dataset_zip[count] = dict()
+    for i in range(args.view):
+        view_id = 'view_' + str(i)
+        camera_info = camera_metadata[i]
+        data_c_std = w2c(data_3d_std, camera_info, frame)
+        inmat = camera_info['inmat']
+        data_2d_std = c2s(data_c_std, inmat)
+        dataset_zip[count][view_id]=dict()
+        dataset_zip[count][view_id]['camera']=inmat
+        dataset_zip[count][view_id]['pose_c']=data_c_std
+        dataset_zip[count][view_id]['pose_2d']=data_2d_std
 
-    for i in range(len(keys)):
-        dataset[count][keys[i]]=dict()
-        dataset[count][keys[i]]['view_1']=dict()
-        dataset[count][keys[i]]['view_1']['camera']=inmat
-        dataset[count][keys[i]]['viwe_1']['pose_c']=data_c_std
-        dataset[count][keys[i]]['view_1']['pose_2d']=data_2d_std
 
 print('Saving data...')
 '''
 dataset{
         'sample_1': {
-            'person_1': {
-                'view_1': {
-                    'camera': array(3,3),
-                    'pose_c': ndarray(x,17,3),
-                    'pose_2d': ndarray(x,17,2),
-                }
-                'view_2': {
-                    'camera': array(3,3),
-                    'pose_c': ndarray(x,17,3),
-                    'pose_2d': ndarray(x,17,2),
-                }
+            'view_1': {
+                'camera': array(3,3),
+                'pose_c': ndarray(n,x,17,3),
+                'pose_2d': ndarray(n,x,17,2),
             }
-            'person_2': {
-
+            'view_2': {
+                'camera': array(3,3),
+                'pose_c': ndarray(n,x,17,3),
+                'pose_2d': ndarray(n,x,17,2),
             }
-        }
         'sample_2': {
 
         }

@@ -13,9 +13,12 @@ def parse_args():
 
     # Generating arguments
     parser.add_argument('-n', '--number', default=1, type=int, metavar='N', help='number of the generated dataset')
-    parser.add_argument('-c', '--camera', default='phone', type=str, metavar='C', help='the type of camera used')
-    parser.add_argument('-v', '--view', default=1, type=int, metavar='V', help='the number of view')\
+    parser.add_argument('-c', '--camera', default=['phone'], type=list, metavar='C', help='the type of camera used')
+    parser.add_argument('-v', '--view', default=1, type=int, metavar='V', help='the number of view')
 
     args = parser.parse_args()
+
+    if args.view != len(args.camera):
+        raise KeyError('view number does not match camera number')
 
     return args
