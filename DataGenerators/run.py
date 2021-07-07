@@ -76,10 +76,34 @@ for count in tqdm(range(args.number)):
         dataset[count][keys[i]]=dict()
         dataset[count][keys[i]]['view_1']=dict()
         dataset[count][keys[i]]['view_1']['camera']=inmat
+        dataset[count][keys[i]]['viwe_1']['pose_c']=data_c_std
         dataset[count][keys[i]]['view_1']['pose_2d']=data_2d_std
 
 print('Saving data...')
+'''
+dataset{
+        'sample_1': {
+            'person_1': {
+                'view_1': {
+                    'camera': array(3,3),
+                    'pose_c': ndarray(x,17,3),
+                    'pose_2d': ndarray(x,17,2),
+                }
+                'view_2': {
+                    'camera': array(3,3),
+                    'pose_c': ndarray(x,17,3),
+                    'pose_2d': ndarray(x,17,2),
+                }
+            }
+            'person_2': {
 
+            }
+        }
+        'sample_2': {
+
+        }
+    }
+'''
 np.savez_compressed('output/'+output_filename, dataset=dataset)
 
 print('Done.')

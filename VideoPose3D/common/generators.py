@@ -24,13 +24,14 @@ class ChunkedGenerator(Dataset):
     dataset{
         'sample_1': {
             'person_1': {
-                'pose_3d': ndarray(x,17,3),
                 'view_1': {
                     'camera': array(3,3),
+                    'pose_c': ndarray(x,17,3),
                     'pose_2d': ndarray(x,17,2),
                 }
                 'view_2': {
                     'camera': array(3,3),
+                    'pose_c': ndarray(x,17,3),
                     'pose_2d': ndarray(x,17,2),
                 }
             }

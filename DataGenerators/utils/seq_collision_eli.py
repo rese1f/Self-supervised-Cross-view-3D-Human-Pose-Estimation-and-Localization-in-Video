@@ -157,7 +157,7 @@ class sequential_collision_elimination:
             # the initial value of shift_vector_list is simply DON'T MOVE
             shift_vector_list = np.array([0, 0, 0])
 
-            print("Eliminating person {}'s collision with all other persons".format(i))
+            # print("Eliminating person {}'s collision with all other persons".format(i))
             # frame-wise operation, with step size 3 for skipping to accelerate progress
             for frame in range(0, self.x, 3):
                 # if the frame of this person has collision with any other person
@@ -168,7 +168,7 @@ class sequential_collision_elimination:
 
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
             # unit test
-            print("the max shift vector for person {} is {}".format(i,max_shift_vector))
+            # print("the max shift vector for person {} is {}".format(i,max_shift_vector))
             self.broadcast_add_data_3d_std(i, max_shift_vector)  # broadcast add to self.data_3d_std
 
         return self.data_3d_std
