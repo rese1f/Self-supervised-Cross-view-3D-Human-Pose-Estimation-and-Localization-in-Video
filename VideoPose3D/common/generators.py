@@ -21,28 +21,23 @@ class ChunkedGenerator(Dataset):
         pose_3d -- 3d pose for each person
 
     Structure:
+
     dataset{
-        'sample_1': {
-            'person_1': {
+            'sample_1': {
                 'view_1': {
                     'camera': array(3,3),
-                    'pose_c': ndarray(x,17,3),
-                    'pose_2d': ndarray(x,17,2),
+                    'pose_c': ndarray(n,x,17,3),
+                    'pose_2d': ndarray(n,x,17,2),
                 }
                 'view_2': {
                     'camera': array(3,3),
-                    'pose_c': ndarray(x,17,3),
-                    'pose_2d': ndarray(x,17,2),
+                    'pose_c': ndarray(n,x,17,3),
+                    'pose_2d': ndarray(n,x,17,2),
                 }
-            }
-            'person_2': {
+            'sample_2': {
 
             }
         }
-        'sample_2': {
-
-        }
-    }
 
     """
     def __init__(self, dataset):
@@ -55,36 +50,8 @@ class ChunkedGenerator(Dataset):
 
         sample_key = self.sample_keys_list[index]
         sample = self.dataset[sample_key]
-        person_keys_list = list(sample)
-        for person_key in person_keys_list:
-
-            person_list = list()
-
-            person = sample[person_key]
-            pose_3d = person['pose_3d']
-
-            person_list.append(pose_3d)
-
-            view_list = list()
-
-            view_keys_list = list(person)[1:]
-            for view_key in view_keys_list:
-                view = person[view_key]
-                camera = view['camera']
-                pose_2d = view['pose_2d']
-                info = list([camera, pose_2d])
-                view_list.append(info)
-            
-            person_list.append(view_list)
         
-            output.append(person_list)
-
-        # index is the key for each sample
-        # return list(
-        # list1(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
-        # list2(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
-        # ...
-        # )
+        
 
         return output
 

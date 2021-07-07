@@ -70,11 +70,11 @@ for count in tqdm(range(args.number)):
     
     dataset_zip[count] = dict()
     for i in range(args.view):
-        view_id = 'view_' + str(i)
         camera_info = camera_metadata[i]
         data_c_std = w2c(data_3d_std, camera_info, frame)
         inmat = camera_info['inmat']
         data_2d_std = c2s(data_c_std, inmat)
+        view_id = camera_info['layout_name'] + str(i)
         dataset_zip[count][view_id]=dict()
         dataset_zip[count][view_id]['camera']=inmat
         dataset_zip[count][view_id]['pose_c']=data_c_std
