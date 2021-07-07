@@ -41,20 +41,26 @@ class ChunkedGenerator(Dataset):
 
     """
     def __init__(self, dataset):
-        self.dataset = dataset
+        self.dataset = dataset.tolist()
         self.sample_keys_list = list(self.dataset)
 
     def __getitem__(self, index):
 
-        output = list()
+        cameras, pose_cs, pose_2ds = list(), list(), list()
 
         sample_key = self.sample_keys_list[index]
         sample = self.dataset[sample_key]
-        
-        
+        view_keys_list = list(sample)
+        for view_key in view_keys_list:
+            view = sample[view_key]
+            camera = view['camera']
+            pose_c = view['pose_c']
+            pose_2d = view['pose_2d']
+            cameras.append(camera)
+            pose_cs.append(pose_c)
+            pose_2ds.append(pose_2d)
 
-        return output
+        return cameras, pose_cs, pose_2ds
 
-        
     def __len__(self):
         return len(self.sample_keys_list)
