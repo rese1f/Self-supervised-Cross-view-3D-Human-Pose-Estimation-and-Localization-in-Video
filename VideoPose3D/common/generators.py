@@ -6,6 +6,8 @@
 #
 
 import numpy as np
+import torch
+from torch._C import dtype
 from torch.utils.data import Dataset
 
 class ChunkedGenerator(Dataset):
@@ -53,9 +55,13 @@ class ChunkedGenerator(Dataset):
         view_keys_list = list(sample)
         for view_key in view_keys_list:
             view = sample[view_key]
-            camera = view['camera']
-            pose_c = view['pose_c']
-            pose_2d = view['pose_2d']
+            camera = torch.from_numpy(view['camera'])
+            pose_c = torch.from_numpy(view['pose_c'])
+            pose_2d = torch.from_numpy(view['pose_2d'])
+            if torch.cuda.is_available():
+                camera = camera.cuda()
+                pose_c = pose_c.cuda()
+                pose_2d = pose_2d.cuda()
             cameras.append(camera)
             pose_cs.append(pose_c)
             pose_2ds.append(pose_2d)

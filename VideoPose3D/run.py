@@ -59,10 +59,12 @@ if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset)
-if dataset.__len__() < args.epochs:
-    raise KeyError('dataset overload')
-train_iter = DataLoader(dataset, shuffle=True)
+data_iter = DataLoader(dataset, shuffle=True)
 
 for epoch in tqdm(range(args.epochs)):
-    for sample in train_iter:
+    for cameras, pose_cs, pose_2ds in data_iter:
+        if args.multi_view:
+            raise KeyError('sorry, multi_view is not in beta test')
+        camera_m, pose_c_m, pose_2d_m = cameras[0], pose_cs[0], pose_2ds[0]
+        
         continue
