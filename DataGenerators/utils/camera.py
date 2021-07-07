@@ -37,17 +37,17 @@ def get_angle(data):
 
         [frame,3] ndarray of euclidean angle
     """
-    if len(data.shape()) == 1:
+    if len(data.shape) == 1:
         result = np.zeros(3)
                 
         x = data[0]; y = data[1]; z = data[2]
-        result[2] = (np.add(np.atan2(y, x),np.pi/2))
+        result[2] = (np.add(np.arctan2(y, x),np.pi/2))
         result[0] =  np.pi/2
     else:
-        result = np.zeros(data.shape(0), 3)
+        result = np.zeros(data.shape[0], 3)
                 
         x = data[:, 0]; y = data[:, 1]; z = data[:, 2]
-        result[:, 2] = (np.add(np.atan2(y, x),np.pi/2))
+        result[:, 2] = (np.add(np.arctan2(y, x),np.pi/2))
         result[:, 0] =  np.pi/2
             
         
@@ -107,38 +107,34 @@ def generate_exmat(T_mat, center, tracking):
     Raises:
         NOError: no error occurred up to now
     """
-    
-    exmat = [];
-    for i in range(T_mat.shape(1)):
+    exmat = np.zeros((T_mat.shape[0],4,4))
+    for i in range(T_mat.shape[0]):
         posCamera = T_mat[i]
         if tracking is True:
-            argCamera = get_angle(np.subs(center - posCamera))
+            argCamera = get_angle(center - posCamera)
         else:
-            argCamera = get_angle(np.subs(center - T_mat[0]))
+            argCamera = get_angle(center - T_mat[0])
             pass
 
         Rz = np.array(
                 [[np.cos(argCamera[2]), -np.sin(argCamera[2]), 0.], [np.sin(argCamera[2]), np.cos(argCamera[2]), 0.],
-                 [0., 0., 1.]], dtype=np.float16)
+                 [0., 0., 1.]], dtype=np.float32)
         Ry = np.array([[np.cos(argCamera[1]), 0., np.sin(argCamera[1])], [0., 1., 0.],
-                                        [-np.sin(argCamera[1]), 0., np.cos(argCamera[1])]], dtype=np.float16)
+                                        [-np.sin(argCamera[1]), 0., np.cos(argCamera[1])]], dtype=np.float32)
         Rx = np.array([[1., 0., 0.], [0., np.cos(argCamera[0]), -np.sin(argCamera[0])],
-                                        [0., np.sin(argCamera[0]), np.cos(argCamera[0])]], dtype=np.float16)
+                                        [0., np.sin(argCamera[0]), np.cos(argCamera[0])]], dtype=np.float32)
 
         Rotation = np.matmul(Rz, Ry)
         Rotation = np.matmul(Rotation, Rx)
         Rotation = Rotation.transpose(0,1)
             
 
-        Translation = - np.matmul(Rotation, np.array(posCamera, dtype=np.float16).reshape(3, 1))
+        Translation = - np.matmul(Rotation, np.array(posCamera, dtype=np.float32).reshape(3, 1))
 
         H_o2k = np.concatenate((Rotation, Translation), 1)
-        H_o2k = np.concatenate((H_o2k, np.array([[0., 0., 0., 1.]])), 0)
+        H_o2k = np.concatenate((H_o2k, np.array([[0., 0., 0., 1.]], dtype=np.float32)), 0)
 
-        if i == 0:
-            exmat = H_o2k.reshape(1, 4, 4)
-        else:
-            exmat = np.concatenate((exmat, H_o2k.reshape(1, 4, 4)), 0)
+        exmat[i] = H_o2k
 
     return exmat
 
@@ -150,7 +146,6 @@ def w2c(data_3d_std, camera_metadata, frame):
     """
 
     center = get_center(data_3d_std)
-    print(center)
 
     distance = camera_metadata['distance']
     height = camera_metadata['height']
@@ -161,8 +156,16 @@ def w2c(data_3d_std, camera_metadata, frame):
     
     T_mat = T(endpoint, frame)
     exmat = generate_exmat(T_mat, center, tracking)
-
-    data_c_std = None
+    
+    data_3d_std = data_3d_std.transpose(1,0,2,3) # transpose n and x for the loop
+    ds = data_3d_std.shape
+    data_3d_std = np.concatenate((data_3d_std, np.ones((ds[0], ds[1], ds[2], 1),
+        dtype=np.float32)), axis=3) # add one column to generate homogeneous coordinate
+    data_c_std = np.zeros(ds, dtype=np.float32)
+    for i in range(exmat.shape[0]):
+        data = data_3d_std[i].reshape(ds[1],ds[2],ds[3]+1,1)
+        data_c_std[i] = np.matmul(exmat[i],data).reshape(ds[1],ds[2],ds[3]+1)[:,:,0:3]
+    data_c_std = data_c_std.transpose(1,0,2,3) # transpose n and x to get original shape
 
     return data_c_std
     
