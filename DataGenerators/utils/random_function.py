@@ -10,7 +10,7 @@ def extract(dict_keys, min, max):
     input: dict_keys([...,...])
     output: dict_keys(list with len in [min,max])
     '''
-    n = random.randint(min, max+1)
+    n = random.randint(min, max)
     keys = random.sample(dict_keys, n)
     return keys
 
