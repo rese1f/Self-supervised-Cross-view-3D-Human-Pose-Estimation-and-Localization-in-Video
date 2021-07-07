@@ -18,7 +18,7 @@ import errno
 
 from common.arguments import parse_args
 from common.model import *
-from common.loss import *
+from common.utils import *
 from common.generators import ChunkedGenerator
 
 args = parse_args()
@@ -65,6 +65,12 @@ for epoch in tqdm(range(args.epochs)):
     for cameras, pose_cs, pose_2ds in data_iter:
         if args.multi_view:
             raise KeyError('sorry, multi_view is not in beta test')
-        camera_m, pose_c_m, pose_2d_m = cameras[0], pose_cs[0], pose_2ds[0]
-        
-        continue
+        pose_2d_m = pose_2ds[0].squeeze(0)
+        # N - number of people
+        N = pose_2d_m.shape[0]
+        # for each person
+        for i in range(N):
+            pose_2d = pose_2d_m[i].unsqueeze(0).type(torch.float32)
+            pose_c = model_pos(pose_2d)
+            T = regressor(pose_c, pose_2d)
+        break

@@ -57,7 +57,7 @@ class ChunkedGenerator(Dataset):
             view = sample[view_key]
             camera = torch.from_numpy(view['camera'])
             pose_c = torch.from_numpy(view['pose_c'])
-            pose_2d = torch.from_numpy(view['pose_2d'])
+            pose_2d = torch.from_numpy(view['pose_2d'])[...,:2]
             if torch.cuda.is_available():
                 camera = camera.cuda()
                 pose_c = pose_c.cuda()
