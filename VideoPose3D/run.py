@@ -18,7 +18,7 @@ import errno
 
 from common.arguments import parse_args
 from common.model import *
-from common.loss import *
+from common.utils import *
 from common.generators import ChunkedGenerator
 
 args = parse_args()
@@ -33,62 +33,44 @@ except OSError as e:
 
 
 print('Loading dataset...')
-dataset_path = 'data/data_3d_' + args.dataset + '.npz'
-dataset = np.load(dataset_path)
+dataset_path = 'data/data_multi_' + args.dataset + '.npz'
+dataset = np.load(dataset_path, allow_pickle=True)['dataset']
 
 
 print('Loading Model...')
 filter_widths = [int(x) for x in args.architecture.split(',')]
-model = TemporalModel(args.keypoints_number, 2, args.keypoints_number, filter_widths, 
+model_pos = TemporalModel(args.keypoints_number, 2, args.keypoints_number, filter_widths, 
             args.causal, args.dropout, args.channels, args.dense)
 
-chk_filename = os.path.join(args.checkpoint, args.resume if args.resume else args.evaluate)
+chk_filename = os.path.join(args.checkpoint, args.resume)
 print('- Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
 print('- This model was trained for {} epochs'.format(checkpoint['epoch']))
-model.load_state_dict(checkpoint['model_pos'])
+model_pos.load_state_dict(checkpoint['model_pos'])
 
 lr = args.learning_rate
 lr_decay = args.lr_decay
 initial_momentum = 0.1
 final_momentum = 0.001
-optimizer = optim.Adam(model.parameters(), Ir=lr, amsgrad=True)
-enable_cuda = torch.cuda.is_available()
+optimizer = optim.Adam(model_pos.parameters(), lr=lr, amsgrad=True)
+if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
+    optimizer.load_state_dict(checkpoint['optimizer'])
+
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset)
-if dataset.__len__ < args.epochs:
-    raise KeyError('Dataset overload')
-train_iter = DataLoader(dataset, shuffle=True)
+data_iter = DataLoader(dataset, shuffle=True)
 
 for epoch in tqdm(range(args.epochs)):
-    for sample in train_iter:
-        # up-to-date, we use single view dataset
-        # [sample]
-        # list(
-        # list1(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
-        # list2(pose_3d, [[camera1, pose_2d_1],[camera2, pose_2d_2], ...),
-        # ...
-        # )
-        for person in sample:
-            for view in person:
-                camera = view[0]
-                pose_2d = torch.from_numpy(view[1])
-                if enable_cuda:
-                    pose_2d = pose_2d.cuda()
-
-                optimizer.zero_grad()
-
-                # Predict 3D poses
-                predicted_3d_pos = model(pose_2d)
-
-                # loss.backward()
-
-                optimizer.step()
-
-            # pose_3d is used to evaluate model, if just for use, we set None
-            pose_3d = person[0]
-            if pose_3d:
-                pose_3d = torch.from_numpy(pose_3d)
-                if enable_cuda:
-                    pose_3d = pose_3d.cuda()
+    for cameras, pose_cs, pose_2ds in data_iter:
+        if args.multi_view:
+            raise KeyError('sorry, multi_view is not in beta test')
+        pose_2d_m = pose_2ds[0].squeeze(0)
+        # N - number of people
+        N = pose_2d_m.shape[0]
+        # for each person
+        for i in range(N):
+            pose_2d = pose_2d_m[i].unsqueeze(0).type(torch.float32)
+            pose_c = model_pos(pose_2d)
+            T = regressor(pose_c, pose_2d)
+        break
