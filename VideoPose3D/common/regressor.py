@@ -1,12 +1,13 @@
 import torch
 
-def regressor(pose_cf, pose_2df):
+def regressor(pose_cf, pose_2df, camera):
     """
     input
         pose_cf - [1,x,17,3]
         pose_2df - [1,x,17,2]
+        camera - [cx,cy,fx,fy]
     return 
-        T - [x,3]
+        Tf - [x,3]
         loss - float32
     """
     pose_cf = pose_cf.squeeze(0)
@@ -18,18 +19,20 @@ def regressor(pose_cf, pose_2df):
     for f in range(frame):
         pose_c = pose_cf[f]
         pose_2d = pose_2df[f]
-        T, loss = regressorof(pose_c, pose_2d)
+        T, loss = regressorof(pose_c, pose_2d, camera)
         Tf[f] = T
         lossf += loss
     loss = lossf/frame
     return Tf, loss
 
 
-def regressorof(pose_c, pose_2d):
+def regressorof(pose_c, pose_2d, camera):
     """
     regressor of single frame
     """
     loss = 0
+    pose_2d[:,0] = (pose_2d[:,0]-camera[0])/(camera[2]*1000)
+    pose_2d[:,1] = (pose_2d[:,1]-camera[1])/(camera[3]*1000)
     x = torch.mean(pose_2d[:,0])
     y = torch.mean(pose_2d[:,1])
     x2 = torch.mean(torch.pow(pose_2d,2)[:,0])
@@ -49,5 +52,6 @@ def regressorof(pose_c, pose_2d):
                                   [yZ-Y],
                                   [x2y2Z-xX-yY]])
     T = torch.mm(torch.inverse(parameter_matrix),result_vector).flatten()
-
+    
     return T, loss
+

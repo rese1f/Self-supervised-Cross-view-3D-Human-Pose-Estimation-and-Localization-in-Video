@@ -76,7 +76,11 @@ for count in tqdm(range(args.number)):
         data_2d_std = c2s(data_c_std, inmat)
         view_id = camera_info['layout_name'] + '_' + str(i)
         dataset_zip[count][view_id]=dict()
-        dataset_zip[count][view_id]['camera']=inmat
+        cx = inmat[0,2]
+        cy = inmat[1,2]
+        fx = inmat[0,0]
+        fy = inmat[1,1]
+        dataset_zip[count][view_id]['camera']=[cx,cy,fx,fy]
         dataset_zip[count][view_id]['pose_c']=data_c_std
         dataset_zip[count][view_id]['pose_2d']=data_2d_std
 
@@ -86,12 +90,12 @@ print('Saving data...')
 dataset{
         'sample_1': {
             'view_1': {
-                'camera': array(3,3),
+                'camera': [cx,cy,fx,fy],
                 'pose_c': ndarray(n,x,17,3),
                 'pose_2d': ndarray(n,x,17,2),
             }
             'view_2': {
-                'camera': array(3,3),
+                'camera': [cx,cy,fx,fy],
                 'pose_c': ndarray(n,x,17,3),
                 'pose_2d': ndarray(n,x,17,2),
             }

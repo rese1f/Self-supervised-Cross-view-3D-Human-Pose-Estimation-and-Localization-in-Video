@@ -66,17 +66,30 @@ data_iter = DataLoader(dataset, shuffle=True)
 
 for epoch in tqdm(range(args.epochs)):
     for cameras, pose_cs, pose_2ds in data_iter:
+        
         if args.multi_view:
             raise KeyError('sorry, multi_view is not in beta test')
+
+        # if have ground truth 3D pose, make a evaluation
+        if pose_cs:
+            pose_c_m = pose_cs[0].squeeze(0)
+
         pose_2d_m = pose_2ds[0].squeeze(0)
+        camera_m = cameras[0].squeeze(0)
         # N - number of people
         N = pose_2d_m.shape[0]
         # for each person
         for i in range(N):
-            pose_2d = pose_2d_m[i].unsqueeze(0).type(torch.float32)
-            pose_c = model_pos(pose_2d)
+            pose_2d = pose_2d_m[i].unsqueeze(0)
+            pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
-            T, loss = regressor(pose_c, pose_2d_test)
+            T, loss = regressor(pose_c_test, pose_2d_test, camera_m)
+            
+            # if have ground truth 3D pose, make a evaluation
+            if pose_cs:
+                pose_c_gt = pose_c_m[i].squeeze(0)
+                print(pose_c_gt)
 
+            
             break
         break

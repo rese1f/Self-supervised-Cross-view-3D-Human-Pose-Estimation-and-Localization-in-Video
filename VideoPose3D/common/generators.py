@@ -25,12 +25,12 @@ class ChunkedGenerator(Dataset):
     dataset{
             'sample_1': {
                 'view_1': {
-                    'camera': array(3,3),
+                    'camera': [cx,cy,fx,fy],
                     'pose_c': ndarray(n,x,17,3),
                     'pose_2d': ndarray(n,x,17,2),
                 }
                 'view_2': {
-                    'camera': array(3,3),
+                    'camera': [cx,cy,fx,fy],
                     'pose_c': ndarray(n,x,17,3),
                     'pose_2d': ndarray(n,x,17,2),
                 }
@@ -53,7 +53,7 @@ class ChunkedGenerator(Dataset):
         view_keys_list = list(sample)
         for view_key in view_keys_list:
             view = sample[view_key]
-            camera = torch.from_numpy(view['camera'])
+            camera = torch.tensor(view['camera'])
             pose_c = torch.from_numpy(view['pose_c'])
             pose_2d = torch.from_numpy(view['pose_2d'])[...,:2]
             if torch.cuda.is_available():
