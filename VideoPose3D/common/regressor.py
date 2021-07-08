@@ -8,7 +8,7 @@ def regressor(pose_cf, pose_2df):
         pose_2df - [1,x,17,2]
     return 
         T - [x,3]
-        loss
+        loss - float32
     """
     pose_cf = pose_cf.squeeze(0)
     pose_2df = pose_2df.squeeze(0)
