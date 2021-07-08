@@ -167,7 +167,7 @@ def w2c(data_3d_std, camera_metadata, frame):
         data_c_std[i] = np.matmul(exmat[i],data, dtype= np.float32).reshape(ds[1],ds[2],ds[3]+1)[:,:,0:3]
     data_c_std = data_c_std.transpose(1,0,2,3) # transpose n and x to get original shape
 
-    return data_c_std
+    return data_c_std/1000
     
 
 def c2s(data_c_std, inmat):
@@ -187,4 +187,4 @@ def c2s(data_c_std, inmat):
     data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis], dtype=np.float32)
     data_2d_std = (data / np.abs(data[:,:,:,np.newaxis,2])).squeeze()
 
-    return data_2d_std
+    return data_2d_std/1000
