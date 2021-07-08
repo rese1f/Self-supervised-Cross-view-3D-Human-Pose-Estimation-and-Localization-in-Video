@@ -1,5 +1,4 @@
 import torch
-from torch.nn import parameter
 
 def regressor(pose_cf, pose_2df):
     """
