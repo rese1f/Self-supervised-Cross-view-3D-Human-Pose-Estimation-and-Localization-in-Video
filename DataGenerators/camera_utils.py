@@ -10,7 +10,7 @@ phone = {
     'tracking': True,
     'inmat': np.array([[1527.4,     0,  957.1],
                        [     0,1529.2,  529.8],
-                       [     0,     0,      1]],dtype=np.float32)
+                       [     0,     0,      1]])
 }
 
 others = {
