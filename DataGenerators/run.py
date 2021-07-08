@@ -74,7 +74,7 @@ for count in tqdm(range(args.number)):
         data_c_std = w2c(data_3d_std, camera_info, frame)
         inmat = camera_info['inmat']
         data_2d_std = c2s(data_c_std, inmat)
-        view_id = camera_info['layout_name'] + '_' + str(i)
+        view_id = camera_info['layout_name'] + str(i)
         dataset_zip[count][view_id]=dict()
         dataset_zip[count][view_id]['camera']=inmat
         dataset_zip[count][view_id]['pose_c']=data_c_std
@@ -100,6 +100,6 @@ dataset{
         }
     }
 '''
-np.savez_compressed('output/'+output_filename, dataset=dataset_zip)
+np.savez_compressed('output/'+output_filename, dataset=dataset)
 
 print('Done.')

@@ -52,7 +52,7 @@ if torch.cuda.is_available():
 
 receptive_field = model_pos.receptive_field()
 lr = args.learning_rate
-lr_decay = args.lr_decay
+lr_decay = args.lr_decay  
 initial_momentum = 0.1
 final_momentum = 0.001
 optimizer = optim.Adam(model_pos.parameters(), lr=lr, amsgrad=True)

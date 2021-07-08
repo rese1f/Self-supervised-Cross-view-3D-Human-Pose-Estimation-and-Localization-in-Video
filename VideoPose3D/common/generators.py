@@ -5,9 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import numpy as np
 import torch
-from torch._C import dtype
 from torch.utils.data import Dataset
 
 class ChunkedGenerator(Dataset):
