@@ -18,7 +18,7 @@ import errno
 
 from common.arguments import parse_args
 from common.model import *
-from common.utils import *
+from common.regressor import *
 from common.generators import ChunkedGenerator
 
 args = parse_args()
@@ -47,7 +47,10 @@ print('- Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
 print('- This model was trained for {} epochs'.format(checkpoint['epoch']))
 model_pos.load_state_dict(checkpoint['model_pos'])
+if torch.cuda.is_available():
+    model_pos = model_pos.cuda()
 
+receptive_field = model_pos.receptive_field()
 lr = args.learning_rate
 lr_decay = args.lr_decay
 initial_momentum = 0.1
@@ -72,5 +75,8 @@ for epoch in tqdm(range(args.epochs)):
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0).type(torch.float32)
             pose_c = model_pos(pose_2d)
-            T = regressor(pose_c, pose_2d)
+            pose_2d_test = pose_2d[:,receptive_field-1:]
+            T, loss = regressor(pose_c, pose_2d_test)
+
+            break
         break
