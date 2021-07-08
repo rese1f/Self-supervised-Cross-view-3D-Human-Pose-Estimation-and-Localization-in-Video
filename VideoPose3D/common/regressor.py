@@ -23,6 +23,8 @@ def regressor(pose_cf, pose_2df, camera):
         Tf[f] = T
         lossf += loss
     loss = lossf/frame
+    if torch.cuda.is_available():
+        Tf = Tf.cuda()
     return Tf, loss
 
 

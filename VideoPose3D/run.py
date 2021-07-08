@@ -88,8 +88,6 @@ for epoch in tqdm(range(args.epochs)):
             # if have ground truth 3D pose, make a evaluation
             if pose_cs:
                 pose_c_gt = pose_c_m[i].squeeze(0)
-                print(pose_c_gt)
-
             
             break
         break
