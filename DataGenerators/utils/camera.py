@@ -126,7 +126,7 @@ def generate_exmat(T_mat, center, tracking):
 
         Rotation = np.matmul(Rz, Ry)
         Rotation = np.matmul(Rotation, Rx)
-        Rotation = Rotation.transpose(0,1)
+        Rotation = Rotation.transpose(1,0)
             
 
         Translation = - np.matmul(Rotation, np.array(posCamera, dtype=np.float32).reshape(3, 1))
@@ -164,7 +164,7 @@ def w2c(data_3d_std, camera_metadata, frame):
     data_c_std = np.zeros(ds, dtype=np.float32)
     for i in range(exmat.shape[0]):
         data = data_3d_std[i].reshape(ds[1],ds[2],ds[3]+1,1)
-        data_c_std[i] = np.matmul(exmat[i],data).reshape(ds[1],ds[2],ds[3]+1)[:,:,0:3]
+        data_c_std[i] = np.matmul(exmat[i],data, dtype= np.float32).reshape(ds[1],ds[2],ds[3]+1)[:,:,0:3]
     data_c_std = data_c_std.transpose(1,0,2,3) # transpose n and x to get original shape
 
     return data_c_std
@@ -184,7 +184,7 @@ def c2s(data_c_std, inmat):
         data: of the same size as input data, i.e. [n, x, 17, 3]
     """
     
-    data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis])
+    data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis], dtype=np.float32)
     data_2d_std = (data / np.abs(data[:,:,:,np.newaxis,2])).squeeze()
 
     return data_2d_std
