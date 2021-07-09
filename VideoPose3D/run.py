@@ -79,11 +79,21 @@ for epoch in tqdm(range(args.epochs)):
 
         pose_2d_m = pose_2ds[0].squeeze(0)
         camera_m = cameras[0].squeeze(0)
+
         # N - number of people
         N = pose_2d_m.shape[0]
+
         # for each person
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0)
+            
+            if args.evaluate:
+                model_pos.eval()
+            else:
+                model_pos.train()
+                
+            optimizer.zero_grad()
+
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
@@ -91,9 +101,12 @@ for epoch in tqdm(range(args.epochs)):
             # if have ground truth 3D pose, make a evaluation
             if pose_cs and args.evaluate:
                 # T -> [x,3] -> [1,x,17,3]
-                T = T.unsqueeze(0).unsqueeze(2)
+                T = T.unsqueeze(1)
                 pose_c_gt = pose_c_m[i][receptive_field-1:]
-                pose_c_test = pose_c_test+T
+                pose_c_test = pose_c_test.squeeze(0) + T
+            
+            loss.backward()
+            optimizer.step()
 
             break
         break

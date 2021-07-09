@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('-r', '--resume', default='pretrained_h36m_cpn.bin', type=str, metavar='FILENAME',
                         help='checkpoint to resume (file name)')
     parser.add_argument('-v', '--multi-view', default=False, type=bool, metavar='V', help='if the dataset have multi-view')
-    parser.add_argument('-ev', '--evaluate', default=False, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
+    parser.add_argument('-ev', '--evaluate', default=True, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
     parser.add_argument('-u', '--update', default=True, type=bool, metavar='U', help='if update the parameter of model')
 
     # Model arguments

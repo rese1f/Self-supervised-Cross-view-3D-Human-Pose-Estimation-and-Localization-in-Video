@@ -74,14 +74,7 @@ def regressorof(pose_c, pose_2d, camera, update):
         beta = T[1] 
         gamma= T[2]
 
-        X_xZ2 = mean(pow(pX-mul(px,pZ),2))
-        X_xZ = mean(pX-mul(px,pZ))
-        Y_yZ2 = mean(pow(pY-mul(py,pZ),2))
-        Y_yZ = mean(pY-mul(py,pZ))
-        x2Z = mean(mul(pow(px,2),pZ))
-        y2Z = mean(mul(pow(py,2),pZ))
-
-        loss = alpha**2/J + beta**2/J +(x2+y2)*gamma**2 + X_xZ2 + Y_yZ2 -2*x*alpha*gamma -2*y*beta*gamma + 2*X_xZ*alpha + 2*Y_yZ*beta - 2*(xX+yY-x2Z-y2Z)*gamma 
+        loss = mean(pow(-px*gamma+pX-mul(px,pX)+alpha,2)+pow(-py*gamma+pY-mul(py,pY)+beta,2))
         
 
 
