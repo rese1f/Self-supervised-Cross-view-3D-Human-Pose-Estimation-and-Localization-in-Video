@@ -86,12 +86,11 @@ for epoch in tqdm(range(args.epochs)):
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0)
             
-            if args.evaluate:
-                model_pos.eval()
-            else:
+            if args.update:
                 model_pos.train()
-                
-            optimizer.zero_grad()
+                optimizer.zero_grad()
+            else:
+                model_pos.eval()
 
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
@@ -104,8 +103,9 @@ for epoch in tqdm(range(args.epochs)):
                 pose_c_gt = pose_c_m[i][receptive_field-1:]
                 pose_c_test = pose_c_test.squeeze(0) + T
             
-            loss.backward()
-            optimizer.step()
+            if args.update:
+                loss.backward()
+                optimizer.step()
 
             break
         break

@@ -39,4 +39,7 @@ def parse_args():
     
     args = parser.parse_args()
 
+    if not args.update and args.save:
+        RuntimeError('cannot save model when stay constant')
+
     return args
