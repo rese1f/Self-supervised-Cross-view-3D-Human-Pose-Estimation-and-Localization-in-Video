@@ -71,7 +71,10 @@ for epoch in tqdm(range(args.epochs)):
             raise KeyError('sorry, multi_view is not in beta test')
 
         # if have ground truth 3D pose, make a evaluation
-        if pose_cs:
+        if not pose_cs and args.evaluate:
+            raise KeyError('3D groung truth: 404 not found')
+
+        if pose_cs and args.evaluate:
             pose_c_m = pose_cs[0].squeeze(0)
 
         pose_2d_m = pose_2ds[0].squeeze(0)
@@ -86,8 +89,13 @@ for epoch in tqdm(range(args.epochs)):
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m)
             
             # if have ground truth 3D pose, make a evaluation
-            if pose_cs:
-                pose_c_gt = pose_c_m[i].squeeze(0)
-            
+            if pose_cs and args.evaluate:
+                # T -> [x,3] -> [1,x,17,3]
+                T = T.unsqueeze(0).unsqueeze(2)
+                pose_c_gt = pose_c_m[i][receptive_field-1:]
+                pose_c_test = pose_c_test+T
+
+            print(T)
+
             break
         break
