@@ -132,12 +132,11 @@ dmypy.json
 .idea/
 
 #config files
-configs.ini
-output/
-
+settings.json
 # Apple Mac local files
 .DS_STORE
 
 # Data Storages
 *.mat
 *.npz
+*.bin

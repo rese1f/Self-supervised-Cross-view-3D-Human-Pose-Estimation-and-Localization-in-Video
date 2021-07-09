@@ -42,16 +42,15 @@ filter_widths = [int(x) for x in args.architecture.split(',')]
 model_pos = TemporalModel(args.keypoints_number, 2, args.keypoints_number, filter_widths, 
             args.causal, args.dropout, args.channels, args.dense)
 
-chk_filename = os.path.join(args.checkpoint, args.resume)
+chk_filename = os.path.join(args.checkpoint, args.load)
 print('- Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
-print('- This model was trained for {} epochs'.format(checkpoint['epoch']))
 model_pos.load_state_dict(checkpoint['model_pos'])
 if torch.cuda.is_available():
     model_pos = model_pos.cuda()
 
 receptive_field = model_pos.receptive_field()
-lr = args.learning_rate
+lr = checkpoint['lr']
 lr_decay = args.lr_decay  
 initial_momentum = 0.1
 final_momentum = 0.001
@@ -110,3 +109,28 @@ for epoch in tqdm(range(args.epochs)):
 
             break
         break
+
+
+    # Decay learning rate exponentially
+    lr *= lr_decay
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+      
+    # Decay BatchNorm momentum
+    momentum = initial_momentum * np.exp(-epoch/args.epochs * np.log(initial_momentum/final_momentum))
+    model_pos.set_bn_momentum(momentum)
+
+    
+if args.save:
+    print('Saving model...')
+    chk_path = os.path.join(args.checkpoint, args.save)
+    print('- Saving checkpoint to', chk_path)
+            
+    torch.save({
+        'lr': lr,
+        'optimizer': optimizer.state_dict(),
+        'model_pos': model_pos.state_dict(),
+    }, chk_path)
+
+        
+print('Done.')
