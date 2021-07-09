@@ -86,7 +86,7 @@ for epoch in tqdm(range(args.epochs)):
             pose_2d = pose_2d_m[i].unsqueeze(0)
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
-            T, loss = regressor(pose_c_test, pose_2d_test, camera_m)
+            T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
             
             # if have ground truth 3D pose, make a evaluation
             if pose_cs and args.evaluate:
@@ -94,8 +94,6 @@ for epoch in tqdm(range(args.epochs)):
                 T = T.unsqueeze(0).unsqueeze(2)
                 pose_c_gt = pose_c_m[i][receptive_field-1:]
                 pose_c_test = pose_c_test+T
-
-            print(T)
 
             break
         break
