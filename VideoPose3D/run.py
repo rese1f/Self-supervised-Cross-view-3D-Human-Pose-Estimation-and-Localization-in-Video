@@ -1,11 +1,3 @@
-# Copyright (c) 2018-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
-
-# Code refactorer: Wenhao Chai 7/5/2021
 
 import torch
 from torch.utils.data import DataLoader
@@ -30,6 +22,13 @@ try:
 except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create checkpoint directory:', args.checkpoint)
+
+try:
+    # Create out directory if it does not exist
+    os.makedirs(args.output)
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        raise RuntimeError('Unable to create output directory:', args.checkpoint)
 
 
 print('Loading dataset...')

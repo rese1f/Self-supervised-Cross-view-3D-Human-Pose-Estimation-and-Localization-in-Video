@@ -1,9 +1,3 @@
-# Copyright (c) 2018-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
 
 import argparse
 
@@ -22,6 +16,8 @@ def parse_args():
     parser.add_argument('-v', '--multi-view', default=False, type=bool, metavar='V', help='if the dataset have multi-view')
     parser.add_argument('-eval', '--evaluate', default=True, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
     parser.add_argument('-u', '--update', default=True, type=bool, metavar='U', help='if update the parameter of model')
+    parser.add_argument('-o', '--output', default='output', type=str, metavar='PATH',
+                        help='output directory')
 
     # Model arguments
     parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
