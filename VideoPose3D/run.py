@@ -30,9 +30,6 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create output directory:', args.checkpoint)
 
-if args.output:
-    output_zip = dict()
-
 
 print('Loading dataset...')
 dataset_path = 'data/data_multi_' + args.dataset + '.npz'
@@ -64,7 +61,8 @@ if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset)
-
+if args.output:
+    output_zip = dict()
 
 print('Processing...')
 
@@ -74,19 +72,26 @@ pbar = tqdm(total=dataset.__len__())
 while epoch < args.epochs:
 
     count = 0
-
+    
     for cameras, pose_cs, pose_2ds in data_iter:
-        
+
+        if args.output:
+            pose_pred = list()
+            multi_T = list()
+            output_zip[count] = dict()
+            output_zip[count]['view_main'] = dict()
+
         if args.multi_view:
             raise KeyError('sorry, multi_view is not in beta test')
 
         # if have ground truth 3D pose, make a evaluation
         if not pose_cs and args.evaluate:
             raise KeyError('3D groung truth: 404 not found')
-
+        
         if pose_cs and args.evaluate:
             pose_c_m = pose_cs[0].squeeze(0)
 
+        # for main view
         pose_2d_m = pose_2ds[0].squeeze(0)
         camera_m = cameras[0].squeeze(0)
 
@@ -106,7 +111,11 @@ while epoch < args.epochs:
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
-            
+
+            if args.output:
+                pose_pred.append(pose_c_test)
+                multi_T.append(T)
+
             # if have ground truth 3D pose, make a evaluation
             if pose_cs and args.evaluate:
                 # T -> [x,3] -> [1,x,17,3]
@@ -117,6 +126,11 @@ while epoch < args.epochs:
             if args.update:
                 loss.backward()
                 optimizer.step()
+        
+        if args.output:
+            output_zip[count]['view_main']['pose_pred'] = pose_pred
+            output_zip[count]['view_main']['T'] = multi_T
+            output_zip[count]['view_main']['receptive_field'] = receptive_field
         
         count += 1
         pbar.update(1)
@@ -147,7 +161,8 @@ if args.save:
 
 if args.output:
     print('Saving output...')
-    output_path = os.path.join(args.output, 'data/data_multi_output_' + args.dataset + '.npz')
-    print('- Saving output to', output_path)
+    output_filename = os.path.join(args.output, 'data/data_multi_output_' + args.dataset + '.npz')
+    print('- Saving output to', output_filename)
+    np.savez_compressed(output_filename, positions_3d=output_zip)
         
 print('Done.')
