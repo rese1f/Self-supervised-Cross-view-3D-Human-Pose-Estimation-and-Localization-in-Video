@@ -30,6 +30,9 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create output directory:', args.checkpoint)
 
+if args.output:
+    output_zip = dict()
+
 
 print('Loading dataset...')
 dataset_path = 'data/data_multi_' + args.dataset + '.npz'
@@ -65,7 +68,13 @@ data_iter = DataLoader(dataset)
 
 print('Processing...')
 
-for epoch in tqdm(range(args.epochs)):
+epoch = 0
+pbar = tqdm(total=dataset.__len__())
+
+while epoch < args.epochs:
+
+    count = 0
+
     for cameras, pose_cs, pose_2ds in data_iter:
         
         if args.multi_view:
@@ -108,10 +117,10 @@ for epoch in tqdm(range(args.epochs)):
             if args.update:
                 loss.backward()
                 optimizer.step()
-
-            break
-        break
-
+        
+        count += 1
+        pbar.update(1)
+    pbar.close()
 
     # Decay learning rate exponentially
     lr *= lr_decay
@@ -121,6 +130,8 @@ for epoch in tqdm(range(args.epochs)):
     # Decay BatchNorm momentum
     momentum = initial_momentum * np.exp(-epoch/args.epochs * np.log(initial_momentum/final_momentum))
     model_pos.set_bn_momentum(momentum)
+
+    epoch += 1
 
     
 if args.save:
