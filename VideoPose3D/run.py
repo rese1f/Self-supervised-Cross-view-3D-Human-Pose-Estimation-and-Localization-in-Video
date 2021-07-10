@@ -33,7 +33,7 @@ except OSError as e:
 
 print('Loading dataset...')
 dataset_path = 'data/data_multi_' + args.dataset + '.npz'
-dataset = np.load(dataset_path, allow_pickle=True)['dataset']
+dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 
 
 print('Loading Model...')
@@ -59,8 +59,11 @@ if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
 
 
 print('Preparing data...')
-dataset = ChunkedGenerator(dataset)
-data_iter = DataLoader(dataset, shuffle=True)
+dataset = ChunkedGenerator(dataset_zip)
+data_iter = DataLoader(dataset)
+
+
+print('Processing...')
 
 for epoch in tqdm(range(args.epochs)):
     for cameras, pose_cs, pose_2ds in data_iter:
@@ -131,5 +134,9 @@ if args.save:
         'model_pos': model_pos.state_dict(),
     }, chk_path)
 
+if args.output:
+    print('Saving output...')
+    output_path = os.path.join(args.output, 'data/data_multi_output_' + args.dataset + '.npz')
+    print('- Saving output to', output_path)
         
 print('Done.')
