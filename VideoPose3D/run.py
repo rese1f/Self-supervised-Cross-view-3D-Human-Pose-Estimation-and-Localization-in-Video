@@ -24,12 +24,13 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create checkpoint directory:', args.checkpoint)
 
-try:
-    # Create out directory if it does not exist
-    os.makedirs(args.output)
-except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise RuntimeError('Unable to create output directory:', args.checkpoint)
+if args.output:
+    try:
+        # Create out directory if it does not exist
+        os.makedirs('output')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise RuntimeError('Unable to create output directory')
 
 
 print('Loading dataset...')
@@ -49,6 +50,7 @@ checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
 model_pos.load_state_dict(checkpoint['model_pos'])
 if torch.cuda.is_available():
     model_pos = model_pos.cuda()
+    print('- Running in device', torch.cuda.get_device_name())
 
 receptive_field = model_pos.receptive_field()
 lr = checkpoint['lr']
@@ -62,9 +64,13 @@ if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset_zip)
-data_iter = DataLoader(dataset)
+
 if args.output:
     output_zip = dict()
+    data_iter = DataLoader(dataset)
+else:
+    data_iter = DataLoader(dataset, shuffle=True)
+
 
 print('Processing...')
 
@@ -164,7 +170,7 @@ if args.save:
 
 if args.output:
     print('Saving output...')
-    output_filename = os.path.join(args.output, 'data_multi_output_' + args.dataset + '.npz')
+    output_filename = os.path.join('output/data_multi_output_' + args.dataset + '.npz')
     print('- Saving output to', output_filename)
     np.savez_compressed(output_filename, posetions_2d=dataset_zip, positions_3d=output_zip)
 
@@ -187,7 +193,6 @@ if args.output:
         }
     }
     """
-print(loss_list)
 
 # Save training curves after every epoch, as .png images (if requested)
 if args.export_training_curves:
@@ -199,7 +204,7 @@ if args.export_training_curves:
 
     plt.figure()
     x = np.arange(0, len(loss_list))
-    plt.plot(x, loss_list, '--', color='C0')
+    plt.plot(x, loss_list, linestyle='-', color='C0')
     plt.xlabel('Batch')
     plt.ylabel('Regression loss')
     plt.savefig(os.path.join(args.checkpoint, 'loss_3d.png'))
