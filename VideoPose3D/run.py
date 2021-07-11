@@ -64,12 +64,10 @@ if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset_zip)
+data_iter = DataLoader(dataset, shuffle=True)
 
 if args.output:
     output_zip = dict()
-    data_iter = DataLoader(dataset)
-else:
-    data_iter = DataLoader(dataset, shuffle=True)
 
 
 print('Processing...')
@@ -79,10 +77,9 @@ loss_list = list()
 
 while epoch < args.epochs:
 
-    count = 0
     pbar = tqdm(total=dataset.__len__())
     
-    for cameras, pose_cs, pose_2ds in data_iter:
+    for cameras, pose_cs, pose_2ds, count in data_iter:
 
         if args.output:
             pose_pred = list()
@@ -141,7 +138,6 @@ while epoch < args.epochs:
             output_zip[count]['T'] = multi_T
             output_zip[count]['receptive_field'] = receptive_field
         
-        count += 1
         pbar.update(1)
     pbar.close()
 
