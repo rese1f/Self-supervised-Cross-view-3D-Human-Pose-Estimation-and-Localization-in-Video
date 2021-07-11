@@ -79,7 +79,6 @@ while epoch < args.epochs:
             pose_pred = list()
             multi_T = list()
             output_zip[count] = dict()
-            output_zip[count]['view_main'] = dict()
 
         if args.multi_view:
             raise KeyError('sorry, multi_view is not in beta test')
@@ -128,9 +127,9 @@ while epoch < args.epochs:
                 optimizer.step()
         
         if args.output:
-            output_zip[count]['view_main']['pose_pred'] = pose_pred
-            output_zip[count]['view_main']['T'] = multi_T
-            output_zip[count]['view_main']['receptive_field'] = receptive_field
+            output_zip[count]['pose_pred'] = pose_pred
+            output_zip[count]['T'] = multi_T
+            output_zip[count]['receptive_field'] = receptive_field
         
         count += 1
         pbar.update(1)
@@ -163,6 +162,26 @@ if args.output:
     print('Saving output...')
     output_filename = os.path.join(args.output, 'data/data_multi_output_' + args.dataset + '.npz')
     print('- Saving output to', output_filename)
-    np.savez_compressed(output_filename, positions_3d=output_zip)
+    np.savez_compressed(output_filename, posetions_2d=dataset_zip, positions_3d=output_zip)
+
+    """
+    dataset_zip = {
+        sample'0': {
+
+        }
+    }
+    output_zip = {
+        sample'0': {
+            'pose_pred': list(n,x,17,3),
+            'T': list(n,x,3),
+            'receptive_field': int
+        }
+        sample'1': {
+            'pose_pred': list(n,x,17,3),
+            'T': list(n,x,3),
+            'receptive_field': int
+        }
+    }
+    """
         
 print('Done.')
