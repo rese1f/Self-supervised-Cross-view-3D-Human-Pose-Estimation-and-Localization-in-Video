@@ -133,6 +133,7 @@ dmypy.json
 
 #config files
 settings.json
+
 # Apple Mac local files
 .DS_STORE
 
@@ -140,3 +141,4 @@ settings.json
 *.mat
 *.npz
 *.bin
+*.png

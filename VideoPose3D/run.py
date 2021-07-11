@@ -7,6 +7,7 @@ from tqdm import tqdm
 import numpy as np
 import os
 import errno
+import sys
 
 from common.arguments import parse_args
 from common.model import *
@@ -33,6 +34,7 @@ except OSError as e:
 
 print('Loading dataset...')
 dataset_path = 'data/data_multi_' + args.dataset + '.npz'
+print('- Loading file', dataset_path)
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 
 
@@ -67,11 +69,12 @@ if args.output:
 print('Processing...')
 
 epoch = 0
-pbar = tqdm(total=dataset.__len__())
+loss_list = list()
 
 while epoch < args.epochs:
 
     count = 0
+    pbar = tqdm(total=dataset.__len__())
     
     for cameras, pose_cs, pose_2ds in data_iter:
 
@@ -110,6 +113,7 @@ while epoch < args.epochs:
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
+            loss_list.append(loss)
 
             if args.output:
                 pose_pred.append(pose_c_test)
@@ -160,7 +164,7 @@ if args.save:
 
 if args.output:
     print('Saving output...')
-    output_filename = os.path.join(args.output, 'data/data_multi_output_' + args.dataset + '.npz')
+    output_filename = os.path.join(args.output, 'data_multi_output_' + args.dataset + '.npz')
     print('- Saving output to', output_filename)
     np.savez_compressed(output_filename, posetions_2d=dataset_zip, positions_3d=output_zip)
 
@@ -183,5 +187,22 @@ if args.output:
         }
     }
     """
-        
+print(loss_list)
+
+# Save training curves after every epoch, as .png images (if requested)
+if args.export_training_curves:
+    print('Saving traning curve...')
+    if 'matplotlib' not in sys.modules:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
+    plt.figure()
+    x = np.arange(0, len(loss_list))
+    plt.plot(x, loss_list, '--', color='C0')
+    plt.xlabel('Batch')
+    plt.ylabel('Regression loss')
+    plt.savefig(os.path.join(args.checkpoint, 'loss_3d.png'))
+    plt.close('all')
+
 print('Done.')
