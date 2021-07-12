@@ -15,7 +15,7 @@ The codeblock level logic of this project is conposed of four blocks:
 
 By graph presentation, the codeblock level logic can be expressed as below.
 
-![BlockLogic](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-101229.png)
+<div align=center>![BlockLogic](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-101229.png)</div>
 
 ## Overall Layout of the Project
 
@@ -30,13 +30,7 @@ By graph presentation, the overall layout of the project can be expressed as bel
 
 ![OverallLayout](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-101231.png)
 
-For dissecting all the parts please turn to [DOCUMENTATION.d](./DOCUMENTATION.md), which elaborates on the explanation of all functions and parameters passed in for each code block.
-
-## Algorithm Flowchart
-
-This is the flowchart of our algorithm about operations on *Human3.6M*. The infeed dataset may be expanded to datasets other than *Human3.6M*.
-
-![2021-06-14-144814](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-15-021149.png)
+For dissecting all the parts please turn to [DOCUMENTATION.md](./DOCUMENTATION.md), which elaborates on the explanation of all functions and parameters passed in for each code block.
 
 ## Vertex Layout of *Human3.6M* Dataset
 
