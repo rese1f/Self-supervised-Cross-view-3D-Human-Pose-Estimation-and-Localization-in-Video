@@ -2,7 +2,7 @@
 
 ## Release Notes
 
-The release of version 2.0.0 will be carried out after the accomplishment of the visualization part of the Data Enhancement part.
+The release of version 2.0.0 will be carried out after the accomplishment of the visualization part of the Data Enhancement part.git pu
 
 ## Codeblock Level Logic
 
