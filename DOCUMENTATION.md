@@ -43,6 +43,12 @@ This part is core of this project, and will be explained detailedly. The overall
 
 ![image-20210712191740717](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-111740.png)
 
+Each part of the algorithm is separated from each other and is implemented individually.
+
+-   Random Functioning. The random functioning part comprises of 
+-   Collision Elimination.
+-   Camera Generation.
+
 By graph presentation, the algorithm of data enhancement part can be expressed as below.
 
 ![DataEnhancementAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110456.png)
@@ -55,7 +61,13 @@ Now we look into each part one by one.
 
 #### Collision Elimination
 
+The collision elimination part is a brand new, self-developed algorithm, *Sequential Approach for Eliminating Individual Collisions*.  The pseudo code is shown below.
 
+![image-20210705130049360](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-112522.png)
+
+In this function, there is another complicated function `find_shift_vector()`, which is illustrated below.
+
+![image-20210705130100821](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-112610.png)
 
 #### Camera generator
 
@@ -84,4 +96,4 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 ## STAR Model
 
-This part is still under developement. Do NOT edit this part until version 2.0.0 is released.
+This part is still under developement. Do **not** edit this part until version 2.0.0 is released.
