@@ -88,12 +88,16 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 ## Video Pose 3D
 
+![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113712.png)
 
-
-
+![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113719.png)
 
 
 
 ## STAR Model
+
+The vertex layout of STAR model is shown below.
+
+![WechatIMG572](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113623.png)
 
 This part is still under developement. Do **not** edit this part until version 2.0.0 is released.

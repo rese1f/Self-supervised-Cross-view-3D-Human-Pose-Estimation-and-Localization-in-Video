@@ -32,15 +32,9 @@ By graph presentation, the overall layout of the project can be expressed as bel
 
 For dissecting all the parts please turn to [DOCUMENTATION.md](./DOCUMENTATION.md), which elaborates on the explanation of all functions and parameters passed in for each code block.
 
-## Vertex Layout of the *STAR* Model
+## Super-parameter Layout
 
-![WechatIMG572](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091732.png)
+The basic dataset layouts including the vertex layout of `Human3.6M` is in [DATASETS.md](./DATASETS.md), and the vertex layout of the STAR model is in [DOCUMENTATION.md](./DOCUMENTATION.md).
 
-## Logic of VideoPose3D Project
-
-![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-06-30-091845.png)
-
-## A More Accurate Logic
-
-![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-05-132050.png)
+If you want to change the super-parameters layout of the Data Generators workflow part, please change the `*_utils.py` files in dir `DataGenerators`. Note that you have to visualize the results after you change them, in order to prevent possible hitches in building.
 
