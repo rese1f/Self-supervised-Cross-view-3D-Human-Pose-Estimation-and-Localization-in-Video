@@ -45,7 +45,7 @@ This part is core of this project, and will be explained detailedly. The overall
 
 Each part of the algorithm is separated from each other and is implemented individually.
 
--   Random Functioning. The random functioning part comprises of 
+-   Random Functioning. The random functioning part comprises of the random translation part and the random rotation part.
 -   Collision Elimination.
 -   Camera Generation.
 
@@ -88,7 +88,11 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 ## Video Pose 3D
 
-![image-20210630171845523](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113712.png)
+Note that although this part is already implemented, it’s not reported yet because it containes much mathematical knowledge. The detailed illustration of this part will be shown in the **essay**.
+
+This workflow part aims to switch 2D pose to 3D. The main technique used is the regressor, with a back-propagation process `back_forward()` to gain the feedback system with a loss value.
+
+The basic logic of this part can be expressed below.
 
 ![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113719.png)
 
