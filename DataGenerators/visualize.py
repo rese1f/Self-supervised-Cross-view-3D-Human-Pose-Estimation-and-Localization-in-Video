@@ -1,10 +1,12 @@
 import numpy as np
-import scipy.io as scio
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from mpl_toolkits.mplot3d import Axes3D
 from tqdm import tqdm
 from arguments import parse_args
+from random import choice
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d.proj3d import proj_transform
+from mpl_toolkits.mplot3d.axes3d import Axes3D
 
 from data_utils import *
 
@@ -46,7 +48,9 @@ class Visualization:
 
 
 
-
+        # prepare color
+        self.color = []
+        for i in range(self.n): self.color.append("#" + "".join([choice("0123456789ABCDEF") for i in range(6)]))
 
 
         #generate subplot
@@ -71,12 +75,13 @@ class Visualization:
         
     def plt2D(self, view_key, frame):
         self.ax[view_key][1].clear()
-        multiperson_data = self.dataset[view_key]["pose_2d"] * 1e3
+        multiperson_data = self.dataset[view_key]["pose_2d"] * 1e3; k = 0
         for person in multiperson_data:
             for i in self.skeleton:
                 x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
                 y = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
-                self.ax[view_key][1].plot(x, y, lw=2, color="b",alpha=0.2)
+                self.ax[view_key][1].plot(x, y, lw=2, c=self.color[k],alpha=0.6); 
+            k += 1
             
             for j in range(17):
                 x = person[frame,j,0]
@@ -101,17 +106,25 @@ class Visualization:
 
     def plt3D(self, view_key, frame):
         self.ax[view_key][0].clear()
-        multiperson_data = self.dataset[view_key]["pose_c"] * 1e3
+        multiperson_data = self.dataset[view_key]["pose_c"] * 1e3; k = 0
         for person in multiperson_data:
             for i in self.skeleton:
                 x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
                 z = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
                 y = np.stack((person[frame, i[0], 2], person[frame, i[1], 2]), 0)
-                self.ax[view_key][0].plot3D(x, y, z, lw=2, c="#000520", alpha = 0.3)
+                self.ax[view_key][0].plot3D(x, y, z, lw=2, c=self.color[k], alpha = 0.8); 
+            k+=1
+
+        self.ax[view_key][0].arrow3D(0,0,0,
+           0,1,0,
+           mutation_scale=20,
+           arrowstyle="-|>",
+           linestyle='dashed')
+
 
         self.ax[view_key][0].set_xlim3d([self.center_c[view_key][0] - 2*self.radius, self.center_c[view_key][0] + 2*self.radius]) # 画布大小
         self.ax[view_key][0].set_ylim3d([self.center_c[view_key][2] - 2*self.radius, self.center_c[view_key][2] + 2*self.radius])
-        self.ax[view_key][0].set_zlim3d([0, self.radius + self.center_c[view_key][1]])
+        self.ax[view_key][0].set_zlim3d([-self.radius/2 + self.center_c[view_key][1], self.radius/2 + self.center_c[view_key][1]])
         pass
 
         
@@ -147,19 +160,41 @@ class Visualization:
         print(center_dict)
         return center_dict
 
+#   this prt used for arrow drawing
+class Arrow3D(FancyArrowPatch):
+
+    def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
+        super().__init__((0, 0), (0, 0), *args, **kwargs)
+        self._xyz = (x, y, z)
+        self._dxdydz = (dx, dy, dz)
+
+    def draw(self, renderer):
+        x1, y1, z1 = self._xyz
+        dx, dy, dz = self._dxdydz
+        x2, y2, z2 = (x1 + dx, y1 + dy, z1 + dz)
+
+        xs, ys, zs = proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        super().draw(renderer)
+
+def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
+    '''Add an 3d arrow to an `Axes3D` instance.'''
+
+    arrow = Arrow3D(x, y, z, dx, dy, dz, *args, **kwargs)
+    ax.add_artist(arrow)
+
+setattr(Axes3D, 'arrow3D', _arrow3D)
 
 
 
 
 
 
-
-
-
-#visualize
+#visualize main
 
 
 if __name__ == '__main__':
+    
     filename = '1'
     v = Visualization()
     v.animate()
