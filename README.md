@@ -1,4 +1,4 @@
-# DE-PRJ: V-1.9.7 (ENHANCED)
+# DE-PRJ: V-1.9.7 (ENHANCED)
 
 ## Release Notes
 
