@@ -15,7 +15,7 @@ The codeblock level logic of this project is conposed of four blocks:
 
 By graph presentation, the codeblock level logic can be expressed as below.
 
-<div align=center>![BlockLogic](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-101229.png)</div>
+![BlockLogic](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-111143.png)
 
 ## Overall Layout of the Project
 

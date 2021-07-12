@@ -41,11 +41,27 @@ If you’re on the right way, you will find `data_3d_h36m.npz` in dir `DataGener
 
 This part is core of this project, and will be explained detailedly. The overall algorithm of this part can be expressed as a self-developed algorithm, as shown below.
 
-
+![image-20210712191740717](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-111740.png)
 
 By graph presentation, the algorithm of data enhancement part can be expressed as below.
 
 ![DataEnhancementAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110456.png)
+
+Now we look into each part one by one.
+
+#### Random Functioning
+
+
+
+#### Collision Elimination
+
+
+
+#### Camera generator
+
+
+
+
 
 ### Execution
 
@@ -68,3 +84,4 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 ## STAR Model
 
+This part is still under developement. Do NOT edit this part until version 2.0.0 is released.
