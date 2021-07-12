@@ -1,4 +1,8 @@
-# Dataexpand 1.9.7 Released
+# DE-PRJ: V-1.9.7 (ENHANCED)
+
+## Release Notes
+
+The release of version 2.0.0 will be carried out after the accomplishment of the visualization part of the Data Enhancement part.
 
 ## Codeblock Level Logic
 
