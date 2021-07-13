@@ -108,21 +108,21 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 If you want to changes the super-parameters, you have these choices below:
 
-| Arg.   | Abbr.           | Meaning                                           | Default |
-| ------ | --------------- | ------------------------------------------------- | ------- |
-| `-d`   | `--dataset`     | The dataset to be expanded                        | *h36m*  |
-| `-min` | `--min`         | The minimum number of persons in the new dataset. | 2       |
-| `-max` | `--max`         | The maximum number of persons in the new dataset  | 4       |
-| `-s`   | `--shift`       |                                                   |         |
-| `-t`   | `--translation` | The mean value for the random translation part.   | 1000    |
-| `-r`   | `--rotation`    | The                                               | True    |
-| `-n`   | `--number`      |                                                   |         |
-| `-c`   | `camera`        |                                                   |         |
-| `-v`   | `--view`        |                                                   |         |
-
-
+| Arg.   | Abbr.           | Meaning                                                      | Default   |
+| ------ | --------------- | ------------------------------------------------------------ | --------- |
+| `-d`   | `--dataset`     | The dataset to be expanded.                                  | *h36m*    |
+| `-min` | `--min`         | The minimum number of persons in the new dataset.            | 2         |
+| `-max` | `--max`         | The maximum number of persons in the new dataset             | 4         |
+| `-s`   | `--shift`       | The mean value for shifting the timeline.                    | 500       |
+| `-t`   | `--translation` | The mean value for the random translation part.              | 1000      |
+| `-r`   | `--rotation`    | Whether rotating a single raw data (*True*) or not (*False*). | *True*    |
+| `-n`   | `--number`      | The number of the generated datasets (all at once).          | 16        |
+| `-c`   | `camera`        | The type of camera used to generate the new dataset.         | [‘Phone’] |
+| `-v`   | `--view`        | The number of view sites.                                    | 1         |
 
 ## Video Pose 3D
+
+### Principles
 
 Note that although this part is already implemented, it’s not reported yet because it containes much mathematical knowledge. The detailed illustration of this part will be shown in the **essay**.
 
@@ -131,6 +131,28 @@ This workflow part aims to switch 2D pose to 3D. The main technique used is the 
 The basic logic of this part can be expressed below.
 
 ![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113719.png)
+
+### Execution/Super-parameters
+
+| Arg.    | Abbr.                      | Meaning                                                      | Default                   |
+| ------- | -------------------------- | ------------------------------------------------------------ | ------------------------- |
+| `-d`    | `--dataset`                | The dataset to be expanded.                                  | *h36m*                    |
+| `-k`    | `--keypoints_number`       | The number of key points in each frame.                      | 17                        |
+| `-c`    | `--checkpoint`             | The dir for outputting checkpoints.                          | `checkpoint`              |
+| `-l`    | `--load`                   | The checkpoint file to be loaded.                            | `pretrained_h36m_cpn.bin` |
+| /       | `--save`                   | The checkpoint file to be saved.                             | `trained_h36m_cpn.bin`    |
+| `-v`    | `--multi-view`             | Whether the data set has multi-view (*True*) or not (*False*). | *False*                   |
+| `-eval` | `--evaluate`               | Whether the machine makes evaluation after getting the 3D ground truth (*True*) or not. (*False*) | *True*                    |
+| `-u`    | `--update`                 | Whether the machine updates the parameters of the model (*True*) or not (*False*). | *True*                    |
+| `-o`    | `--output`                 | Whether the output predicts the 3D pose (*True*) or not(*False*). | *False*                   |
+| /       | `--export-training-curves` | If flagged, save training curves (as `*.png` files)          | **FLAG HAS NO DEFAULT**   |
+| `-s`    | `--stride`                 | The trunk size to use when training.                         | 1                         |
+| `-e`    | `--epochs`                 | The number of training epochs.                               | 4                         |
+| `-drop` | `--dropout`                | The probability for dropouts.                                | 0.25                      |
+| `-lrd`  | `--lr-decay`               | The decay of learning rate through each epoch.               | 0.95                      |
+| `-arc`  | `--architecture`           | The filter widths (separated by commas).                     | 3, 3, 3, 3, 3             |
+| /       | `--causal`                 |                                                              | **FLAG HAS NO DEFAULT**   |
+| `-ch`   | `--channels`               |                                                              | 1024                      |
 
 
 
