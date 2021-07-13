@@ -36,8 +36,8 @@ def regressorof(pose_c, pose_2d, camera, update):
     pose_c = pose_c.transpose(0,1)
     pose_2d = pose_2d.transpose(0,1)
     # for regression
-    px = (pose_2d[0]-camera[0]/1000)/(camera[2]/1000)
-    py = (pose_2d[1]-camera[1]/1000)/(camera[3]/1000)
+    px = (pose_2d[0]-camera[0])/(camera[2]/1000)
+    py = (pose_2d[1]-camera[1])/(camera[3]/1000)
     pX = pose_c[0]
     pY = pose_c[1]
     pZ = pose_c[2]
