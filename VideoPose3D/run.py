@@ -81,7 +81,8 @@ while epoch < args.epochs:
     
     for cameras, pose_cs, pose_2ds, count in data_iter:
 
-        if args.output:
+        if args.output and epoch==args.epochs-1:
+            count = count.item()
             pose_pred = list()
             multi_T = list()
             output_zip[count] = dict()
@@ -118,7 +119,7 @@ while epoch < args.epochs:
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
             loss_list.append(loss)
 
-            if args.output:
+            if args.output and epoch==args.epochs-1:
                 pose_pred.append(pose_c_test)
                 multi_T.append(T)
 
