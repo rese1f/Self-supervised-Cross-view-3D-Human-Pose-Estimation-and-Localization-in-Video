@@ -120,6 +120,8 @@ If you want to changes the super-parameters, you have these choices below:
 | `-c`   | `camera`        | The type of camera used to generate the new dataset.         | [‘Phone’] |
 | `-v`   | `--view`        | The number of view sites.                                    | 1         |
 
+If you are curious about the source code implementing the parameters, turn to [DataGenerators/arguments.py](./DataGenerators/arguments.py)
+
 ## Video Pose 3D
 
 ### Principles
@@ -130,7 +132,7 @@ This workflow part aims to switch 2D pose to 3D. The main technique used is the 
 
 The basic logic of this part can be expressed below.
 
-![image-20210705212050018](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113719.png)
+![VideoPose3DLayout](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-070950.png)
 
 ### Execution/Super-parameters
 
@@ -151,10 +153,10 @@ The basic logic of this part can be expressed below.
 | `-drop` | `--dropout`                | The probability for dropouts.                                | 0.25                      |
 | `-lrd`  | `--lr-decay`               | The decay of learning rate through each epoch.               | 0.95                      |
 | `-arc`  | `--architecture`           | The filter widths (separated by commas).                     | 3, 3, 3, 3, 3             |
-| /       | `--causal`                 |                                                              | **FLAG HAS NO DEFAULT**   |
-| `-ch`   | `--channels`               |                                                              | 1024                      |
+| /       | `--causal`                 | If flagged, use causal convolutions for real-time processing. | **FLAG HAS NO DEFAULT**   |
+| `-ch`   | `--channels`               | The number of channels in the convolution layers.            | 1024                      |
 
-
+If you are curious about the source code implementing the parameters, turn to [VideoPose3D/common/arguments.py](VideoPose3D/common/arguments.py).
 
 ## STAR Model
 
