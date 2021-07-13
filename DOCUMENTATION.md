@@ -24,26 +24,6 @@ By graph presentation, the algorithm of the data preparation part can be express
 
 ![PrepareDatasetAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110447.png)
 
-### Parameters
-
-#### `extract(dict_keys, min, max)`
-
-`dict_keys`: 
-
-`min`:
-
-`max`:
-
-#### `pre_process(array, shift, distance, rotation)`
-
-`array`:
-
-`shift`:
-
-`distance`:
-
-`rotation`:
-
 ### Execution
 
 For execution, simply type
@@ -61,7 +41,7 @@ If you’re on the right way, you will find `data_3d_h36m.npz` in dir `DataGener
 
 This part is core of this project, and will be explained detailedly. The overall algorithm of this part can be expressed as a self-developed algorithm, as shown below.
 
-![image-20210712191740717](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-111740.png)
+![image-20210713152538005](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-072538.png)
 
 Each part of the algorithm is separated from each other and is implemented individually.
 
@@ -77,17 +57,19 @@ Now we look into each part one by one.
 
 #### Random Functioning
 
-This part basically deal with the movements of the raw data. 
+This part basically deals with the movements of the raw data. Firstly, the algorithm randomly shifts the timeline of the input data pieces; secondly, the algorithm randomly translationally moves the persons; at last, if the user passes in a command for rotation, execute the rotation part. The pseudo-code is shown below.
+
+![image-20210713153549228](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-073549.png)
 
 #### Collision Elimination
 
 The collision elimination part is a brand new, self-developed algorithm, *Sequential Approach for Eliminating Individual Collisions*.  The pseudo code is shown below.
 
-![image-20210705130049360](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-112522.png)
+![image-20210713153609929](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-073610.png)
 
 In this function, there is another complicated function `find_shift_vector()`, which is illustrated below.
 
-![image-20210705130100821](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-112610.png)
+![image-20210713153622881](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-073623.png)
 
 #### Camera generator
 
