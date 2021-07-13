@@ -45,9 +45,9 @@ This part is core of this project, and will be explained detailedly. The overall
 
 Each part of the algorithm is separated from each other and is implemented individually.
 
--   Random Functioning. The random functioning part comprises of the random translation part and the random rotation part.
--   Collision Elimination.
--   Camera Generation.
+-   Random Functioning. The random functioning part comprises of the random translation part and the random rotation part. Both parts take one person and do ramdom switches on the person, after which multiple persons will be combined and put into one coordinate system and form a new series of data. The dataset is thus “enhanced” to a new one, with multiple persons and a double/triple complexity.
+-   Collision Elimination. This part deals with the collision after the random functioning part. After the random functioning part the persons are likely to collide with each other, which is forbidden in real datasets. Our group thus provides a self-developed algorithm to the dataset to gain a *shift vector* for each person to avoid collisions.
+-   Camera Generation. After the collision elimination part we now gain the 3 dimensional dataset with multiple persons in each frame. Now by the extrinsic camera matrix we gain the corresponding 2 dimensional dataset, and by the intrinsic camera matrix we gain the corresponding 2 dimensional dataset without deleterious distortions. This part also simulates different kinds of motions of cameras, e.g. phone camera and surveillance camera.
 
 By graph presentation, the algorithm of data enhancement part can be expressed as below.
 
