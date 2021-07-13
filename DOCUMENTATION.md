@@ -24,6 +24,26 @@ By graph presentation, the algorithm of the data preparation part can be express
 
 ![PrepareDatasetAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110447.png)
 
+### Parameters
+
+#### `extract(dict_keys, min, max)`
+
+`dict_keys`: 
+
+`min`:
+
+`max`:
+
+#### `pre_process(array, shift, distance, rotation)`
+
+`array`:
+
+`shift`:
+
+`distance`:
+
+`rotation`:
+
 ### Execution
 
 For execution, simply type
@@ -57,7 +77,7 @@ Now we look into each part one by one.
 
 #### Random Functioning
 
-
+This part basically deal with the movements of the raw data. 
 
 #### Collision Elimination
 
@@ -71,11 +91,11 @@ In this function, there is another complicated function `find_shift_vector()`, w
 
 #### Camera generator
 
+This part basically 
 
 
 
-
-### Execution
+### Execution/Super-parameters
 
 For execution simply type
 
@@ -84,7 +104,17 @@ cd ./DataGenerators/
 python3 run.py
 ```
 
-If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `DataGenerators/output`. 
+If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `DataGenerators/output`.
+
+If you want to changes the super-parameters, you have these choices below:
+
+| Arg. | Abbr.       | Usage                                | Default |
+| ---- | ----------- | ------------------------------------ | ------- |
+| `-d` | `--dataset` | prescribe the dataset to be expanded | *h36m*  |
+|      |             |                                      |         |
+|      |             |                                      |         |
+
+
 
 ## Video Pose 3D
 
