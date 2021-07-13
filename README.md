@@ -34,7 +34,7 @@ For dissecting all the parts please turn to [DOCUMENTATION.md](./DOCUMENTATION.m
 
 ## Super-parameter Layout
 
-The basic dataset layouts including the vertex layout of `Human3.6M` is in [DATASETS.md](./DATASETS.md), and the vertex layout of the STAR model is in [DOCUMENTATION.md](./DOCUMENTATION.md).
+The basic dataset layouts including the vertex layout of `Human3.6M` is in [DATASETS.md](./DATASETS.md), and the vertex layout of the STAR model is in [DOCUMENTATION.md](./DOCUMENTATION.md). Other super-parameters are also available in [DOCUMENTATION.md](./DOCUMENTATION.md)
 
 If you want to change the super-parameters layout of the Data Generators workflow part, please change the `*_utils.py` files in dir `DataGenerators`. Note that you have to visualize the results after you change them, in order to prevent possible hitches in building.
 

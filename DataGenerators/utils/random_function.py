@@ -20,7 +20,7 @@ def pre_process(array, shift, distance, rotation):
     frame = random.randint(0, shift)
     array = array[frame:]
 
-    # random traslate the raw array
+    # random translate the raw array
     dis = np.random.normal(distance,distance/3,2)
     x_flag, y_flag = random.choice((-1,1)), random.choice((-1,1))
     x, y = dis[0]*x_flag, dis[1]*y_flag
