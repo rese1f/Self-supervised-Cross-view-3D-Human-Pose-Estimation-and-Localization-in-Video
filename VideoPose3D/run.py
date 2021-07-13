@@ -133,7 +133,7 @@ while epoch < args.epochs:
                 loss.backward()
                 optimizer.step()
         
-        if args.output and epoch==args.epoch-1:
+        if args.output and epoch==args.epochs-1:
             output_zip[count]['pose_pred'] = pose_pred
             output_zip[count]['T'] = multi_T
             output_zip[count]['receptive_field'] = receptive_field
