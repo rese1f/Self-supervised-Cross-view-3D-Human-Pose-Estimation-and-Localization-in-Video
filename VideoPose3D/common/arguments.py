@@ -40,3 +40,18 @@ def parse_args():
         RuntimeError('cannot save model when stay constant')
 
     return args
+
+def args_4_visc():
+    parser = argparse.ArgumentParser(description='Training script')
+    
+    parser.add_argument('-d', '--dataset', default='h36m', type=str, metavar='NAME', help='target dataset') # h36m or humaneva
+    parser.add_argument('-s', '--sample', default=0, type=int, metavar='NAME', help='sample number') 
+    parser.add_argument('-p', '--playback', default=False, type=bool, metavar='NAME', 
+        help='if saving the visualize result for playback') 
+    parser.add_argument('-c', '--compare', default=True, type=bool, metavar='NAME', 
+        help='if compare prediction with camera') 
+
+
+    args = parser.parse_args()
+
+    return args
