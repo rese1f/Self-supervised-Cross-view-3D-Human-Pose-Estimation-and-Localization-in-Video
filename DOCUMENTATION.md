@@ -6,8 +6,13 @@
     + [Execution](#execution)
   * [Data Enhancement](#data-enhancement)
     + [Principles](#principles-1)
-    + [Execution](#execution-1)
+      - [Random Functioning](#random-functioning)
+      - [Collision Elimination](#collision-elimination)
+      - [Camera generator](#camera-generator)
+    + [Execution/Super-parameters](#execution-super-parameters)
   * [Video Pose 3D](#video-pose-3d)
+    + [Principles](#principles-2)
+    + [Execution/Super-parameters](#execution-super-parameters-1)
   * [STAR Model](#star-model)
 
 This guide includes **all** important information about the whole project and includes the essential principles of the code logic. Please be **sure** that you’ve read [README.md](./README.md) thoroughly before you move on.
@@ -73,9 +78,9 @@ In this function, there is another complicated function `find_shift_vector()`, w
 
 #### Camera generator
 
-This part basically 
+This part basically transfers the 3D data into 2D data by using the extrinsic and intrinsic camera matrices. Firstly we apply the extrinsic camera matrix to obtain the 2D data in the camera lens, then we apply the intrinsic camera matrix to obtain the real pixels on the imager or screen. The knowledge about extrinsic/intrinsic can be obtained on [CSDN](https://blog.csdn.net/liulina603/article/details/52953414) or [my blog](http://jackgetup.com/2021/06/26/datasetexpansion/reporton27june-md/).
 
-
+This part can also be used to apply different types of camera movements, like phone movements and surveillance camera movements. 
 
 ### Execution/Super-parameters
 
