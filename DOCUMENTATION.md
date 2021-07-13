@@ -108,11 +108,17 @@ If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `Dat
 
 If you want to changes the super-parameters, you have these choices below:
 
-| Arg. | Abbr.       | Usage                                | Default |
-| ---- | ----------- | ------------------------------------ | ------- |
-| `-d` | `--dataset` | prescribe the dataset to be expanded | *h36m*  |
-|      |             |                                      |         |
-|      |             |                                      |         |
+| Arg.   | Abbr.           | Meaning                                           | Default |
+| ------ | --------------- | ------------------------------------------------- | ------- |
+| `-d`   | `--dataset`     | The dataset to be expanded                        | *h36m*  |
+| `-min` | `--min`         | The minimum number of persons in the new dataset. | 2       |
+| `-max` | `--max`         | The maximum number of persons in the new dataset  | 4       |
+| `-s`   | `--shift`       |                                                   |         |
+| `-t`   | `--translation` | The mean value for the random translation part.   | 1000    |
+| `-r`   | `--rotation`    | The                                               | True    |
+| `-n`   | `--number`      |                                                   |         |
+| `-c`   | `camera`        |                                                   |         |
+| `-v`   | `--view`        |                                                   |         |
 
 
 
