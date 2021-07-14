@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument('-v', '--multi-view', default=False, type=bool, metavar='V', help='if the dataset have multi-view')
     parser.add_argument('-eval', '--evaluate', default=True, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
     parser.add_argument('-u', '--update', default=True, type=bool, metavar='U', help='if update the parameter of model')
-    parser.add_argument('-o', '--output', default=False, type=bool, metavar='PATH',
+    parser.add_argument('-o', '--output', default=True, type=bool, metavar='PATH',
                         help='output predict 3d pose')
     parser.add_argument('--export-training-curves', action='store_true', help='save training curves as .png images')
 

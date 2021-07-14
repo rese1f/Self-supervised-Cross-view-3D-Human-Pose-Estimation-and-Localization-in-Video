@@ -24,20 +24,26 @@ def regressor(pose_cf, pose_2df, camera, updata):
         Tf[f] = T
         lossf += loss
     loss = lossf/frame
+
+    # add variance condition
+    loss += Tf[0].std() + Tf[1].std() + Tf[2].std()
+
     if torch.cuda.is_available():
         Tf = Tf.cuda()
+
     return Tf, loss
 
 
 def regressorof(pose_c, pose_2d, camera, update):
     """
     regressor of single frame
+    camera - [cx,cy,fx,fy]
     """
     pose_c = pose_c.transpose(0,1)
     pose_2d = pose_2d.transpose(0,1)
     # for regression
-    px = (pose_2d[0]-camera[0])/(camera[2]/1000)
-    py = (pose_2d[1]-camera[1])/(camera[3]/1000)
+    px = (pose_2d[0]-camera[0])/(camera[2]*1e-3)
+    py = (pose_2d[1]-camera[1])/(camera[3]*1e-3)
     pX = pose_c[0]
     pY = pose_c[1]
     pZ = pose_c[2]
@@ -62,6 +68,7 @@ def regressorof(pose_c, pose_2d, camera, update):
                                   [yZ-Y],
                                   [x2y2Z-xX-yY]])
 
+
     T = torch.mm(torch.inverse(parameter_matrix),result_vector).flatten()
     
     # for loss computing
@@ -75,8 +82,5 @@ def regressorof(pose_c, pose_2d, camera, update):
         gamma= T[2]
 
         loss = mean(pow(-px*gamma+pX-mul(px,pX)+alpha,2)+pow(-py*gamma+pY-mul(py,pY)+beta,2))
-        
-
-
 
     return T, loss

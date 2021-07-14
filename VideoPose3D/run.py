@@ -107,7 +107,7 @@ while epoch < args.epochs:
         # for each person
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0)
-            
+
             if args.update:
                 model_pos.train()
                 optimizer.zero_grad()
@@ -135,8 +135,8 @@ while epoch < args.epochs:
                 optimizer.step()
         
         if args.output and epoch==args.epochs-1:
-            output_zip[count]['pose_pred'] = pose_pred
-            output_zip[count]['T'] = multi_T
+            output_zip[count]['pose_pred'] = pose_pred*1e3
+            output_zip[count]['T'] = multi_T*1e3
             output_zip[count]['receptive_field'] = receptive_field
         
         pbar.update(1)
@@ -177,6 +177,8 @@ if args.output:
 
         }
     }
+    # unit: mm
+
     output_zip = {
         sample'0': {
             'pose_pred': list(n,x,17,3),
@@ -189,6 +191,7 @@ if args.output:
             'receptive_field': int
         }
     }
+    # unit: mm
     """
 
 # Save training curves after every epoch, as .png images (if requested)
