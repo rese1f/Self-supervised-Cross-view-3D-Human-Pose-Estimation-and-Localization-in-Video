@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument('-v', '--multi-view', default=False, type=bool, metavar='V', help='if the dataset have multi-view')
     parser.add_argument('-eval', '--evaluate', default=True, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
     parser.add_argument('-u', '--update', default=True, type=bool, metavar='U', help='if update the parameter of model')
-    parser.add_argument('-o', '--output', default=True, type=bool, metavar='PATH',
+    parser.add_argument('-o', '--output', default=False, type=bool, metavar='PATH',
                         help='output predict 3d pose')
     parser.add_argument('--export-training-curves', action='store_true', help='save training curves as .png images')
 
@@ -38,5 +38,20 @@ def parse_args():
 
     if not args.update and args.save:
         RuntimeError('cannot save model when stay constant')
+
+    return args
+
+def args_4_visc():
+    parser = argparse.ArgumentParser(description='Training script')
+    
+    parser.add_argument('-d', '--dataset', default='h36m', type=str, metavar='NAME', help='target dataset') # h36m or humaneva
+    parser.add_argument('-s', '--sample', default=None, type=int, metavar='NAME', help='sample number') 
+    parser.add_argument('-p', '--playback', default=False, type=bool, metavar='NAME', 
+        help='if saving the visualize result for playback') 
+    parser.add_argument('-c', '--compare', default=True, type=bool, metavar='NAME', 
+        help='if compare prediction with camera') 
+
+
+    args = parser.parse_args()
 
     return args
