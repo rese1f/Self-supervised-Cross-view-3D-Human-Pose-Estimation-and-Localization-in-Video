@@ -64,7 +64,7 @@ class ChunkedGenerator(Dataset):
             pose_cs.append(pose_c)
             pose_2ds.append(pose_2d)
 
-        return cameras, pose_cs, pose_2ds, index
+        return cameras, pose_cs, pose_2ds, sample_key
 
     def __len__(self):
         return len(self.sample_keys_list)

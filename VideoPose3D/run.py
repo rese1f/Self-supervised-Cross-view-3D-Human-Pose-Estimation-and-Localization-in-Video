@@ -16,6 +16,7 @@ from common.generators import ChunkedGenerator
 
 args = parse_args()
 print(args)
+print('\n')
 
 try:
     # Create checkpoint directory if it does not exist
