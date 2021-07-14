@@ -107,7 +107,7 @@ while epoch < args.epochs:
         # for each person
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0)
-
+            print(pose_2d)
             if args.update:
                 model_pos.train()
                 optimizer.zero_grad()
