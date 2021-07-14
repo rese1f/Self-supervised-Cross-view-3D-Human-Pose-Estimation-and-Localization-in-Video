@@ -121,6 +121,7 @@ while epoch < args.epochs:
             # if not update dont compute loss
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
             loss_list.append(loss)
+            print(T)
 
             if args.output and epoch==args.epochs-1:
                 pose_pred.append(pose_c_test)
@@ -186,12 +187,12 @@ if args.output:
         sample'0': {
             'pose_pred': list(n,x,17,3),
             'T': list(n,x,3),
-            'receptive_field': int
+            'receptive_field': int, int
         }
         sample'1': {
             'pose_pred': list(n,x,17,3),
             'T': list(n,x,3),
-            'receptive_field': int
+            'receptive_field': int, in
         }
     }
     # unit: m
