@@ -26,7 +26,7 @@ def regressor(pose_cf, pose_2df, camera, updata):
     loss = lossf/frame
 
     # add variance condition
-    loss += Tf[0].std() + Tf[1].std() + Tf[2].std()
+    # loss += Tf[0].std() + Tf[1].std() + Tf[2].std()
 
     if torch.cuda.is_available():
         Tf = Tf.cuda()
