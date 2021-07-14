@@ -186,5 +186,5 @@ def c2s(data_c_std, inmat):
     
     data = np.matmul(inmat, data_c_std[:,:,:,:,np.newaxis], dtype=np.float32)
     data_2d_std = (data / np.abs(data[:,:,:,np.newaxis,2])).squeeze()
-    print(data_2d_std)
+    
     return data_2d_std

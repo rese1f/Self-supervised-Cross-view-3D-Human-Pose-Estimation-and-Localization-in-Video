@@ -107,7 +107,7 @@ while epoch < args.epochs:
         # for each person
         for i in range(N):
             pose_2d = pose_2d_m[i].unsqueeze(0)
-            print(pose_2d)
+
             if args.update:
                 model_pos.train()
                 optimizer.zero_grad()
@@ -116,6 +116,8 @@ while epoch < args.epochs:
 
             pose_c_test = model_pos(pose_2d)
             pose_2d_test = pose_2d[:,receptive_field-1:]
+
+            # if not update dont compute loss
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
             loss_list.append(loss)
 
@@ -135,9 +137,9 @@ while epoch < args.epochs:
                 optimizer.step()
         
         if args.output and epoch==args.epochs-1:
-            output_zip[count]['pose_pred'] = pose_pred*1e3
-            output_zip[count]['T'] = multi_T*1e3
-            output_zip[count]['receptive_field'] = receptive_field
+            output_zip[count]['pose_pred'] = pose_pred
+            output_zip[count]['T'] = multi_T
+            output_zip[count]['receptive_field'] = (receptive_field, args.width)
         
         pbar.update(1)
     pbar.close()
@@ -169,7 +171,7 @@ if args.output:
     print('Saving output...')
     output_filename = os.path.join('output/data_multi_output_' + args.dataset + '.npz')
     print('- Saving output to', output_filename)
-    np.savez_compressed(output_filename, posetions_2d=dataset_zip, positions_3d=output_zip)
+    np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=output_zip)
 
     """
     dataset_zip = {
@@ -191,7 +193,7 @@ if args.output:
             'receptive_field': int
         }
     }
-    # unit: mm
+    # unit: m
     """
 
 # Save training curves after every epoch, as .png images (if requested)
