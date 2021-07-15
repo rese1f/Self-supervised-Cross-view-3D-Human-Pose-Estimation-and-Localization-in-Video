@@ -3,7 +3,7 @@ import numpy as np
 phone = {
     'layout_name': 'phone',
     'height': [500,2000],
-    'distance': [1000,10000],
+    'distance': [2000,5000],
     # if cross the center location
     'cross': False,
     # if head to center location
