@@ -16,7 +16,6 @@ from common.generators import ChunkedGenerator
 
 args = parse_args()
 print(args)
-print('\n')
 
 try:
     # Create checkpoint directory if it does not exist
@@ -77,7 +76,7 @@ epoch = 0
 loss_list = list()
 
 while epoch < args.epochs:
-
+    print('- epoch {}'.format(epoch))
     pbar = tqdm(total=dataset.__len__())
     
     for cameras, pose_cs, pose_2ds, count in data_iter:
@@ -120,8 +119,10 @@ while epoch < args.epochs:
 
             # if not update dont compute loss
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
-            loss_list.append(loss)
-            print(T)
+            # loss filter
+            if loss > 1:
+                loss = loss.sigmoid()
+            loss_list.append(loss.item())
 
             if args.output and epoch==args.epochs-1:
                 pose_pred.append(pose_c_test)
@@ -171,7 +172,7 @@ if args.save:
 
 if args.output:
     print('Saving output...')
-    output_filename = os.path.join('output/data_multi_output_' + args.dataset + '.npz')
+    output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.epochs) + '.npz')
     print('- Saving output to', output_filename)
     np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=output_zip)
 
