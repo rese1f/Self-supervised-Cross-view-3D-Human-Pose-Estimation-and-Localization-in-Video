@@ -118,11 +118,15 @@ while epoch < args.epochs:
             pose_2d_test = pose_2d[:,receptive_field-1:]
 
             # if not update dont compute loss
+            w = int((args.width-1)/2)
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
+
             # loss filter
-            if loss > 1:
-                loss = loss.sigmoid()
-            loss_list.append(loss.item())
+            if loss < 1:
+                loss_list.append(loss.item())
+                if args.update:
+                    loss.backward()
+                    optimizer.step()
 
             if args.output and epoch==args.epochs-1:
                 pose_pred.append(pose_c_test)
@@ -134,11 +138,7 @@ while epoch < args.epochs:
                 T = T.unsqueeze(1)
                 pose_c_gt = pose_c_m[i][receptive_field-1:]
                 pose_c_test = pose_c_test.squeeze(0) + T
-            
-            if args.update:
-                loss.backward()
-                optimizer.step()
-        
+
         if args.output and epoch==args.epochs-1:
             output_zip[count]['pose_pred'] = pose_pred
             output_zip[count]['T'] = multi_T

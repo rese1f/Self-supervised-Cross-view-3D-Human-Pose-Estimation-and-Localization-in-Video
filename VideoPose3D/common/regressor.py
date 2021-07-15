@@ -1,5 +1,51 @@
 import torch
 from torch import mean, pow, mul
+from torch.nn import parameter
+
+def Regressor(pose_cf, pose_2df, camera, updata, w):
+    """
+    input
+        pose_cf - [1,x,17,3]
+        pose_2df - [1,x,17,2]
+        camera - [cx,cy,fx,fy]
+    return 
+        T - [x,3]
+        loss - float32
+    """
+    # [f，17，3]
+    pose_cf = pose_cf.squeeze(0)
+    pose_2df = pose_2df.squeeze(0)
+    # frame
+    f = pose_cf.shape[0]
+    T = [   for i in range(w,f-w)]
+
+
+def ABo1f(pose_c, pose_2d, camera):
+    """
+    give the pose info and camera
+    return the two matirx for Ax = B
+    """ 
+    pose_c = pose_c.transpose(0,1)
+    pose_2d = pose_2d.transpose(0,1)
+    px = (pose_2d[0]-camera[0])/(camera[2])
+    py = (pose_2d[1]-camera[1])/(camera[3])
+    pX = pose_c[0]
+    pY = pose_c[1]
+    pZ = pose_c[2]
+
+    A = torch.tensor([[1,        0,        -mean(px)],
+                      [0,        1,        -mean(py)],
+                      [mean(px), mean(py), -mean(pow(px,2))-mean(pow(py,2))]])
+
+    B = torch.tensor([[mean(mul(px,pZ))-mean(pX)],
+                      [mean(mul(py,pZ))-mean(pY)],
+                      [mean(mul(pow(px,2)+pow(py,2),pZ))-mean(mul(px,pX))-mean(mul(py,pY))]])
+
+    return A,B
+
+
+
+# for temp
 
 def regressor(pose_cf, pose_2df, camera, updata):
     """
@@ -26,9 +72,6 @@ def regressor(pose_cf, pose_2df, camera, updata):
         Tf[f] = T
         lossf += loss
     loss = lossf/frame
-
-    # add variance condition
-    # loss += Tf[0].std() + Tf[1].std() + Tf[2].std()
 
     return Tf, loss
 
