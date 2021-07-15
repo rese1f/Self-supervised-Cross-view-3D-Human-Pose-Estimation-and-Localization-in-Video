@@ -118,8 +118,8 @@ while epoch < args.epochs:
             pose_2d_test = pose_2d[:,receptive_field-1:]
 
             # if not update dont compute loss
-            w = int((args.width-1)/2)
             T, loss = regressor(pose_c_test, pose_2d_test, camera_m, args.update)
+            # T, loss = Regressor(pose_c_test, pose_2d_test, camera_m, args.update, args.width)
 
             # loss filter
             if loss < 1:

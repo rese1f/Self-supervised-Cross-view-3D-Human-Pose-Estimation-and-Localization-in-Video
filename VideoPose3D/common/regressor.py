@@ -1,6 +1,5 @@
 import torch
 from torch import mean, pow, mul
-from torch.nn import parameter
 
 def Regressor(pose_cf, pose_2df, camera, updata, w):
     """
@@ -12,21 +11,28 @@ def Regressor(pose_cf, pose_2df, camera, updata, w):
         T - [x,3]
         loss - float32
     """
-    # [f，17，3]
-    pose_cf = pose_cf.squeeze(0)
-    pose_2df = pose_2df.squeeze(0)
+    # [f，3, 17]
+    pose_cf = pose_cf.squeeze(0).transpose(1,2)
+    pose_2df = pose_2df.squeeze(0).transpose(1,2)
     # frame
     f = pose_cf.shape[0]
-    T = [   for i in range(w,f-w)]
+    print(ABowf(pose_cf,pose_2df,camera,w))
+
+    return 0,0
+    
+def ABowf(pose_cw, pose_2dw, camera, w):
+    """
+    pose_c: [w,3,17]
+    """
+    return [ABo1f(pose_cw[i],pose_2dw[i],camera) for i in range(w)]
 
 
 def ABo1f(pose_c, pose_2d, camera):
     """
+    pose_c: [3,17]
     give the pose info and camera
     return the two matirx for Ax = B
-    """ 
-    pose_c = pose_c.transpose(0,1)
-    pose_2d = pose_2d.transpose(0,1)
+    """
     px = (pose_2d[0]-camera[0])/(camera[2])
     py = (pose_2d[1]-camera[1])/(camera[3])
     pX = pose_c[0]
@@ -42,7 +48,6 @@ def ABo1f(pose_c, pose_2d, camera):
                       [mean(mul(pow(px,2)+pow(py,2),pZ))-mean(mul(px,pX))-mean(mul(py,pY))]])
 
     return A,B
-
 
 
 # for temp
