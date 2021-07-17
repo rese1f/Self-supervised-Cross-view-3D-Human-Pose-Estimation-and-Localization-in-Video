@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 from matplotlib.animation import FuncAnimation
 from tqdm import tqdm
 from arguments import parse_args
@@ -13,24 +14,43 @@ from data_utils import *
 class Visualization:
     def __init__(self) -> None:
 
-        args = parse_args()
-        print(args)
+        self.args = parse_args()
+        print(self.args)
 
-        #load data
-        sample_key = int(args.number) - 1
-        dataset_metadata = suggest_metadata(args.dataset)
+        Visualization.load_data(self)
+        Visualization.get_info(self)
+        Visualization.subplot(self)
+
+
+
+        #tqdm
+        if __name__ == '__main__':
+            self.pbar = tqdm(total=self.x)
+        pass
+
+    def load_data(self, ifdebug = False):
+        try:
+            dataset_orig = np.load('output/data_multi_' + self.args.dataset + '.npz', allow_pickle=True)["dataset"].item()
+        except FileNotFoundError():
+            print("Please select another dataset")
+
         #view_key = "view_" + str(args.view)
         try:
-            dataset_orig = np.load('output/data_multi_' + args.dataset + '.npz', allow_pickle=True)["dataset"].item()
+            
+            if self.args.sample is not None:
+                sample_key = int(self.args.sample)
+            else:
+                sample_key = random.choice(list(dataset_orig.keys()))
             self.dataset = dataset_orig[sample_key]
         except KeyError:
-            print('Sample does not exist! Please input right sample number')
-        #print(self.dataset)
-        #camera = dataset['camera']
-        #self.dataset = dataset
+            #print('Sample does not exist! Please input right sample number')
+            
+            sample_key = random.choice(list(dataset_orig.keys()))
+            self.dataset = dataset_orig[sample_key]
+        pass
 
-        # get basic parameter
-        #print(self.dataset)
+    def get_info(self):
+        dataset_metadata = suggest_metadata(self.args.dataset)
         try:
             self.view_key_list = list(self.dataset.keys())
             self.n = self.dataset[self.view_key_list[0]]['pose_2d'].shape[0]
@@ -40,99 +60,99 @@ class Visualization:
         except KeyError:
             print("The dataset havent been fully supported yet")
         self.radius = 4000
-        self.center_c = Visualization.__get_center(self.dataset, self.view_key_list)
+        self.center_c = Visualization.__get_center(self.dataset, self.view_key_list, 1e3)
 
 
 
-        #pre process
+        return
 
 
-
-        # prepare color
+    def subplot(self):
         self.color = []
         for i in range(self.n): self.color.append("#" + "".join([choice("0123456789ABCDEF") for i in range(6)]))
 
 
-        #generate subplot
 
         self.fig = plt.figure()
         ax = dict()
         view_num = len(self.view_key_list)
         i = 1
         for view_key in self.view_key_list:
-            pos = np.array([i,i+1]) + 20 + view_num*100; print(pos)
+            pos = np.array([i,i+1]) + 20 + view_num*100; 
             ax[view_key]=[self.fig.add_subplot(pos[0], projection='3d'), self.fig.add_subplot(pos[1])]
             ax[view_key][0].set_xlabel("x"); ax[view_key][0].set_xlabel("y"); ax[view_key][0].set_xlabel("z")
             ax[view_key][1].set_xlabel("x"); ax[view_key][1].set_xlabel("y")
             i += 2
         self.ax = ax
-
-        #tqdm
-        if __name__ == '__main__':
-            self.pbar = tqdm(total=self.x)
         pass
 
         
-    def plt2D(self, view_key, frame):
-        self.ax[view_key][1].clear()
-        multiperson_data = self.dataset[view_key]["pose_2d"] * 1e3; k = 0
+    def plt2D(self, ax, data, camera, frame, ifscale = True, ifclear = True, ifdot = True):
+        if ifclear: ax.clear()
+        multiperson_data = data; k = 0
         for person in multiperson_data:
             for i in self.skeleton:
                 x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
                 y = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
-                self.ax[view_key][1].plot(x, y, lw=2, c=self.color[k],alpha=0.6); 
+                ax.plot(x, y, lw=2, c=self.color[k],alpha=0.6); 
             k += 1
             
-            for j in range(17):
-                x = person[frame,j,0]
-                y = person[frame,j,1]
-                c = person[frame,j,2]
+            if ifdot:
+                for j in range(17):
+                    x = person[frame,j,0]
+                    y = person[frame,j,1]
+                    c = person[frame,j,2]
 
-                if c == 1:
-                    self.ax[view_key][1].plot(x, y,'.',color='g',alpha=1)
+                    if c == 1:
+                        ax.plot(x, y,'.',color='g',alpha=1)
 
-                if c == -1:
-                    self.ax[view_key][1].plot(x,y,'.',color="r",alpha=1)
+                    if c == -1:
+                        ax.plot(x,y,'.',color="r",alpha=1)
 
-        camdata = self.dataset[view_key]['camera']            
-        fx = camdata[2]/2
-        fy = camdata[3]/2
-        cx = camdata[0]
-        cy = camdata[1]    
-        self.ax[view_key][1].set_xlim([cx-fx,cx+fx])
-        self.ax[view_key][1].set_ylim([cy-fy,cy+fy])
+        if ifscale:
+            camdata = camera            
+            fx = camdata[2]/2
+            fy = camdata[3]/2
+            cx = camdata[0]
+            cy = camdata[1]    
+            ax.set_xlim([cx-fx,cx+fx])
+            ax.set_ylim([cy-fy,cy+fy])
         pass
 
 
-    def plt3D(self, view_key, frame):
-        self.ax[view_key][0].clear()
-        multiperson_data = self.dataset[view_key]["pose_c"] * 1e3; k = 0
+    def plt3D(self, ax, data, center, frame, ifarrow = True, ifclear = True, ifscale = True, transform = False):
+        if ifclear: ax.clear()
+        multiperson_data = data; k = 0
         for person in multiperson_data:
             for i in self.skeleton:
                 x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
                 z = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
                 y = np.stack((person[frame, i[0], 2], person[frame, i[1], 2]), 0)
-                self.ax[view_key][0].plot3D(x, y, z, lw=2, c=self.color[k], alpha = 0.8); 
+                if transform:
+                    temp = y; y = z; z = temp
+                ax.plot3D(x, y, z, lw=2, c=self.color[k], alpha = 0.8); 
             k+=1
 
-        self.ax[view_key][0].arrow3D(0,0,0,
-           0,1,0,
-           mutation_scale=20,
-           arrowstyle="-|>",
-           linestyle='dashed')
+        if ifarrow:
+            ax.arrow3D(0,0,0,
+                0,1,0,
+                mutation_scale=20,
+                arrowstyle="-|>",
+                linestyle='dashed')
 
-
-        self.ax[view_key][0].set_xlim3d([self.center_c[view_key][0] - 2*self.radius, self.center_c[view_key][0] + 2*self.radius]) # 画布大小
-        self.ax[view_key][0].set_ylim3d([self.center_c[view_key][2] - 2*self.radius, self.center_c[view_key][2] + 2*self.radius])
-        self.ax[view_key][0].set_zlim3d([-self.radius/2 + self.center_c[view_key][1], self.radius/2 + self.center_c[view_key][1]])
+        if ifscale:
+            ax.set_xlim3d([center[0] - 2*self.radius, center[0] + 2*self.radius]) # 画布大小
+            ax.set_ylim3d([center[2] - 2*self.radius, center[2] + 2*self.radius])
+            ax.set_zlim3d([-self.radius/2 + center[1], self.radius/2 + center[1]])
         pass
-
         
     def updater(self, frame):
 
         for key in self.view_key_list:
-            Visualization.plt2D(self, key, frame)
-            Visualization.plt3D(self, key, frame)
+            Visualization.plt2D(self, self.ax[key][1], self.dataset[key]["pose_2d"],
+                self.dataset[key]['camera'], frame)
+            Visualization.plt3D(self, self.ax[key][0], self.dataset[key]["pose_c"] * 1e3,
+                self.center_c[key], frame, True, True)
             
             pass
 
@@ -148,16 +168,15 @@ class Visualization:
         '''
         anim = FuncAnimation(self.fig, self.updater, self.x, interval=1)
         plt.show()
-        #anim.save(self.save_name, writer='pillow', fps=165)
+        if self.args.playback: anim.save("player/output.gif", writer='pillow', fps=165)
 
         return
 
-    def __get_center(data: dict, key_list):
+    def __get_center(data: dict, key_list, scale):
         center_dict = dict();
         for key in key_list:
-            center_dict[key] = np.mean(data[key]["pose_c"][:,0,10,:],axis=0)*1e3
+            center_dict[key] = np.mean(data[key]["pose_c"][:,0,10,:],axis=0)*scale
             pass
-        print(center_dict)
         return center_dict
 
 #   this prt used for arrow drawing
