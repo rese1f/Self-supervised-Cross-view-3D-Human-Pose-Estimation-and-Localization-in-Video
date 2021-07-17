@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from tqdm import tqdm
-from common.arguments import args_4_visc
+from common.arguments import parse_args
 from random import choice
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d.proj3d import proj_transform
@@ -15,7 +15,7 @@ from common.data_utils import *
 class Visualization:
     def __init__(self) -> None:
 
-        args = args_4_visc()
+        args = parse_args()
         print(args)
         self.ifcomp = args.compare
         self.ds = args.dataset
