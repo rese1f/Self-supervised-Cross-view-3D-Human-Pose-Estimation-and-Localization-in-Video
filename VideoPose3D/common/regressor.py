@@ -1,8 +1,7 @@
 import torch
 from torch import mean, pow, mul
-import time
 
-def Regressor(pose_cf, pose_2df, camera, updata, w):
+def Regressor(pose_cf, pose_2df, camera, update, w):
     """
     input
         pose_cf - [1,x,17,3]
@@ -19,19 +18,22 @@ def Regressor(pose_cf, pose_2df, camera, updata, w):
     f = pose_cf.shape[0]
     # base is to calculate all the A B matrix for single frame
     # base - list(matrix A, matrix B), len = f
-    t1 = time.time()
     base = ABof(pose_cf,pose_2df,camera,f)
-    t2 = time.time()
-    T = [base[i-w:i+w+1] for i in range(w,f-w)]
-    t3 = time.time()
-    print(t2-t1,t3-t2)
-    return 0,0
-    
+    # T - [f-2w,3]
+    T = torch.stack([solver(base[i-w:i+w+1]) for i in range(w,f-w)])
+    loss = 0
+    if update:
+        pass
+
+    return T,loss
+
+
 def ABof(pose_cw, pose_2dw, camera, f):
     """
     pose_c: [f,3,17]
     """
     return [ABo1f(pose_cw[i],pose_2dw[i],camera) for i in range(f)]
+
 
 def ABo1f(pose_c, pose_2d, camera):
     """
@@ -55,6 +57,7 @@ def ABo1f(pose_c, pose_2d, camera):
 
     return A,B
 
+
 def solver(matrix_list):
     """
     input: list[(A,B),(A,B),...]
@@ -63,6 +66,9 @@ def solver(matrix_list):
     B = sum([i[1] for i in matrix_list])
     T = torch.mm(torch.inverse(A),B).flatten()
     return T
+
+
+
 
 # for temp
 
