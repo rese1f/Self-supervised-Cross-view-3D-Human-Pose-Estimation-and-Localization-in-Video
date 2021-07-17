@@ -148,7 +148,7 @@ class sequential_collision_elimination:
 
     # ***** broadcast_add() ***** #
     def broadcast_add_data_3d_std(self, i, max_shift_vector):
-        self.data_3d_std[i, :, :] += max_shift_vector
+        self.data_3d_std[i, :, :] += max_shift_vector * 3
 
     # ***** main routine ***** #
     def sequential_collision_eliminate_routine(self):
@@ -168,7 +168,7 @@ class sequential_collision_elimination:
 
             max_shift_vector = self.find_max_shift_vector(shift_vector_list)
             # unit test
-            # print("the max shift vector for person {} is {}".format(i,max_shift_vector))
+            # print("the max shift vector for person {} is {}".format(i, max_shift_vector))
             self.broadcast_add_data_3d_std(i, max_shift_vector)  # broadcast add to self.data_3d_std
 
         return self.data_3d_std
