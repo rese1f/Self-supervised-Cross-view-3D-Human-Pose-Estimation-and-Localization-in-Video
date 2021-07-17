@@ -16,6 +16,10 @@ def parse_args():
     parser.add_argument('-c', '--camera', default=['phone'], type=list, metavar='C', help='the type of camera used')
     parser.add_argument('-v', '--view', default=1, type=int, metavar='V', help='the number of view')
 
+    # Visualize arguments
+    parser.add_argument('-sp', '--sample', default=None, type=int, metavar='SP', help='the sample number u want 2 display')
+    parser.add_argument('-p', '--playback', default=True, type=bool, metavar='PB', help='if saving as gif 4 playback')
+
     args = parser.parse_args()
 
     if args.view != len(args.camera):
