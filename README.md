@@ -15,7 +15,7 @@ The codeblock level logic of this project is conposed of four blocks:
 
 By graph presentation, the codeblock level logic can be expressed as below.
 
-![BlockLogic](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-111143.png)
+![BlockLogic](./Graphs/BlockLogic.png)
 
 ## Overall Layout of the Project
 
@@ -28,7 +28,7 @@ The overall layout of the Project is composed of 4 workflow blocks hitherto, eac
 
 By graph presentation, the overall layout of the project can be expressed as below.
 
-![OverallLayout](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-101231.png)
+![OverallLayout](./Graphs/OverallLayout.png)
 
 For dissecting all the parts please turn to [DOCUMENTATION.md](./DOCUMENTATION.md), which elaborates on the explanation of all functions and parameters passed in for each code block.
 

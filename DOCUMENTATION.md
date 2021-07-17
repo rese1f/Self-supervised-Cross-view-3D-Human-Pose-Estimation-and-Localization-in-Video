@@ -13,7 +13,6 @@
   * [Video Pose 3D](#video-pose-3d)
     + [Principles](#principles-2)
     + [Execution/Super-parameters](#execution-super-parameters-1)
-  * [STAR Model](#star-model)
 
 This guide includes **all** important information about the whole project and includes the essential principles of the code logic. Please be **sure** that you’ve read [README.md](./README.md) thoroughly before you move on.
 
@@ -27,7 +26,7 @@ You can find the file [prepare_dataset.py](./DataGenerators/prepare_dataset.py) 
 
 By graph presentation, the algorithm of the data preparation part can be expressed as below.
 
-![PrepareDatasetAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110447.png)
+![PrepareDatasetAlgo](./Graphs/PrepareDatasetAlgo.png)
 
 ### Execution
 
@@ -56,7 +55,7 @@ Each part of the algorithm is separated from each other and is implemented indiv
 
 By graph presentation, the algorithm of data enhancement part can be expressed as below.
 
-![DataEnhancementAlgo](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-110456.png)
+![DataEnhancementAlgo](./Graphs/DataEnhancementAlgo.png)
 
 Now we look into each part one by one.
 
@@ -119,7 +118,7 @@ This workflow part aims to switch 2D pose to 3D. The main technique used is the 
 
 The basic logic of this part can be expressed below.
 
-![VideoPose3DLayout](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-070950.png)
+![VideoPose3DLayout](./Graphs/VideoPose3DLayout.png)
 
 ### Execution/Super-parameters
 
@@ -145,10 +144,3 @@ The basic logic of this part can be expressed below.
 
 If you are curious about the source code implementing the parameters, turn to [VideoPose3D/common/arguments.py](VideoPose3D/common/arguments.py).
 
-## STAR Model
-
-The vertex layout of STAR model is shown below.
-
-![WechatIMG572](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113623.png)
-
-This part is still under developement. Do **not** edit this part until version 2.0.0 is released.
