@@ -35,11 +35,6 @@ def parse_args():
     # Experimental
     parser.add_argument('--dense', action='store_true', help='use dense convolutions instead of dilated convolutions')
     
-    args = parser.parse_args()
-
-    if not args.update and args.save:
-        RuntimeError('cannot save model when stay constant')
-    
     # Visualize arguments
     parser.add_argument('-ns', '--sample', default=None, type=int, metavar='NAME', help='sample number') 
     parser.add_argument('-p', '--playback', default=False, type=bool, metavar='NAME', 
@@ -48,5 +43,10 @@ def parse_args():
         help='if compare prediction with gt') 
 
     args = parser.parse_args()
+
+    if not args.update and args.save:
+        RuntimeError('cannot save model when stay constant')
+    if args.width % 2 == 0:
+        ValueError('width cannot be even')
 
     return args

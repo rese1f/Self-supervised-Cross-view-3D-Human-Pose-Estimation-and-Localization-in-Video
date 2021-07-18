@@ -20,7 +20,7 @@ def Regressor(pose_cf, pose_2df, camera, update, w):
     # base - list(matrix A, matrix B), len = f
     base = ABof(pose_cf,pose_2df,camera,f)
     # T - [f-2w,3]
-    T = torch.stack([solver(base[i-w:i+w+1]) for i in range(w,f-w)])
+    T = torch.stack([solver(base[i-w:i+w+1],w) for i in range(w,f-w)])
     loss = 0
     if update:
         pass
@@ -58,13 +58,14 @@ def ABo1f(pose_c, pose_2d, camera):
     return A,B
 
 
-def solver(matrix_list):
+def solver(matrix_list,w):
     """
     input: list[(A,B),(A,B),...]
     """
-    A = sum([i[0] for i in matrix_list])
-    B = sum([i[1] for i in matrix_list])
-    T = torch.mm(torch.inverse(A),B).flatten()
+    A = sum([matrix_list[j][0].clone()*(0.5**abs(w-j)) for j in range(len(matrix_list))])
+    B = sum([matrix_list[j][1].clone()*(0.5**abs(w-j)) for j in range(len(matrix_list))])
+    T = torch.linalg.solve(A,B)
+
     return T
 
 
