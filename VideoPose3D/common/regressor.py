@@ -20,10 +20,10 @@ def Regressor(pose_cf, pose_2df, camera, update, w):
     # base - list(matrix A, matrix B), len = f
     base = ABof(pose_cf,pose_2df,camera,f)
     # T - [f-2w,3]
-    T = torch.stack([solver(base[i-w:i+w+1],w) for i in range(w,f-w)])
+    T = torch.stack([solver(base[i-w:i+w+1],w) for i in range(w,f-w)]).unsqueeze(-1)
     loss = 0
     if update:
-        pass
+        loss = loss_total(pose_cf, pose_2df, camera, T, w)
 
     return T,loss
 
@@ -62,93 +62,60 @@ def solver(matrix_list,w):
     """
     input: list[(A,B),(A,B),...]
     """
-    A = sum([matrix_list[j][0].clone()*(0.5**abs(w-j)) for j in range(len(matrix_list))])
-    B = sum([matrix_list[j][1].clone()*(0.5**abs(w-j)) for j in range(len(matrix_list))])
+    A = sum([matrix_list[j][0]*(0.5**abs(w-j)) for j in range(len(matrix_list))])
+    B = sum([matrix_list[j][1]*(0.5**abs(w-j)) for j in range(len(matrix_list))])
     T = torch.linalg.solve(A,B)
 
     return T
 
 
-
-
-# for temp
-
-def regressor(pose_cf, pose_2df, camera, updata):
+def loss_total(pose_cf, pose_2df, camera, T, w):
     """
-    input
-        pose_cf - [1,x,17,3]
-        pose_2df - [1,x,17,2]
-        camera - [cx,cy,fx,fy]
-    return 
-        Tf - [x,3]
-        loss - float32
-    """
-    pose_cf = pose_cf.squeeze(0)
-    pose_2df = pose_2df.squeeze(0)
-    frame = pose_cf.shape[0]
-    Tf = torch.zeros((frame,3))
-    lossf = 0
-    if torch.cuda.is_available():
-        Tf = Tf.cuda()
-    
-    for f in range(frame):
-        pose_c = pose_cf[f]
-        pose_2d = pose_2df[f]
-        T, loss = regressorof(pose_c, pose_2d, camera, updata)
-        Tf[f] = T
-        lossf += loss
-    loss = lossf/frame
-
-    return Tf, loss
-
-
-def regressorof(pose_c, pose_2d, camera, update):
-    """
-    regressor of single frame
+    computing loss for regressor to backward the network
+    pose_cf - [f,3,17]
+    psoe_2df -  [f,2,17]
     camera - [cx,cy,fx,fy]
+    T - [f-2w,3]
+    w - int
     """
-    pose_c = pose_c.transpose(0,1)
-    pose_2d = pose_2d.transpose(0,1)
-    # for regression
-    px = (pose_2d[0]-camera[0])/(camera[2])
-    py = (pose_2d[1]-camera[1])/(camera[3])
-    pX = pose_c[0]
-    pY = pose_c[1]
-    pZ = pose_c[2]
+    # p: [f,17]
+    px = (pose_2df[:,0]-camera[0])/(camera[2])
+    py = (pose_2df[:,1]-camera[1])/(camera[3])
+    pX = pose_cf[:,0]
+    pY = pose_cf[:,1]
+    pZ = pose_cf[:,2]
+    # total weight W to divide
+    W = 4*(1-0.5**(w+1))-1
+    # p[i-w:i+w+1]
+    # loss = sum([print(px[i-w:i+w+1]) for i in range(T.shape[0])])
+    loss = sum([loss_owf(px[i-w:i+w+1],py[i-w:i+w+1],pX[i-w:i+w+1],pY[i-w:i+w+1],pZ[i-w:i+w+1],T[i],w) for i in range(T.shape[0])])/W/T.shape[0]
+    return loss
 
-    x = mean(px)
-    y = mean(py)
-    x2 = mean(pow(px,2))
-    y2 = mean(pow(py,2))
-    X = mean(pX)
-    Y = mean(pY)
-    xZ = mean(mul(px,pZ))
-    yZ = mean(mul(py,pZ))
-    x2y2Z = mean(mul(pow(px,2)+pow(py,2),pZ))
-    xX = mean(mul(px,pX))
-    yY = mean(mul(py,pY))
+
+def loss_owf(px, py, 
+             pX, pY, pZ, 
+             T, 
+             w):
+    """
+    loss of w frame of one group of weight
+    x,y,X,Y,Z - [2w+1,17]
+    T - (alpha,beta,gamma)
+    """
+    loss = sum([loss_o1f(px[i],py[i],pX[i],pY[i],pZ[i],T)*(0.5**abs(w-i)) for i in range(2*w+1)])
+    return loss
+
+
+def loss_o1f(px, py, 
+             pX, pY, pZ, 
+             T):
+    """
+    loss of single frame
+    x,y,X,Y,Z - [17]
+    T - (alpha,beta,gamma)
+    """
+    alpha = T[0]
+    beta = T[1]
+    gamma = T[2]
+    loss = mean(pow(-px*gamma+pX-mul(px,pZ)+alpha,2)+pow(-py*gamma+pY-mul(py,pZ)+beta,2))
     
-    parameter_matrix = torch.tensor([[1, 0, -x],
-                                     [0, 1, -y],
-                                     [x, y, -x2-y2]])
-
-    result_vector = torch.tensor([[xZ-X],
-                                  [yZ-Y],
-                                  [x2y2Z-xX-yY]])
-
-
-    T = torch.mm(torch.inverse(parameter_matrix),result_vector).flatten()
-    
-    # for loss computing
-    
-    loss = 0
-    
-    if update:
-        J = pose_2d.shape[1]
-        alpha = T[0]
-        beta = T[1] 
-        gamma= T[2]
-
-        loss = mean(pow(-px*gamma+pX-mul(px,pX)+alpha,2)+pow(-py*gamma+pY-mul(py,pY)+beta,2))
-
-    return T, loss
+    return loss
