@@ -21,6 +21,8 @@ def Regressor(pose_cf, pose_2df, camera, update, w):
     base = ABof(pose_cf,pose_2df,camera,f)
     # T - [f-2w,3]
     T = torch.stack([solver(base[i-w:i+w+1],w) for i in range(w,f-w)]).unsqueeze(-1)
+    if torch.cuda.is_available():
+        T = T.cuda()
     loss = 0
     if update:
         loss = loss_total(pose_cf, pose_2df, camera, T, w)
@@ -86,9 +88,8 @@ def loss_total(pose_cf, pose_2df, camera, T, w):
     pZ = pose_cf[:,2]
     # total weight W to divide
     W = 4*(1-0.5**(w+1))-1
-    # p[i-w:i+w+1]
-    # loss = sum([print(px[i-w:i+w+1]) for i in range(T.shape[0])])
-    loss = sum([loss_owf(px[i-w:i+w+1],py[i-w:i+w+1],pX[i-w:i+w+1],pY[i-w:i+w+1],pZ[i-w:i+w+1],T[i],w) for i in range(T.shape[0])])/W/T.shape[0]
+    # p[i:i+2*w+1]
+    loss = sum([loss_owf(px[i:i+2*w+1],py[i:i+2*w+1],pX[i:i+2*w+1],pY[i:i+2*w+1],pZ[i:i+2*w+1],T[i],w) for i in range(T.shape[0])])/W/T.shape[0]
     return loss
 
 
