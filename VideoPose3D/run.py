@@ -120,7 +120,7 @@ while epoch < args.epochs:
             # if not update dont compute loss
             T, loss = Regressor(pose_c_test, pose_2d_test, camera_m, args.update, int((args.width-1)/2))
 
-            if args.update:
+            if args.update and (loss.item() < 1):
                 loss_list.append(loss.item())
                 loss.backward()
                 optimizer.step()
