@@ -51,20 +51,28 @@ class ChunkedGenerator(Dataset):
         sample_key = self.sample_keys_list[index]
         sample = self.dataset[sample_key]
         view_keys_list = list(sample)
-        for view_key in view_keys_list:
-            view = sample[view_key]
-            camera = torch.tensor(view['camera'])
-            pose_c = torch.from_numpy(view['pose_c'])
-            pose_2d = torch.from_numpy(view['pose_2d'])[...,:2]
-            if torch.cuda.is_available():
-                camera = camera.cuda()
-                pose_c = pose_c.cuda()
-                pose_2d = pose_2d.cuda()
-            cameras.append(camera)
-            pose_cs.append(pose_c)
-            pose_2ds.append(pose_2d)
+        
+        cameras, pose_cs, pose_2ds = zip(*[self.read(sample[view_key]) for view_key in view_keys_list])
+        cameras = torch.stack(cameras)
+        pose_cs = torch.stack(pose_cs)
+        pose_2ds = torch.stack(pose_2ds)       
+       
+        if torch.cuda.is_available():
+            cameras = cameras.cuda()
+            pose_cs = pose_cs.cuda()
+            pose_2ds = pose_2ds.cuda()
 
         return cameras, pose_cs, pose_2ds, sample_key
 
+    def read(self, view):
+        """
+        read data via view
+        """
+        camera = torch.tensor(view['camera'])
+        pose_c = torch.from_numpy(view['pose_c'])
+        pose_2d = torch.from_numpy(view['pose_2d'])[...,:2]
+        return camera, pose_c, pose_2d
+    
+    
     def __len__(self):
         return len(self.sample_keys_list)

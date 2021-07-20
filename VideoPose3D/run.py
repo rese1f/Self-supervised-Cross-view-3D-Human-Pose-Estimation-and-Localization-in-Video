@@ -49,8 +49,9 @@ print('- Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
 model_pos.load_state_dict(checkpoint['model_pos'])
 if torch.cuda.is_available():
-    model_pos = model_pos.cuda()
     print('- Running in device', torch.cuda.get_device_name())
+    model_pos = model_pos.cuda()
+    print(model_pos)
 
 receptive_field = model_pos.receptive_field()
 lr = checkpoint['lr']
@@ -80,66 +81,37 @@ while epoch < args.epochs:
     pbar = tqdm(total=dataset.__len__())
     
     for cameras, pose_cs, pose_2ds, count in data_iter:
-
+        # cut the useless dimention
+        # pose - [view,number,frame,joint,2]
+        # camera - [view,4]
+        cameras = cameras.squeeze(0)
+        pose_2ds = pose_2ds.squeeze(0)
+        
+        # if have ground truth 3D pose, make a evaluation
+        if args.evaluate:
+            if pose_cs == None:
+                raise KeyError('3D groung truth: 404 not found')
+            else:
+                pose_cs = pose_cs.squeeze(0)
+        
+        # initial the output format
         if args.output and epoch==args.epochs-1:
             count = count.item()
             pose_pred = list()
             multi_T = list()
             output_zip[count] = dict()
 
-        if args.multi_view:
-            raise KeyError('sorry, multi_view is not in beta test')
-
-        # if have ground truth 3D pose, make a evaluation
-        if not pose_cs and args.evaluate:
-            raise KeyError('3D groung truth: 404 not found')
+        if args.update:
+            model_pos.train()
+            optimizer.zero_grad()   
+        else:
+            model_pos.eval()
         
-        if pose_cs and args.evaluate:
-            pose_c_m = pose_cs[0].squeeze(0)
-
-        # for main view
-        pose_2d_m = pose_2ds[0].squeeze(0)
-        camera_m = cameras[0].squeeze(0)
-
-        # N - number of people
-        N = pose_2d_m.shape[0]
-
-        # for each person
-        for i in range(N):
-            pose_2d = pose_2d_m[i].unsqueeze(0)
-
-            if args.update:
-                model_pos.train()
-                optimizer.zero_grad()
-            else:
-                model_pos.eval()
-
-            pose_c_test = model_pos(pose_2d)
-            pose_2d_test = pose_2d[:,receptive_field-1:]
-
-            # if not update dont compute loss
-            T, loss = Regressor(pose_c_test, pose_2d_test, camera_m, args.update, int((args.width-1)/2))
-
-            if args.update and (loss.item() < 1):
-                loss_list.append(loss.item())
-                loss.backward()
-                optimizer.step()
-
-            if args.output and epoch==args.epochs-1:
-                pose_pred.append(pose_c_test)
-                multi_T.append(T)
-
-            # if have ground truth 3D pose, make a evaluation
-            if pose_cs and args.evaluate:
-                # T -> [x,3] -> [1,x,17,3]
-                T = T.unsqueeze(1)
-                pose_c_gt = pose_c_m[i][receptive_field-1:]
-                pose_c_test = pose_c_test.squeeze(0) + T
-
-        if args.output and epoch==args.epochs-1:
-            output_zip[count]['pose_pred'] = pose_pred
-            output_zip[count]['T'] = multi_T
-            output_zip[count]['receptive_field'] = (receptive_field, args.width)
+        view_number = cameras.shape[0]
+        # pose_pred - [view,number,frame,joint,3]
+        pose_pred = torch.stack([model_pos(pose_2ds[v]) for v in range(view_number)])
+        # for each view
+        data = [regressor(cameras[v], pose_pred[v], pose_2ds[v], args.update) for v in range(view_number)]
         
         pbar.update(1)
     pbar.close()
