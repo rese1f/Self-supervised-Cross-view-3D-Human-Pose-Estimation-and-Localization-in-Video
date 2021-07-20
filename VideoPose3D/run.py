@@ -51,7 +51,6 @@ model_pos.load_state_dict(checkpoint['model_pos'])
 if torch.cuda.is_available():
     print('- Running in device', torch.cuda.get_device_name())
     model_pos = model_pos.cuda()
-    print(model_pos)
 
 receptive_field = model_pos.receptive_field()
 lr = checkpoint['lr']
@@ -111,9 +110,11 @@ while epoch < args.epochs:
         # pose_pred - [view,number,frame,joint,3]
         pose_pred = torch.stack([model_pos(pose_2ds[v]) for v in range(view_number)])
         # for each view
-        data = [regressor(cameras[v], pose_pred[v], pose_2ds[v], args.update) for v in range(view_number)]
+        # here we make a cut for pose_2d via receptive_field
+        data = [regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)]
         
         pbar.update(1)
+        break
     pbar.close()
 
     # Decay learning rate exponentially
@@ -157,12 +158,12 @@ if args.output:
         sample'0': {
             'pose_pred': list(n,x,17,3),
             'T': list(n,x,3),
-            'receptive_field': int, int
+            'receptive_field': int
         }
         sample'1': {
             'pose_pred': list(n,x,17,3),
             'T': list(n,x,3),
-            'receptive_field': int, in
+            'receptive_field': int
         }
     }
     # unit: m
