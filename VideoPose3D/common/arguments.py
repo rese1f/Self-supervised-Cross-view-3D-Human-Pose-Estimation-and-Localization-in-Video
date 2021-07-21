@@ -45,6 +45,9 @@ def parse_args():
     args = parser.parse_args()
 
     if not args.update and args.save:
-        RuntimeError('cannot save model when stay constant')
+        ValueError('cannot save model when stay constant')
+        
+    if not args.update and args.export_training_curves:
+        ValueError('cannot save curve when not loss-computing')
 
     return args

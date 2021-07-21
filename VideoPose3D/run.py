@@ -1,5 +1,6 @@
 
 import torch
+from torch.autograd.grad_mode import no_grad
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
@@ -68,13 +69,16 @@ data_iter = DataLoader(dataset, shuffle=True)
 
 if args.output:
     output_zip = dict()
-
+    loss_list = list()
 
 print('Processing...')
 
 epoch = 0
-loss_list = list()
-
+if args.update:
+    model_pos.train()
+else:
+    model_pos.eval()
+    
 while epoch < args.epochs:
     print('- epoch {}'.format(epoch))
     pbar = tqdm(total=dataset.__len__())
@@ -96,25 +100,32 @@ while epoch < args.epochs:
         # initial the output format
         if args.output and epoch==args.epochs-1:
             count = count.item()
-            pose_pred = list()
-            multi_T = list()
             output_zip[count] = dict()
 
         if args.update:
-            model_pos.train()
             optimizer.zero_grad()   
-        else:
-            model_pos.eval()
         
         view_number = cameras.shape[0]
         # pose_pred - [view,number,frame,joint,3]
         pose_pred = torch.stack([model_pos(pose_2ds[v]) for v in range(view_number)])
         # for each view
         # here we make a cut for pose_2d via receptive_field
-        data = [regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)]
+        T, loss = zip(*[regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)])
+        
+        # BETA
+        T = torch.stack(T)
+        if args.update:
+            loss = torch.stack(loss).mean()
+            loss_list.append(loss.item())
+            loss.backward()
+            optimizer.step()
+        
+        if args.output:
+            output_zip['pose_pred'] = pose_pred
+            output_zip['T'] = T
+            output_zip['receptive_field'] = receptive_field
         
         pbar.update(1)
-        break
     pbar.close()
 
     # Decay learning rate exponentially
@@ -156,13 +167,13 @@ if args.output:
 
     output_zip = {
         sample'0': {
-            'pose_pred': list(n,x,17,3),
-            'T': list(n,x,3),
+            'pose_pred': list(v,n,x,17,3),
+            'T': list(v,n,x,3),
             'receptive_field': int
         }
         sample'1': {
-            'pose_pred': list(n,x,17,3),
-            'T': list(n,x,3),
+            'pose_pred': list(v,n,x,17,3),
+            'T': list(v,n,x,3),
             'receptive_field': int
         }
     }

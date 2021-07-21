@@ -1,5 +1,4 @@
 
-from os import device_encoding
 import torch
 
 def regressor(camera, pose_pred, pose_2d, w, update):
@@ -20,9 +19,21 @@ def regressor(camera, pose_pred, pose_2d, w, update):
     N = pose_2d.shape[0]
     pose_pred = torch.split(pose_pred, split_size_or_sections=w, dim=1)
     pose_2d = torch.split(pose_2d, split_size_or_sections=w, dim=1)
-    [subregressor(i[0][j], i[1][j], update) for j in range(N) for i in zip(pose_pred,pose_2d)]
-    
-    return
+    T,loss = zip(*[unzip([subregressor(i[0][j], i[1][j], update) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
+    T = torch.stack(T)
+    mean_loss = torch.stack(loss).mean()
+    return T,mean_loss
+
+def unzip(list):
+    """unzip the tensor tuple list
+
+    Args:
+        list: contains tuple of segemented tensors
+    """
+    T, loss = zip(*list)
+    T = torch.cat(T)
+    mean_loss = torch.cat(loss).mean()
+    return T, mean_loss
 
 def subregressor(pose_pred, pose_2d, update):
     """create a linear regression in single person with frame width w
@@ -60,12 +71,11 @@ def subregressor(pose_pred, pose_2d, update):
     
     T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
     
-    loss = 0
+    loss = torch.zeros(1)
     if update:
         loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
     
     T = T.reshape(w,3)
-    
     return T, loss
 
 def submatrix(A, b, i, x, y, xzX, yzY):
@@ -91,5 +101,4 @@ def submatrix(A, b, i, x, y, xzX, yzY):
     
     A[i*2*J:(i+1)*2*J,i*3:(i+1)*3] = Ai
     b[i*2*J:(i+1)*2*J,:] = bi.unsqueeze_(-1)
-        
     return
