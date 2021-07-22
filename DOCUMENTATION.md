@@ -120,6 +120,10 @@ The basic logic of this part can be expressed below.
 
 ![VideoPose3DLayout](./Graphs/VideoPose3DLayout.png)
 
+### Algorithm for Single-view Camera Coordination Regression
+
+![9461626954532_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-22-143126.png)
+
 ### Execution/Super-parameters
 
 | Arg.    | Abbr.                      | Meaning                                                      | Default                   |

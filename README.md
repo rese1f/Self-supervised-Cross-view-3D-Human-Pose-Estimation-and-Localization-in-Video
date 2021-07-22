@@ -1,8 +1,8 @@
-# DE-PRJ: V-1.9.7 (ENHANCED)
+# DE-PRJ: V-2.0.0 (BREAKTHROUGH)
 
 ## Release Notes
 
-The release of version 2.0.0 will be carried out after the accomplishment of the visualization part of the Data Enhancement part.git pu
+Version 2.0.0 is release because we’ve completed the implementation for single-view camera coordination regression.
 
 ## Codeblock Level Logic
 
