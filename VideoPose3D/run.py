@@ -111,7 +111,7 @@ while epoch < args.epochs:
         # for each view
         # here we make a cut for pose_2d via receptive_field
         T, loss = zip(*[regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)])
-        # BETA
+        # T - [view,number,frame,3]
         T = torch.stack(T)
                     
         if args.update:
