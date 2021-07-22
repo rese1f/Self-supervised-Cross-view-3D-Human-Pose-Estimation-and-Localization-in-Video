@@ -1,4 +1,7 @@
 
+# How to check grad?
+# Hint: torch.sum(tensor).backward(retain_graph=True)
+
 import torch
 
 def regressor(camera, pose_pred, pose_2d, w, update):
@@ -22,7 +25,9 @@ def regressor(camera, pose_pred, pose_2d, w, update):
     T,loss = zip(*[unzip([subregressor(i[0][j], i[1][j], update) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
     T = torch.stack(T)
     mean_loss = torch.stack(loss).mean()
-    return T,mean_loss
+    if update:
+        mean_loss.backward(retain_graph=True)
+    return T, mean_loss
 
 def unzip(list):
     """unzip the tensor tuple list
@@ -47,16 +52,16 @@ def subregressor(pose_pred, pose_2d, update):
     # initial the matrix
     w = pose_2d.shape[0]
     J = pose_2d.shape[1]
-    A = torch.zeros((2*J*w,3*w), device=device)
-    b = torch.zeros((2*J*w,1), device=device)
 
     # get component [128,17]
     x = pose_2d[...,0]
     y = pose_2d[...,1]
     xzX = torch.mul(x,pose_pred[...,2]).add(pose_pred[...,0])
     yzY = torch.mul(y,pose_pred[...,2]).add(pose_pred[...,1])
-
-    [submatrix(A, b, i, x[i], y[i], xzX[i], yzY[i]) for i in range(w)]
+    
+    A_tuple, b_tuple = zip(*[submatrix(w, i, x[i], y[i], xzX[i], yzY[i]) for i in range(w)])
+    A_mse = torch.cat(A_tuple)
+    b_mse = torch.cat(b_tuple)
     
     # first difference
     lambda_1 = 1e-3
@@ -65,20 +70,16 @@ def subregressor(pose_pred, pose_2d, update):
     A_1 = torch.cat((I_1,O), dim=1) - torch.cat((O,I_1), dim=1)
     b_1 = torch.zeros((3*w-3,1), device=device)
 
-    # second difference
-    A = torch.cat((A,A_1), dim=0)
-    b = torch.cat((b,b_1), dim=0)
-    
+    A = torch.cat((A_mse,A_1), dim=0)
+    b = torch.cat((b_mse,b_1), dim=0)
     T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
-    
-    loss = torch.zeros(1)
+    loss = 0
     if update:
         loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
-    
     T = T.reshape(w,3)
     return T, loss
 
-def submatrix(A, b, i, x, y, xzX, yzY):
+def submatrix(w, i, x, y, xzX, yzY):
     """create a matrix block
 
     Args:
@@ -87,18 +88,18 @@ def submatrix(A, b, i, x, y, xzX, yzY):
         xzX (tensor): [17]
         yzY (tensor): [17]
     """
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     J = x.shape[0]
-    # Ai - [34,3]
-    # bi - [34]
-    Ai = torch.zeros((J*2,3))
-    bi = torch.zeros((J*2))
-    Ai[:J,0] = -1
-    Ai[J:,1] = -1
-    Ai[:J,2] = x
-    Ai[J:,2] = y
-    bi[:J] = xzX
-    bi[J:] = yzY
+
+    fill_0 = torch.zeros((J,1), device=device, requires_grad=True)
+    fill_1 = -torch.ones((J,1), device=device, requires_grad=True)
+    fill_x = torch.cat((fill_1, fill_0, x.unsqueeze(-1)), dim=1)
+    fill_y = torch.cat((fill_0, fill_1, y.unsqueeze(-1)), dim=1)
+    fill = torch.cat((fill_x, fill_y), dim=0)
+    zero_l = torch.zeros((J*2,3*i), device=device, requires_grad=True)
+    zero_r = torch.zeros((J*2,3*w-3*i-3), device=device, requires_grad=True)
     
-    A[i*2*J:(i+1)*2*J,i*3:(i+1)*3] = Ai
-    b[i*2*J:(i+1)*2*J,:] = bi.unsqueeze_(-1)
-    return
+    Ai = torch.cat((zero_l, fill, zero_r), dim=1)
+    bi = torch.cat((xzX.unsqueeze(-1), yzY.unsqueeze(-1)), dim=0)
+
+    return Ai, bi

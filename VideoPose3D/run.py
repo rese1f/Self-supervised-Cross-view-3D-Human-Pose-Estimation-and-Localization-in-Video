@@ -50,7 +50,7 @@ print('- Loading checkpoint', chk_filename)
 checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
 model_pos.load_state_dict(checkpoint['model_pos'])
 if torch.cuda.is_available():
-    print('- Running in device', torch.cuda.get_device_name())
+    print('- Running on device', torch.cuda.get_device_name())
     model_pos = model_pos.cuda()
 
 receptive_field = model_pos.receptive_field()
@@ -78,7 +78,7 @@ if args.update:
     model_pos.train()
 else:
     model_pos.eval()
-    
+
 while epoch < args.epochs:
     print('- epoch {}'.format(epoch))
     pbar = tqdm(total=dataset.__len__())
@@ -111,13 +111,12 @@ while epoch < args.epochs:
         # for each view
         # here we make a cut for pose_2d via receptive_field
         T, loss = zip(*[regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)])
-        
         # BETA
         T = torch.stack(T)
+                    
         if args.update:
-            loss = torch.stack(loss).mean()
-            loss_list.append(loss.item())
-            loss.backward()
+            mean_loss = torch.stack(loss).mean()
+            loss_list.append(mean_loss.item())
             optimizer.step()
         
         if args.output:
