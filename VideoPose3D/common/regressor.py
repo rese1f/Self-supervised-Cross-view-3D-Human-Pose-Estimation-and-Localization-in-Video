@@ -4,20 +4,15 @@
 
 import torch
 
-def regressor(camera, pose_pred, pose_2d, w, update):
+def regressor(pose_pred, pose_2d, w, update):
     """create a linear regression in single view
 
     Args:
-        camera (tensor): camera_parameters[cx,cy,fx,fy]
         pose_pred (tensor): predicted_3d_pose with shape[number,frame,joint,3]
         pose_2d (tensor): pixel_2d_pose with shape[number,frame,joint,2]
         w (int): number of frames in one shot
         update (bool): if compute loss
     """
-    # make a assignment x=(x-c)/f, y=(y-c)/f
-    pose_2d[...,0].add_(-camera[0]).mul_(1/camera[2])
-    pose_2d[...,1].add_(-camera[1]).mul_(1/camera[3])
-
     # split via person and width
     N = pose_2d.shape[0]
     pose_pred = torch.split(pose_pred, split_size_or_sections=w, dim=1)
@@ -25,8 +20,6 @@ def regressor(camera, pose_pred, pose_2d, w, update):
     T,loss = zip(*[unzip([subregressor(i[0][j], i[1][j], update) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
     T = torch.stack(T)
     mean_loss = torch.stack(loss).mean()
-    if update:
-        mean_loss.backward(retain_graph=True)
     return T, mean_loss
 
 def unzip(list):
@@ -73,7 +66,7 @@ def subregressor(pose_pred, pose_2d, update):
     A = torch.cat((A_mse,A_1), dim=0)
     b = torch.cat((b_mse,b_1), dim=0)
     T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
-    loss = 0
+    loss = torch.zeros(1)
     if update:
         loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
     T = T.reshape(w,3)

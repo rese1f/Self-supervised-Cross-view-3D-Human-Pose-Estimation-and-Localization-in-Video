@@ -83,47 +83,59 @@ while epoch < args.epochs:
     print('- epoch {}'.format(epoch))
     pbar = tqdm(total=dataset.__len__())
     
-    for cameras, pose_cs, pose_2ds, count in data_iter:
-        # cut the useless dimention
-        # pose - [view,number,frame,joint,2]
-        # camera - [view,4]
-        cameras = cameras.squeeze(0)
-        pose_2ds = pose_2ds.squeeze(0)
-        
+    for cameras, pose_cs, pose_2ds, count in data_iter:   
         # if have ground truth 3D pose, make a evaluation
         if args.evaluate:
             if pose_cs == None:
                 raise KeyError('3D groung truth: 404 not found')
             else:
                 pose_cs = pose_cs.squeeze(0)
-        
+                
         # initial the output format
         if args.output and epoch==args.epochs-1:
             count = count.item()
             output_zip[count] = dict()
-
         if args.update:
-            optimizer.zero_grad()   
+            optimizer.zero_grad() 
+              
+        # cut the useless dimention
+        # pose_2d - [view,number,frame,joint,2]
+        # camera - [view,4] [cx,cy,fx,fy]
+        # shape - [view,number,frame,joint,2]
+        cameras = cameras.squeeze(0)
+        pose_2ds = pose_2ds.squeeze(0)
+        shape = pose_2ds.shape
         
-        view_number = cameras.shape[0]
-        # pose_pred - [view,number,frame,joint,3]
-        pose_pred = torch.stack([model_pos(pose_2ds[v]) for v in range(view_number)])
-        # for each view
+        # pose_2ds -> reshape to [view*number,frame,joint,3]
+        pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
+        pose_pred = model_pos(pose_2ds)
+        
         # here we make a cut for pose_2d via receptive_field
-        T, loss = zip(*[regressor(cameras[v], pose_pred[v], pose_2ds[v,:,receptive_field-1:], args.width, args.update) for v in range(view_number)])
-        # T - [view,number,frame,3]
-        T = torch.stack(T)
+        # make a assignment x=(x-c)/f, y=(y-c)/f
+        pose_2ds = pose_2ds.reshape(shape)
+        cameras = cameras[:,None,None,None,:]
+        pose_2ds[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
+        pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
+        pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
+        pose_2ds = pose_2ds[:, receptive_field-1:]
+        
+        T, loss = regressor(pose_pred, pose_2ds, args.width, args.update)
+
+        # reshape back to [view, number, frame, joint, 2/3]
+        pose_2ds = pose_2ds.reshape(shape[0],shape[1],-1,shape[3],2)      
+        pose_pred = pose_pred.reshape(shape[0],shape[1],-1,shape[3],3)
+        T = T.reshape(shape[0],shape[1],-1,3)                  
                     
         if args.update:
-            mean_loss = torch.stack(loss).mean()
-            loss_list.append(mean_loss.item())
+            loss.backward()
+            loss_list.append(loss.item())
             optimizer.step()
-        
+            
         if args.output:
             output_zip['pose_pred'] = pose_pred
             output_zip['T'] = T
             output_zip['receptive_field'] = receptive_field
-        
+            
         pbar.update(1)
     pbar.close()
 
