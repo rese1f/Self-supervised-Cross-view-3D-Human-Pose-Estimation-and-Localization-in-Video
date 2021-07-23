@@ -13,106 +13,156 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 from common.data_utils import *
 
 class Visualization:
+    '''
+    obj Visualization:
+        data: dict{
+            'truth': dict{
+                "view_0": dict{
+                    "pose_c": array[n,x,17,3]
+                    "pose_2d": array[n,x,17,2]
+                    "camera": array[4]
+                    "center": array[3]
+                }
+                "view_1"
+            }
+            'prediction': dict{
+                "pose_pred": array[n,x,17,3]
+                "trans": array[n,x,2]
+                "center" (if calculated)
+            }
+        }
+        info: dict{
+            "args" args
+            "frame" x(int)
+            "number" n(int)
+            "receptive_field" int, int
+            "view_key" list of view
+            "skeleton" list of connection
+            "sample"
+        }
+    
+    '''
+
+
+
+
     def __init__(self) -> None:
 
-        args = parse_args()
-        print(args)
-        self.ifcomp = args.compare
-        self.ds = args.dataset
-        self.pb = args.playback
+        self.data_truth = dict(); self.data_prediction = dict()
+        self.info_args = parse_args()
+        print(self.info_args)
         #load data
         
-        Visualization.load_camera_view(self, args)
-        Visualization.load_prediction(self, args)
-        Visualization.get_datainfo(self, args)
+        
+        Visualization.load_data(self)
+        Visualization.get_datainfo(self)
+        Visualization.process_prediction(self)
+        
 
         #generate subplot
 
-        Visualization.prepare_plot(self, self.ifcomp)
+        Visualization.prepare_plot(self, self.info_args.compare)
         
 
         #tqdm
         if __name__ == '__main__':
-            self.pbar = tqdm(total=self.x)
+            self.pbar = tqdm(total=self.info_frame)
         pass
 
-    def load_camera_view(self, args):
+    def load_data(self):
         try:
-            dataset_orig = np.load('output/data_multi_output_' + args.dataset + '.npz', allow_pickle=True)["positions_2d"].item()
-            
+            #if self.info_args.file is not None:
+            #    filepath = self.info_args.file
 
-            self.count_key_list = list(dataset_orig.keys())
-            if args.sample is not None: 
-                self.sample_key = int(args.sample); 
+            #else:
+            #    filepath = 'output/data_output_' + self.info_args.dataset + '.npz'
+            filepath = 'output/data_output_' + self.info_args.dataset + '_1.npz'
+            dataset_orig = np.load(filepath, allow_pickle=True)["positions_2d"].item()
+            count_key_list = list(dataset_orig.keys())
+            if self.info_args.sample is not None: 
+                sample_key = int(self.info_args.sample); 
             else: 
-                self.sample_key = random.choice( self.count_key_list )
-            self.dataset = dataset_orig[self.sample_key]
+                sample_key = random.choice( count_key_list )
+            self.data_truth = dataset_orig[sample_key]
+            self.info_sample = sample_key
+
+            prediction_orig = np.load(filepath, allow_pickle=True)["positions_3d"].item()
+            prediction = prediction_orig[count_key_list[sample_key]]
+            
+            # the block below is used 4 transform list(tensor[],tensor[],...) into array[] 
+            #       with the same shape of list 
+            pos_pred = list()
+            for item in prediction["pose_pred"]: pos_pred.append(item.cpu().detach().numpy())
+            pos_pred = np.array(pos_pred).squeeze()
+
+            pos_trans = list()
+            for item in prediction["T"]: pos_trans.append(item.cpu().detach().numpy())
+            pos_trans = np.array(pos_trans).squeeze()
+
+            self.data_prediction["pose_pred"] = pos_pred
+            self.data_prediction["trans"] = pos_trans
+
+            self.info_receptive_field = list(prediction["receptive_field"])
             
         except KeyError:
             print('Sample does not exist! Please input right sample number')
 
         pass
 
-    def load_prediction(self, args):
+    def process_prediction(self):
         
-        try:
-            prediction_orig = np.load('output/data_multi_output_' + args.dataset + '.npz', allow_pickle=True)["positions_3d"].item()
-            self.prediction = prediction_orig[self.count_key_list[self.sample_key]]
-            
-            self.pos_pred = list()
-            for item in self.prediction["pose_pred"]: self.pos_pred.append(item.cpu().detach().numpy())
-            self.pos_pred = np.array(self.pos_pred).squeeze()
-
-            self.pos_trans = list()
-            for item in self.prediction["T"]: self.pos_trans.append(item.cpu().detach().numpy())
-            self.pos_trans = np.array(self.pos_trans).squeeze()
-            
-            self.pos_pred = self.pos_pred.transpose((0,2,1,3)).transpose((1,0,2,3))
-            self.pos_pred = self.pos_pred * 1e3
-            #for i in range(self.pos_pred.shape[0]):
-            #    for j in range(self.pos_pred.shape[1]):
-            #        self.pos_pred[i,j] = self.pos_pred[i,j] + self.pos_trans[i,j]*1e3
-            self.pos_pred = self.pos_pred + self.pos_trans * 1e3
-            self.pos_pred[:,:,:,1] = - self.pos_pred[:,:,:,1]
-            self.pos_pred = self.pos_pred.transpose((1,0,2,3)).transpose((0,2,1,3))            
-            #print(self.pos_pred.shape)
-            #print(self.pos_pred[1])
-            
-        except KeyError:
-            print('Sample does not exist! Please input right sample number')
-
-
+        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((0,2,1,3)).transpose((1,0,2,3))
+        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] * 1e3
+        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] + self.data_prediction["trans"] * 1e3
+        self.data_prediction["pose_pred"][:,:,:,1] = - self.data_prediction["pose_pred"][:,:,:,1] # not sure about this operation
+        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((1,0,2,3)).transpose((0,2,1,3))            
         pass
 
-    def get_datainfo(self, args):
+    def get_datainfo(self):
         
-        dataset_metadata = suggest_metadata(args.dataset)
+        dataset_metadata = suggest_metadata(self.info_args.dataset)
         try:
-            self.view_key_list = list(self.dataset.keys())
-            self.n = self.dataset[self.view_key_list[0]]['pose_2d'].shape[0]
-            self.x = self.dataset[self.view_key_list[0]]['pose_2d'].shape[1] - self.prediction["receptive_field"][0] + 1
-            self.skeleton = dataset_metadata['skeleton']
-            self.joints_num = dataset_metadata['num_joints']
+            self.info_view_key = list(self.data_truth.keys())
+            self.info_number = self.data_truth[self.info_view_key[0]]['pose_2d'].shape[0]
+            self.info_frame = (self.data_truth[self.info_view_key[0]]['pose_2d'].shape[1] 
+                - self.info_receptive_field[0] + 2 - self.info_receptive_field[1])
+            self.info_skeleton = dataset_metadata['skeleton']
+            self.info_num_joints = dataset_metadata['num_joints']
+            Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
         except KeyError:
             print("The dataset havent been fully supported yet")
-        self.radius = 4000
-        self.radius_m = 4000
-        self.center_c = Visualization.__get_center(self.dataset, self.view_key_list)
-        self.center_p = np.mean(self.pos_pred[:,0,0,:],axis=0)
+        
+        self.info_plot_radius = 4000
+
+        for key in self.info_view_key:
+            self.data_truth[key] = Visualization.__get_center(self.data_truth[key], "pose_c", 1)
+        if not self.info_args.compare: self.data_prediction = Visualization.__get_center(self.data_prediction, "pose_c", 1e3)
 
         pass
+
+    def cut_length(self, receptive_field_1, receptive_field_2):
+        start_true = int(receptive_field_1/2) + int(receptive_field_2/2) - 1; end_true = start_true + self.info_frame
+        start_pred = int(receptive_field_2/2) - 1; end_pred = start_pred + self.info_frame
+
+        for key in self.info_view_key:
+            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+
+        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"][:,start_pred:end_pred,:,:]
+
+        return
 
     def prepare_plot(self, ifcomp):
 
-        self.color = []
-        for i in range(self.n + 1): self.color.append("#" + "".join([choice("0123456789ABCDEF") for i in range(6)]))
+        self.info_color = []
+        for i in range(self.info_number + 1): self.info_color.append("#" + "".join([choice("0123456789ABCDEF") for i in range(6)]))
 
         self.fig = plt.figure()
         if ifcomp:
             ax = dict()
-            view_num = len(self.view_key_list)
+            view_num = len(self.info_view_key)
             i = 1
-            for view_key in self.view_key_list:
+            for view_key in self.info_view_key:
                 pos = np.array([i,i+1]) + 20 + view_num*100
                 ax[view_key]=[self.fig.add_subplot(pos[0], projection='3d'), self.fig.add_subplot(pos[1])]
                 ax[view_key][0].set_xlabel("x"); ax[view_key][0].set_xlabel("y"); ax[view_key][0].set_xlabel("z")
@@ -125,59 +175,65 @@ class Visualization:
 
         pass
         
-    def plt2D(self, ax, data, camdata, frame):
-        ax.clear()
-        multiperson_data = data; k = 0
-        for person in multiperson_data:
-            for i in self.skeleton:
-                x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
-                y = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
-                ax.plot(x, y, lw=2, c=self.color[k],alpha=0.6); 
-            k += 1
+    def plt2D(self, frame, ax, multiperson_data, camdata = None, ifclear = True, ifdot = True, ifscale = True):
+        if ifclear: ax.clear()
+        for k in range(multiperson_data.shape[0]):
+            for i in self.info_skeleton:
+                x = np.stack((multiperson_data[k, frame, i[0], 0], multiperson_data[k, frame, i[1], 0]), 0)
+                y = np.stack((multiperson_data[k, frame, i[0], 1], multiperson_data[k, frame, i[1], 1]), 0)
+                ax.plot(x, y, lw=2, c=self.info_color[k],alpha=0.6); 
             
-            for j in range(17):
-                x = person[frame,j,0]
-                y = person[frame,j,1]
-                c = person[frame,j,2]
+            if ifdot:
+                for j in range(17):
+                    x = multiperson_data[k, frame, j, 0]
+                    y = multiperson_data[k, frame, j, 1]
+                    c = multiperson_data[k, frame, j, 2]
 
-                if c == 1:
-                    ax.plot(x, y,'.',color='g',alpha=1)
+                    if c == 1:
+                        ax.plot(x, y,'.',color='g',alpha=1)
 
-                if c == -1:
-                    ax.plot(x,y,'.',color="r",alpha=1)
+                    if c == -1:
+                        ax.plot(x,y,'.',color="r",alpha=1)
 
-        fx = camdata[2]/2
-        fy = camdata[3]/2
-        cx = camdata[0]
-        cy = camdata[1]    
-        ax.set_xlim([cx-fx,cx+fx])
-        ax.set_ylim([cy-fy,cy+fy])
+        if ifscale:
+            fx = camdata[2]/2
+            fy = camdata[3]/2
+            cx = camdata[0]
+            cy = camdata[1]    
+            ax.set_xlim([cx-fx,cx+fx])
+            ax.set_ylim([cy-fy,cy+fy])
         pass
 
 
-    def plt3D(self, ax, data, center, frame, dot = False, arrow = True, clear = True, ifscale = True, ifroot = True):
+    def plt3D(self, frame, ax, multiperson_data, center = None,
+         dot = False, arrow = True, clear = True, ifscale = True, ifroot = True, iftrans = False, ifskeleton = True):
         if clear: ax.clear()
-        multiperson_data = data; k = 0
-        for person in multiperson_data:
-            if k != 1: continue
-            for i in self.skeleton:
-                x = np.stack((person[frame, i[0], 0], person[frame, i[1], 0]), 0)
-                z = np.stack((person[frame, i[0], 1], person[frame, i[1], 1]), 0)
-                y = np.stack((person[frame, i[0], 2], person[frame, i[1], 2]), 0)
-                ax.plot3D(x, y, z, lw=2, c=self.color[k], alpha = 0.8); 
-            k+=1
+        
+        for k in range(multiperson_data.shape[0]):
+            
+            if ifskeleton:
+            
+                for i in self.info_skeleton:
+
+                    y = np.stack((multiperson_data[k, frame, i[0], 0], multiperson_data[k, frame, i[1], 0]), 0)
+                    z = np.stack((multiperson_data[k, frame, i[0], 1], multiperson_data[k, frame, i[1], 1]), 0)
+                    x = np.stack((multiperson_data[k, frame, i[0], 2], multiperson_data[k, frame, i[1], 2]), 0)
+                    if iftrans: 
+                        temp = y; y = -x; x = temp
+                    ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 0.8); 
+            
             if ifroot:
-                root = person[frame,0,:]
-                ax.plot3D(root[0], root[2], root[1], '.',color="r",alpha=1)
+                root = multiperson_data[k, frame, 0, :]
+                ax.plot3D(root[0], root[2], root[1], '.',color=self.info_color[k],alpha=1)
                 label = '(%d, %d, %d)' % (root[0], root[2], root[1])
                 ax.text(root[0], root[2], root[1], label)
             
 
             if dot:
                 for j in range(17):
-                    x = person[frame,j,0]
-                    y = person[frame,j,1]
-                    z = person[frame,j,2]
+                    x = multiperson_data[k, frame, j, 0]
+                    z = multiperson_data[k, frame, j, 1]
+                    y = multiperson_data[k, frame, j, 2]
 
                     if j != 0: ax.plot3D(x, y, z, '.',color="r",alpha=1)
 
@@ -189,24 +245,23 @@ class Visualization:
             linestyle='dashed')
 
         if ifscale:
-            ax.set_xlim3d([center[0] - 2*self.radius, center[0] + 2*self.radius]) # 画布大小
-            ax.set_ylim3d([center[2] - 2*self.radius, center[2] + 2*self.radius])
-            ax.set_zlim3d([-self.radius/2 + center[1], self.radius/2 + center[1]])
+            ax.set_xlim3d([center[0] - 2*self.info_plot_radius, center[0] + 2*self.info_plot_radius]) # 画布大小
+            ax.set_ylim3d([center[2] - 2*self.info_plot_radius, center[2] + 2*self.info_plot_radius])
+            ax.set_zlim3d([-self.info_plot_radius + center[1], self.info_plot_radius + center[1]])
         pass
-
 
 
         
     def updater(self, frame):
 
-        if self.ifcomp:
-            for key in self.view_key_list:
-                Visualization.plt2D(self, self.ax[key][1], self.dataset[key]["pose_2d"], self.dataset[key]['camera'], frame)
-                Visualization.plt3D(self, self.ax[key][0], self.dataset[key]["pose_c"] * 1e3, self.center_c[key], frame, False, True)
+        if self.info_args.compare:
+            for key in self.info_view_key:
+                Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
+                Visualization.plt3D(self, frame, self.ax[key][0], self.data_truth[key]["pose_c"], self.data_truth[key]["center"], False, True, True, True, True, False, True)
                 pass
-            Visualization.plt3D(self, self.ax[self.view_key_list[0]][0] ,self.pos_pred, self.center_p, frame, False, False, False, False)
+            Visualization.plt3D(self, frame, self.ax[self.info_view_key[0]][0] ,self.data_prediction["pose_pred"], self.data_truth[key]["center"], False, False, False, False, True, False, False)
         else:
-            Visualization.plt3D(self, self.bx, self.pos_pred, self.center_p, frame, True, True)
+            Visualization.plt3D(self, frame, self.bx, self.data_prediction["pose_pred"], self.data_prediction["center"],  True, True)
 
         if __name__ == '__main__':
             self.pbar.update(1)
@@ -218,23 +273,20 @@ class Visualization:
         '''
         Produce animation and save it
         '''
-        anim = FuncAnimation(self.fig, self.updater, self.x, interval=1)
+        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=1)
         plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
-        if self.pb:anim.save("output/data_multi_output_" + self.ds + ".gif", writer='pillow', fps=165)
+        if self.info_args.playback: anim.save("output/data_multi_output_" + self.info_args.dataset + ".gif", writer='pillow', fps=165)
 
         return
 
-    def __get_center(data: dict, key_list):
-        center_dict = dict();
-        for key in key_list:
-            center_dict[key] = np.mean(data[key]["pose_c"][:,0,10,:],axis=0)*1e3
-            pass
-        return center_dict
+    def __get_center(data: dict, key, scale = 1):
+        data['center'] = np.mean(data[key][:,0,0,:],axis=0) * scale
+        return data
 
     def check_data(self, n):
         try:
-            data = self.pos_pred[n]
+            data = self.data_prediction["pose_pred"][n]
             for eachframe in data:
                 try:
                     input("Press enter to continue")
