@@ -25,14 +25,6 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create checkpoint directory:', args.checkpoint)
 
-try:
-    # Create out directory if it does not exist
-    os.makedirs('output')
-except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise RuntimeError('Unable to create output directory')
-
-
 print('Loading dataset...')
 dataset_path = 'data/data_multi_' + args.dataset + '.npz'
 print('- Loading file', dataset_path)
@@ -53,24 +45,34 @@ if torch.cuda.is_available():
     model_pos = model_pos.cuda()
 
 receptive_field = model_pos.receptive_field()
+lr = checkpoint['lr']
+lr_decay = args.lr_decay  
+initial_momentum = 0.1
+final_momentum = 0.001
+optimizer = optim.Adam(model_pos.parameters(), lr=lr, amsgrad=True)
+if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
+    optimizer.load_state_dict(checkpoint['optimizer'])
 
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, shuffle=True)
-
-output_zip = dict()
 loss_list = list()
-
+  
 print('Processing...')
 
-model_pos.eval()
+epoch = 0
+model_pos.train()
 
-pbar = tqdm(total=dataset.__len__())
-
-with torch.no_grad():
-    for cameras, pose_cs, pose_2ds, count in data_iter:
-        # initial the output format      
+while epoch < args.epochs:
+    print('- epoch {}'.format(epoch))
+    pbar = tqdm(total=dataset.__len__())
+    
+    for cameras, _, pose_2ds, count in data_iter:
+        # initial the output format
+        
+        optimizer.zero_grad() 
+              
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
         # camera - [view,4] [cx,cy,fx,fy]
@@ -78,11 +80,11 @@ with torch.no_grad():
         cameras = cameras.squeeze(0)
         pose_2ds = pose_2ds.squeeze(0)
         shape = pose_2ds.shape
-            
+        
         # pose_2ds -> reshape to [view*number,frame,joint,3]
         pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
         pose_pred = model_pos(pose_2ds)
-            
+        
         # here we make a cut for pose_2d via receptive_field
         # make a assignment x=(x-c)/f, y=(y-c)/f
         pose_2ds = pose_2ds.reshape(shape)
@@ -91,52 +93,44 @@ with torch.no_grad():
         pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
         pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
         pose_2ds = pose_2ds[:, receptive_field-1:]
-            
+        
         T, loss = regressor(pose_pred, pose_2ds, args.width)
 
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(shape[0],shape[1],-1,shape[3],2)      
         pose_pred = pose_pred.reshape(shape[0],shape[1],-1,shape[3],3)
         T = T.reshape(shape[0],shape[1],-1,3)                  
-
+                    
+        loss.backward()
         loss_list.append(loss.item())
-                
-        output_zip['pose_pred'] = pose_pred
-        output_zip['T'] = T
-        output_zip['receptive_field'] = receptive_field
-                
+        optimizer.step()
+                      
         pbar.update(1)
+    pbar.close()
 
-pbar.close()
+    # Decay learning rate exponentially
+    lr *= lr_decay
+    for param_group in optimizer.param_groups:
+        param_group['lr'] *= lr_decay
+      
+    # Decay BatchNorm momentum
+    momentum = initial_momentum * np.exp(-epoch/args.epochs * np.log(initial_momentum/final_momentum))
+    model_pos.set_bn_momentum(momentum)
 
-print('Saving output...')
-output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.epochs) + '.npz')
-print('- Saving output to', output_filename)
-np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=output_zip)
+    epoch += 1
 
-"""
-    dataset_zip = {
-        sample'0': {
+print('Saving model...')
+chk_path = os.path.join(args.checkpoint, args.save)
+print('- Saving checkpoint to', chk_path)
+            
+torch.save({
+    'lr': lr,
+    'optimizer': optimizer.state_dict(),
+    'model_pos': model_pos.state_dict(),
+}, chk_path)
 
-        }
-    }
-    # unit: mm
 
-    output_zip = {
-        sample'0': {
-            'pose_pred': list(v,n,x,17,3),
-            'T': list(v,n,x,3),
-            'receptive_field': int
-        }
-        sample'1': {
-            'pose_pred': list(v,n,x,17,3),
-            'T': list(v,n,x,3),
-            'receptive_field': int
-        }
-    }
-    # unit: m
-"""
-
+# Save training curves after every epoch, as .png images (if requested)
 
 print('Saving traning curve...')
 if 'matplotlib' not in sys.modules:

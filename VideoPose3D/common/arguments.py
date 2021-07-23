@@ -13,11 +13,6 @@ def parse_args():
                         help='checkpoint to load (file name)')
     parser.add_argument('--save', default='trained_h36m_cpn.bin', type=str, metavar='FILENAME',
                         help='checkpoint to save (file name)')
-    parser.add_argument('-eval', '--evaluate', default=False, type=bool, metavar='E', help='make evaluation if get 3d ground truth')
-    parser.add_argument('-u', '--update', default=True, type=bool, metavar='U', help='if update the parameter of model')
-    parser.add_argument('-o', '--output', default=True, type=bool, metavar='PATH',
-                        help='output predict 3d pose')
-    parser.add_argument('--export-training-curves', action='store_true', help='save training curves as .png images')
 
     # Model arguments
     parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
@@ -43,11 +38,5 @@ def parse_args():
         help='if compare prediction with gt') 
 
     args = parser.parse_args()
-
-    if not args.update and args.save:
-        ValueError('cannot save model when stay constant')
-        
-    if not args.update and args.export_training_curves:
-        ValueError('cannot save curve when not loss-computing')
 
     return args

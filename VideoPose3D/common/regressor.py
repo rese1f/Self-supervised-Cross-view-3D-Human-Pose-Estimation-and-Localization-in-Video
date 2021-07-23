@@ -4,20 +4,19 @@
 
 import torch
 
-def regressor(pose_pred, pose_2d, w, update):
+def regressor(pose_pred, pose_2d, w):
     """create a linear regression in single view
 
     Args:
         pose_pred (tensor): predicted_3d_pose with shape[number,frame,joint,3]
         pose_2d (tensor): pixel_2d_pose with shape[number,frame,joint,2]
         w (int): number of frames in one shot
-        update (bool): if compute loss
     """
     # split via person and width
     N = pose_2d.shape[0]
     pose_pred = torch.split(pose_pred, split_size_or_sections=w, dim=1)
     pose_2d = torch.split(pose_2d, split_size_or_sections=w, dim=1)
-    T,loss = zip(*[unzip([subregressor(i[0][j], i[1][j], update) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
+    T,loss = zip(*[unzip([subregressor(i[0][j], i[1][j]) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
     T = torch.stack(T)
     mean_loss = torch.stack(loss).mean()
     return T, mean_loss
@@ -33,13 +32,12 @@ def unzip(list):
     mean_loss = torch.cat(loss).mean()
     return T, mean_loss
 
-def subregressor(pose_pred, pose_2d, update):
+def subregressor(pose_pred, pose_2d):
     """create a linear regression in single person with frame width w
 
     Args:
         pose_pred (tensor): predicted_3d_pose with shape[w,joint,3]
         pose_2d (tensor): pixel_2d_pose with shape[w,joint,3]
-        update (bool): if compute loss
     """
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     # initial the matrix
@@ -66,9 +64,7 @@ def subregressor(pose_pred, pose_2d, update):
     A = torch.cat((A_mse,A_1), dim=0)
     b = torch.cat((b_mse,b_1), dim=0)
     T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
-    loss = torch.zeros(1)
-    if update:
-        loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
+    loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
     T = T.reshape(w,3)
     return T, loss
 
