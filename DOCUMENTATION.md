@@ -148,3 +148,7 @@ The basic logic of this part can be expressed below.
 
 If you are curious about the source code implementing the parameters, turn to [VideoPose3D/common/arguments.py](VideoPose3D/common/arguments.py).
 
+### A Multi-view Matching Loss Algorithm Based on ICP
+
+![10151627036981_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-23-155600.png)
+
