@@ -69,9 +69,6 @@ while epoch < args.epochs:
     
     for cameras, _, pose_2ds, count in data_iter:
         # initial the output format
-        
-        optimizer.zero_grad() 
-              
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
         # camera - [view,4] [cx,cy,fx,fy]
@@ -94,16 +91,15 @@ while epoch < args.epochs:
         pose_2ds = pose_2ds[:, receptive_field-1:]
         
         T, loss = regressor(pose_pred, pose_2ds, args.width)
-
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(shape[0],shape[1],-1,shape[3],2)      
         pose_pred = pose_pred.reshape(shape[0],shape[1],-1,shape[3],3)
         T = T.reshape(shape[0],shape[1],-1,3)                  
-                    
+         
+        optimizer.zero_grad()          
         loss.backward()
         loss_list.append(loss.item())
-        optimizer.step()
-                      
+        optimizer.step()          
         pbar.update(1)
     pbar.close()
 

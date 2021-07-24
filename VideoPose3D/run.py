@@ -98,13 +98,10 @@ with torch.no_grad():
         T = T.reshape(shape[0],shape[1],-1,3)                  
 
         loss_list.append(loss.item())
-                
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
         output_zip['receptive_field'] = receptive_field
-                
         pbar.update(1)
-
 pbar.close()
 
 print('Saving output...')
