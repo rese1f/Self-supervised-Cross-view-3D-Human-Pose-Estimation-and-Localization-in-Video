@@ -136,7 +136,7 @@ def icp(A, B, init_pose=None, max_iterations=50, tolerance=0.001):
         src = high_dim_matmul(T_temp,src) # [v,n,N,4]
 
         # check error
-        mean_error = np.sum(distances) / distances.shape[0] # float
+        mean_error = torch.sum(distances) / distances.shape[0] # float
         T = torch.matmul(T_temp,T) # [v,n,4,4]
         if abs(prev_error-mean_error) < tolerance or i == max_iterations-1:
             R = R_temp; t = t_temp
@@ -165,8 +165,8 @@ def icp_multi(data_pos_3d, data_trans, init_pose=None, max_iterations=50, tolera
     '''
 
     data_shape = data_pos_3d.shape
-    T = np.zeros((data_shape[3],sum(range(data_shape[0])),4,4)) # homogeneous transformation matrix of [x,sum(range(v)),4,4]
-    loss = np.zeros((data_shape[3],sum(range(data_shape[0])),1)) # loss of [x,sum(range(v)),1]
+    T = torch.zeros((data_shape[3],sum(range(data_shape[0])),4,4)) # homogeneous transformation matrix of [x,sum(range(v)),4,4]
+    loss = torch.zeros((data_shape[3],sum(range(data_shape[0])),1)) # loss of [x,sum(range(v)),1]
     
     data_pos_3d = data_pos_3d.permute(3,0,1,2,4)
     data_pos_3d = data_pos_3d + data_trans
