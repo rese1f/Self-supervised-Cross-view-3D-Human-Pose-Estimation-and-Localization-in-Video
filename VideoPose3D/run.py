@@ -76,27 +76,22 @@ with torch.no_grad():
         cameras = cameras.squeeze(0)
         pose_2ds = pose_2ds.squeeze(0)
         shape = pose_2ds.shape
-            
-        # pose_2ds -> reshape to [view*number,frame,joint,3]
-        pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
-        pose_pred = model_pos(pose_2ds)
-            
-        # here we make a cut for pose_2d via receptive_field
+        # normolization  
         # make a assignment x=(x-c)/f, y=(y-c)/f
-        pose_2ds = pose_2ds.reshape(shape)
         cameras = cameras[:,None,None,None,:]
         pose_2ds[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
         pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
+        # pose_2ds -> reshape to [view*number,frame,joint,2]
         pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
-        pose_2ds = pose_2ds[:, receptive_field-1:]
-            
+        pose_pred = model_pos(pose_2ds)
+        # here we make a cut for pose_2d via receptive_field
+        pose_2ds = pose_2ds[:, receptive_field-1:]       
         T, loss = regressor(pose_pred, pose_2ds, args.width)
-
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(shape[0],shape[1],-1,shape[3],2)      
         pose_pred = pose_pred.reshape(shape[0],shape[1],-1,shape[3],3)
-        T = T.reshape(shape[0],shape[1],-1,3)                  
-
+        T = T.reshape(shape[0],shape[1],-1,3)      
+                    
         loss_list.append(loss.item())
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
