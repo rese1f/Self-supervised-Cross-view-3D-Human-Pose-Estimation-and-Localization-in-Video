@@ -78,7 +78,7 @@ def euc_dist(A,B):
         distances: Euclidean distances (loss) of the point A and B: [v,1]
         
     '''
-    distance = torch.mean(torch.mean(torch.norm(torch.sub(A,B),dim=3), dim=2),dim=1)
+    distance = torch.sum(torch.sum(torch.norm(torch.sub(A,B),dim=3), dim=2),dim=1)
     return distance
 
 def high_dim_matmul(T,src):
@@ -125,12 +125,12 @@ def high_dim_sub(A,B):
     Output:
         src: [v,n,17,3/4] torch tensor of points
     '''
-    A = A.permute(2,0,1,3) # shape of [N,v,n,3/4,1]
-    A = torch.sub(A, B).permute(1,2,0,3)
+    A = A.permute(1,2,0,3) # shape of [N,v,n,3/4,1]
+    A = torch.sub(A, B).permute(2,0,1,3)
         # [v,n,3/4,3/4] reshape2 [v,n,17,3/4]
     return A
 
-def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
+def icp(A, B, init_pose=None, max_iterations=100, tolerance=0.001):
     '''
     The Iterative Closest Point method
     Input:
@@ -259,13 +259,13 @@ def unzip(list):
 
 if __name__ == "__main__":
     
-    data = np.load("common\data_output.npz",allow_pickle=True)
+    data = np.load("output\data_output.npz",allow_pickle=True)
     
     a = torch.tensor(data["pose_pred"])
     b = torch.tensor(data["T"])
     
-    #print(a); 
-    #print(b)
+    print(a.shape); 
+    print(b.shape)
     
     #a = torch.rand((2,3,200,17,3))    # 20 points for test
     #b = torch.rand((2,3,200,3))
