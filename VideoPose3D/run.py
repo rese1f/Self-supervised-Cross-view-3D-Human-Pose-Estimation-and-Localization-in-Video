@@ -11,6 +11,7 @@ import sys
 from common.arguments import parse_args
 from common.model import *
 from common.regressor import *
+from common.ground import *
 from common.generators import ChunkedGenerator
 
 args = parse_args()
@@ -76,27 +77,34 @@ with torch.no_grad():
         cameras = cameras.squeeze(0)
         pose_2ds = pose_2ds.squeeze(0)
         shape = pose_2ds.shape
+        v, n, f, j, w = shape[0], shape[1], shape[2], shape[3], args.width
         # normolization  
         # make a assignment x=(x-c)/f, y=(y-c)/f
         cameras = cameras[:,None,None,None,:]
         pose_2ds[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
         pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
         # pose_2ds -> reshape to [view*number,frame,joint,2]
-        pose_2ds = pose_2ds.reshape(-1,shape[2],shape[3],shape[4])
+        pose_2ds = pose_2ds.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2ds)
         # here we make a cut for pose_2d via receptive_field
         pose_2ds = pose_2ds[:, receptive_field-1:]       
-        T, loss = regressor(pose_pred, pose_2ds, args.width)
+        T, loss = regressor(pose_pred, pose_2ds, w)
         # reshape back to [view, number, frame, joint, 2/3]
-        pose_2ds = pose_2ds.reshape(shape[0],shape[1],-1,shape[3],2)      
-        pose_pred = pose_pred.reshape(shape[0],shape[1],-1,shape[3],3)
+        pose_2ds = pose_2ds.reshape(v,n,-1,j,2)      
+        pose_pred = pose_pred.reshape(v,n,-1,j,3)
         T = T.reshape(shape[0],shape[1],-1,3)      
-                    
+        # compute ground equation
+        foot = pose_pred[:,:,:,[3,6],:]
+        # reshape to [v*f, n*2, 3]
+        foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3).cpu().numpy()
+        ground = ground_computer(foot)
+        
         loss_list.append(loss.item())
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
         output_zip['receptive_field'] = receptive_field
         pbar.update(1)
+        break
 pbar.close()
 
 print('Saving output...')
@@ -126,20 +134,3 @@ np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=outp
     }
     # unit: m
 """
-
-
-print('Saving traning curve...')
-if 'matplotlib' not in sys.modules:
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-plt.figure()
-x = np.arange(0, len(loss_list))
-plt.plot(x, loss_list, linestyle='-', color='C0')
-plt.xlabel('Batch')
-plt.ylabel('Regression loss')
-plt.savefig(os.path.join(args.checkpoint, 'loss_3d.png'))
-plt.close('all')
-
-print('Done.')
