@@ -95,11 +95,10 @@ with torch.no_grad():
         # reshape to [v*f, n*2, 3]
         foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3)
         init_ground = ground_computer(foot)
+        init_ground = init_ground.reshape(n,-1,3,1)
         T, ground, _ = iter_regressor(pose_pred, pose_2ds, init_ground, args.iter_nums, w)
         
         # reshape back to [view, number, frame, joint, 2/3]
-        pose_2ds = pose_2ds.reshape(v,n,-1,j,2)      
-        pose_pred = pose_pred.reshape(v,n,-1,j,3)
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)      
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
         output_zip['pose_pred'] = pose_pred

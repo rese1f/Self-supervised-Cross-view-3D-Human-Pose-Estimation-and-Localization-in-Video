@@ -66,7 +66,8 @@ def init_subregressor(pose_pred, pose_2d):
     return T, loss
 
 def submatrix(w, i, x, y, xzX, yzY):
-    """create a matrix block
+    """create a matrix block+
+    
 
     Args:
         x (tensor): [17]
@@ -90,25 +91,26 @@ def submatrix(w, i, x, y, xzX, yzY):
 
     return Ai, bi
 
-def iter_regressor(pose_pred, pose_2d, ground, iter_nums, w):
+def iter_regressor(pose_preds, pose_2ds, grounds, iter_nums, w):
     """iter_regressor
 
     Args:
         pose_pred
         pose_2ds
-        ground: [frame]
+        ground: [frame,3]
         iter_nums: int
     """
+    N = pose_2ds.shape[0]
+    pose_pred = torch.split(pose_preds, split_size_or_sections=w, dim=1)
+    pose_2d = torch.split(pose_2ds, split_size_or_sections=w, dim=1)
     for i in range(iter_nums):
         # first compute T
-        N = pose_2d.shape[0]
-        pose_pred = torch.split(pose_pred, split_size_or_sections=w, dim=1)
-        pose_2d = torch.split(pose_2d, split_size_or_sections=w, dim=1)
-        T,loss = zip(*[unzip([iter_subregressor(i[0][j], i[1][j], ground) for i in zip(pose_pred,pose_2d)]) for j in range(N)])
+        ground = torch.split(grounds, split_size_or_sections=w, dim=1)
+        T,loss = zip(*[unzip([iter_subregressor(i[0][j], i[1][j], i[2][j]) for i in zip(pose_pred,pose_2d,ground)]) for j in range(N)])
         T = torch.stack(T)
         mean_loss = torch.stack(loss).mean()
         
-    return T, ground, mean_loss
+    return T, grounds, mean_loss
 
 def iter_subregressor(pose_pred, pose_2d, ground):
     """create a linear regression in single person with frame width w
@@ -117,12 +119,13 @@ def iter_subregressor(pose_pred, pose_2d, ground):
             pose_pred (tensor): predicted_3d_pose with shape[w,joint,3]
             pose_2d (tensor): pixel_2d_pose with shape[w,joint,3]
         """
+    ground = ground.transpose(1,2)
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     # initial the matrix
     w = pose_2d.shape[0]
     J = pose_2d.shape[1]
 
-    # get component [128,17]
+    # get component [w,17]
     x = pose_2d[...,0]
     y = pose_2d[...,1]
     xzX = torch.mul(x,pose_pred[...,2]).add(pose_pred[...,0])
@@ -140,8 +143,12 @@ def iter_subregressor(pose_pred, pose_2d, ground):
     b_t = torch.zeros((3*w-3,1), device=device)
     
     # ground
-    lambda_g = 1e-2
-
+    A_g_single = torch.cat([torch.cat((torch.zeros((1,3*i),device=device),ground[i],torch.zeros((1,3*w-3*i-3),device=device)),dim=1) for i in range(w)]) # single foot
+    A_g = torch.cat((A_g_single, A_g_single))
+    foot = torch.cat((pose_pred[:,3,:], pose_pred[:,6,:])) # [2w,3]
+    ground = torch.cat((ground.squeeze(1),ground.squeeze(1)))
+    b_g = 1-torch.sum(torch.mul(foot, ground),dim=1)
+    
     A = torch.cat((A_mse,A_t), dim=0)
     b = torch.cat((b_mse,b_t), dim=0)
     T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
