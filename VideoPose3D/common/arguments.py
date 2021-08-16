@@ -26,6 +26,8 @@ def parse_args():
     # Regressor arguments
     parser.add_argument('-w', '--width', default=16, type=int, metavar='N', 
                         help='number of frames in one shot (the more, the better, but is up to GPU Memory')
+    parser.add_argument('--iter-nums', default=8, type=int, metavar='N',
+                        help='iter_nums for regressor')
 
     # Experimental
     parser.add_argument('--dense', action='store_true', help='use dense convolutions instead of dilated convolutions')

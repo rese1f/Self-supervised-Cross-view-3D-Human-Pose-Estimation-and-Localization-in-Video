@@ -59,7 +59,6 @@ dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, shuffle=True)
 
 output_zip = dict()
-loss_list = list()
 
 print('Processing...')
 
@@ -88,20 +87,24 @@ with torch.no_grad():
         pose_pred = model_pos(pose_2ds)
         # here we make a cut for pose_2d via receptive_field
         pose_2ds = pose_2ds[:, receptive_field-1:]       
-        T, loss = regressor(pose_pred, pose_2ds, w)
+        T, _ = init_regressor(pose_pred, pose_2ds, w)
+        
+        T = T.reshape(shape[0],shape[1],-1,3)     
+        # compute ground equation
+        foot = pose_pred.reshape(v,n,-1,j,3)[:,:,:,[3,6],:] + T.unsqueeze(3)
+        # reshape to [v*f, n*2, 3]
+        foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3)
+        init_ground = ground_computer(foot)
+        T, ground, _ = iter_regressor(pose_pred, pose_2ds, init_ground, args.iter_nums, w)
+        
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)      
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
-        T = T.reshape(shape[0],shape[1],-1,3)      
-        # compute ground equation
-        foot = pose_pred[:,:,:,[3,6],:]
-        # reshape to [v*f, n*2, 3]
-        foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3).cpu().numpy()
-        ground = ground_computer(foot)
-        
-        loss_list.append(loss.item())
+        pose_2ds = pose_2ds.reshape(v,n,-1,j,2)      
+        pose_pred = pose_pred.reshape(v,n,-1,j,3)
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
+        output_zip['ground'] = ground
         output_zip['receptive_field'] = receptive_field
         pbar.update(1)
         break
