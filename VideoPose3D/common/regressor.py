@@ -103,12 +103,17 @@ def iter_regressor(pose_preds, pose_2ds, grounds, iter_nums, w):
     N = pose_2ds.shape[0]
     pose_pred = torch.split(pose_preds, split_size_or_sections=w, dim=1)
     pose_2d = torch.split(pose_2ds, split_size_or_sections=w, dim=1)
+    foot_zero = pose_preds[:,:,[3,6],:]
     for i in range(iter_nums):
         # first compute T
         ground = torch.split(grounds, split_size_or_sections=w, dim=1)
-        T,loss = zip(*[unzip([iter_subregressor(i[0][j], i[1][j], i[2][j]) for i in zip(pose_pred,pose_2d,ground)]) for j in range(N)])
+        T,loss = zip(*[unzip([iter_subregressor(i[0][j], i[1][j], i[2][0]) for i in zip(pose_pred,pose_2d,ground)]) for j in range(N)])
         T = torch.stack(T)
         mean_loss = torch.stack(loss).mean()
+        # than compute ground
+        foot = foot_zero + T.unsqueeze(2)
+        foot = foot.permute(1,0,2,3).reshape(-1,2*N,3)
+        grounds = ground_computer(foot)
         
     return T, grounds, mean_loss
 
