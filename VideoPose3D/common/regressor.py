@@ -113,7 +113,7 @@ def iter_regressor(pose_preds, pose_2ds, grounds, iter_nums, w):
         # than compute ground
         foot = foot_zero + T.unsqueeze(2)
         foot = foot.permute(1,0,2,3).reshape(-1,2*N,3)
-        grounds = ground_computer(foot)
+        grounds = ground_computer(foot).unsqueeze(0)
         
     return T, grounds, mean_loss
 
@@ -124,12 +124,12 @@ def iter_subregressor(pose_pred, pose_2d, ground):
             pose_pred (tensor): predicted_3d_pose with shape[w,joint,3]
             pose_2d (tensor): pixel_2d_pose with shape[w,joint,3]
         """
-    ground = ground.transpose(1,2)
+    
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     # initial the matrix
     w = pose_2d.shape[0]
     J = pose_2d.shape[1]
-
+    ground = ground.transpose(1,2)
     # get component [w,17]
     x = pose_2d[...,0]
     y = pose_2d[...,1]
