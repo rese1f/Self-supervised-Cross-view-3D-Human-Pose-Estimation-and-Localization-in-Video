@@ -126,11 +126,13 @@ np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=outp
         sample'0': {
             'pose_pred': list(v,n,x,17,3),
             'T': list(v,n,x,3),
+            'ground': [a,b,c],
             'receptive_field': int
         }
         sample'1': {
             'pose_pred': list(v,n,x,17,3),
             'T': list(v,n,x,3),
+            'ground': [a,b,c],
             'receptive_field': int
         }
     }
