@@ -112,14 +112,12 @@ with torch.no_grad():
         
         pose_pred += T.unsqueeze(0).unsqueeze(3)
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
-        print(pose.shape)
-        print(pose_pred.shape)
         loss.append(multi_n_mpjpe(pose_pred, pose))
         
         pbar.update(1)
         break
 pbar.close()
-print('MPJPE:', torch.mean(torch.stack(loss)))
+print('MPJPE: ', torch.mean(torch.stack(loss)))
 
 print('Saving output...')
 output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.iter_nums) + '.npz')
