@@ -9,6 +9,7 @@ import errno
 import sys
 
 from common.arguments import parse_args
+from common.loss import *
 from common.model import *
 from common.regressor import *
 from common.ground import *
@@ -65,15 +66,17 @@ print('Processing...')
 model_pos.eval()
 
 pbar = tqdm(total=dataset.__len__())
+loss = list()
 
 with torch.no_grad():
-    for cameras, pose_cs, pose_2ds, count in data_iter:
+    for cameras, pose, pose_2ds, count in data_iter:
         # initial the output format      
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
         # camera - [view,4] [cx,cy,fx,fy]
         # shape - [view,number,frame,joint,2]
         cameras = cameras.squeeze(0)
+        pose = pose.squeeze(0)
         pose_2ds = pose_2ds.squeeze(0)
         shape = pose_2ds.shape
         v, n, f, j, w = shape[0], shape[1], shape[2], shape[3], args.width
@@ -86,7 +89,7 @@ with torch.no_grad():
         pose_2ds = pose_2ds.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2ds)
         # here we make a cut for pose_2d via receptive_field
-        pose_2ds = pose_2ds[:, receptive_field-1:]       
+        pose_2ds = pose_2ds[:, (receptive_field-1)//2:-(receptive_field-1)//2]       
         T, _ = init_regressor(pose_pred, pose_2ds, w)
         
         T = T.reshape(shape[0],shape[1],-1,3)     
@@ -101,14 +104,20 @@ with torch.no_grad():
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
-        print(ground)
+
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
         output_zip['ground'] = ground
         output_zip['receptive_field'] = receptive_field
+        
+        pose_pred += T.unsqueeze(0).unsqueeze(3)
+        pose = pose[:, (receptive_field-1)//2:-(receptive_field-1)//2]
+        loss.append(multi_n_mpjpe(pose_pred, pose))
+        
         pbar.update(1)
         break
 pbar.close()
+print('MPJPE:', torch.mean(torch.stack(loss)))
 
 print('Saving output...')
 output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.epochs) + '.npz')
