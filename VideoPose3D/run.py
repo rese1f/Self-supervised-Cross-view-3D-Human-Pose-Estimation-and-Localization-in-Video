@@ -101,6 +101,7 @@ with torch.no_grad():
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
+        print(ground)
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
         output_zip['ground'] = ground
