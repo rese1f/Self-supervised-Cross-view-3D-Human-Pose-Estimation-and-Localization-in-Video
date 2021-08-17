@@ -83,7 +83,7 @@ def multi_n_mpjpe(predicted, target):
     assert predicted.shape == target.shape
     norm_predicted = torch.mean(torch.sum(predicted**2, dim=4, keepdim=True), dim=3, keepdim=True)
     norm_target = torch.mean(torch.sum(target*predicted, dim=4, keepdim=True), dim=3, keepdim=True)
-    scale = torch.mean(norm_target / norm_predicted, dim=1, keepdim=True)
+    scale = torch.mean(norm_target, dim=1, keepdim=True)/torch.mean(norm_predicted, dim=1, keepdim=True)
     return mpjpe(scale * predicted, target)
 
 def mean_velocity_error(predicted, target):
