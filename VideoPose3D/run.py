@@ -111,7 +111,9 @@ with torch.no_grad():
         output_zip['receptive_field'] = receptive_field
         
         pose_pred += T.unsqueeze(0).unsqueeze(3)
-        pose = pose[:, (receptive_field-1)//2:-(receptive_field-1)//2]
+        pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
+        print(pose.shape)
+        print(pose_pred.shape)
         loss.append(multi_n_mpjpe(pose_pred, pose))
         
         pbar.update(1)
@@ -120,7 +122,7 @@ pbar.close()
 print('MPJPE:', torch.mean(torch.stack(loss)))
 
 print('Saving output...')
-output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.epochs) + '.npz')
+output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.iter_nums) + '.npz')
 print('- Saving output to', output_filename)
 np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=output_zip)
 
@@ -146,5 +148,5 @@ np.savez_compressed(output_filename, positions_2d=dataset_zip, positions_3d=outp
             'receptive_field': int
         }
     }
-    # unit: m
+    # unit: mm
 """

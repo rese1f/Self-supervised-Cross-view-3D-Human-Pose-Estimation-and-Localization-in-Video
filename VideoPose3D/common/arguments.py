@@ -13,7 +13,6 @@ def parse_args():
                         help='checkpoint to load (file name)')
 
     # Model arguments
-    parser.add_argument('-e', '--epochs', default=1, type=int, metavar='N', help='number of training epochs')
     parser.add_argument('-drop', '--dropout', default=0.25, type=float, metavar='P', help='dropout probability')
     parser.add_argument('-arc', '--architecture', default='3,3,3,3,3', type=str, metavar='LAYERS', help='filter widths separated by comma')
     parser.add_argument('--causal', action='store_true', help='use causal convolutions for real-time processing')
