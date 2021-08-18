@@ -115,7 +115,7 @@ with torch.no_grad():
         loss.append(multi_n_mpjpe(pose_pred, pose))
         
         pbar.update(1)
-        break
+        
 pbar.close()
 print('MPJPE: ', torch.mean(torch.stack(loss)))
 
