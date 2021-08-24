@@ -142,3 +142,4 @@ settings.json
 *.npz
 *.bin
 *.png
+*.obj
