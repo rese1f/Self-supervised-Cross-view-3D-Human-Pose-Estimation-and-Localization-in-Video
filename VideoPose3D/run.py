@@ -16,7 +16,7 @@ from common.regressor import *
 from common.ground import *
 from common.generators import ChunkedGenerator
 
-logger.add('run.log')
+logger.add('output/run.log')
 args = parse_args()
 print(args)
 

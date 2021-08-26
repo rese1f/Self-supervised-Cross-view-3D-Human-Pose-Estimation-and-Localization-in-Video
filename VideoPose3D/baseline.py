@@ -9,7 +9,7 @@ from common.model import *
 from common.loss import *
 from common.generators import ChunkedGenerator
 
-logger.add('baseline.log')
+logger.add('output/baseline.log')
 pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
 
