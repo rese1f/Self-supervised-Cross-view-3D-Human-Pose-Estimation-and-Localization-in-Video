@@ -102,7 +102,7 @@ with torch.no_grad():
         foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3)
         init_ground = ground_computer(foot)
         init_ground = init_ground.reshape(1,-1,3,1)
-        T, ground, _ = iter_regressor(pose_pred, pose_2ds, init_ground, args.iter_nums, w)
+        T, ground, reg_loss = iter_regressor(pose_pred, pose_2ds, init_ground, args.iter_nums, w)
         
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)
@@ -112,7 +112,7 @@ with torch.no_grad():
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mpjpe_loss)
-        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), mpjpe_loss.item(), scale[:,:,0].item()))
+        logger.info("id:{}, loss:{}, scale:{}, reg_loss:{}".format(count.item(), mpjpe_loss.item(), scale[:,:,0].item(), reg_loss.item()))
         
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T

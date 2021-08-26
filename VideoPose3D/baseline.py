@@ -50,4 +50,4 @@ with torch.no_grad():
         loss.append(mean_loss)
         
         logger.info("id:{}, loss:{}, scale:{}".format(count.item(), mean_loss.item(), scale[:,:,0].item()))
-logger.error("loss: {}".format(torch.mean(torch.stack(loss)).item()))
+logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))
