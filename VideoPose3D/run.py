@@ -65,11 +65,12 @@ print('Processing...')
 
 model_pos.eval()
 
-pbar = tqdm(total=dataset.__len__())
+# pbar = tqdm(total=dataset.__len__())
 loss = list()
 
 with torch.no_grad():
     for cameras, pose, pose_2ds, count in data_iter:
+        print("id: ", count)
         # initial the output format      
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
@@ -114,9 +115,9 @@ with torch.no_grad():
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         loss.append(multi_n_mpjpe(pose_pred, pose))
         
-        pbar.update(1)
+        # pbar.update(1)
         
-pbar.close()
+# pbar.close()
 print('MPJPE: ', torch.mean(torch.stack(loss)))
 
 print('Saving output...')
