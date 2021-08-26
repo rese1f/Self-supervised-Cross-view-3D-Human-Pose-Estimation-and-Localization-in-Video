@@ -57,7 +57,7 @@ receptive_field = model_pos.receptive_field()
 
 print('Preparing data...')
 dataset = ChunkedGenerator(dataset_zip)
-data_iter = DataLoader(dataset, shuffle=True)
+data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
 
 output_zip = dict()
 
