@@ -50,3 +50,9 @@ with torch.no_grad():
         loss.append(mean_loss)
 
 print(torch.mean(torch.stack(loss)))
+
+error = list()
+for index in range(len(loss)):
+    if loss[index] > 1:
+        error.append(index)
+print("error: ", error)
