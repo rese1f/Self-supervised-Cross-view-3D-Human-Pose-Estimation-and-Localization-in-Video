@@ -16,9 +16,10 @@ from common.regressor import *
 from common.ground import *
 from common.generators import ChunkedGenerator
 
-logger.add('output/run.log')
 args = parse_args()
 print(args)
+logger.add('output/run.log')
+logger.warning('iter_nums:{}'.format(args.iter_nums))
 
 try:
     # Create checkpoint directory if it does not exist
