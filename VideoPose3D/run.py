@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from tqdm import tqdm
+from loguru import logger
 import numpy as np
 import os
 import errno
@@ -15,6 +16,7 @@ from common.regressor import *
 from common.ground import *
 from common.generators import ChunkedGenerator
 
+logger.add('run.log')
 args = parse_args()
 print(args)
 
@@ -70,7 +72,6 @@ loss = list()
 
 with torch.no_grad():
     for cameras, pose, pose_2ds, count in data_iter:
-        print("id:", count.item())
         # initial the output format      
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
@@ -110,7 +111,7 @@ with torch.no_grad():
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mpjpe_loss)
-        print("scale:", scale[:,:,0].item())
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), mpjpe_loss.item(), scale[:,:,0].item()))
         
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
@@ -120,7 +121,7 @@ with torch.no_grad():
         # pbar.update(1)
         
 # pbar.close()
-print('n_MPJPE: ', torch.mean(torch.stack(loss)).item())
+logger.error('n_MPJPE:{}'.format(torch.mean(torch.stack(loss)).item()))
 
 print('Saving output...')
 output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.iter_nums) + '.npz')

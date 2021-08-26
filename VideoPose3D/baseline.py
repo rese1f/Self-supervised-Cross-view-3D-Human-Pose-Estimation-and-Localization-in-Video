@@ -3,12 +3,13 @@ from torch.utils.data import DataLoader
 
 import numpy as np
 import tqdm
+from loguru import logger
 
 from common.model import *
 from common.loss import *
 from common.generators import ChunkedGenerator
 
-
+logger.add('baseline.log')
 pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
 
@@ -46,7 +47,7 @@ with torch.no_grad():
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
         mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
-        print("id:", count.item() ,"  loss:", mean_loss.item(), "  scale:", scale[:,:,0].item())
         loss.append(mean_loss)
-
-print(torch.mean(torch.stack(loss)).item())
+        
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), mean_loss.item(), scale[:,:,0].item()))
+logger.error("loss: {}".format(torch.mean(torch.stack(loss)).item()))
