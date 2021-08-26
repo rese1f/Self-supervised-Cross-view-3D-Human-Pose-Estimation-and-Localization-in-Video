@@ -70,7 +70,7 @@ loss = list()
 
 with torch.no_grad():
     for cameras, pose, pose_2ds, count in data_iter:
-        print("id: ", count)
+        print("id:", count.item())
         # initial the output format      
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
@@ -106,19 +106,21 @@ with torch.no_grad():
         pose_2ds = pose_2ds.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
 
+        pose_pred += T.unsqueeze(0).unsqueeze(3)
+        pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
+        mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
+        loss.append(mpjpe_loss)
+        print("scale:", scale[:,:,0].item())
+        
         output_zip['pose_pred'] = pose_pred
         output_zip['T'] = T
         output_zip['ground'] = ground
         output_zip['receptive_field'] = receptive_field
-        
-        pose_pred += T.unsqueeze(0).unsqueeze(3)
-        pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
-        loss.append(multi_n_mpjpe(pose_pred, pose))
-        
+        output_zip['scale'] = scale
         # pbar.update(1)
         
 # pbar.close()
-print('MPJPE: ', torch.mean(torch.stack(loss)))
+print('n_MPJPE: ', torch.mean(torch.stack(loss)).item())
 
 print('Saving output...')
 output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.iter_nums) + '.npz')
