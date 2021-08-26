@@ -119,11 +119,6 @@ with torch.no_grad():
         
 # pbar.close()
 print('MPJPE: ', torch.mean(torch.stack(loss)))
-error = list()
-for index in range(len(loss)):
-    if loss[index] > 1:
-        error.append(index)
-print("error: ", error)
 
 print('Saving output...')
 output_filename = os.path.join('output/data_output_' + args.dataset + '_' + str(args.iter_nums) + '.npz')

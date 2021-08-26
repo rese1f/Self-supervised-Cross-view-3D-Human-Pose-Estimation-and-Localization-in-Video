@@ -12,8 +12,8 @@ from common.generators import ChunkedGenerator
 pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
 
-model_pos = TemporalModel(17, 2, 17, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024,dense=False)
-model_traj = TemporalModel(17, 2, 1, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024,dense=False)
+model_pos = TemporalModel(17, 2, 17, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024, dense=False)
+model_traj = TemporalModel(17, 2, 1, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024, dense=False)
 
 model_pos.load_state_dict(pose_checkpoint['model_pos'])
 model_traj.load_state_dict(traj_checkpoint['model_pos'])
