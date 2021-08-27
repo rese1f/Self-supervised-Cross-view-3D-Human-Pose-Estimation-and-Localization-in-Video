@@ -71,38 +71,47 @@ class Visualization:
 
     def load_data(self):
         try:
-            #if self.info_args.file is not None:
-            #    filepath = self.info_args.file
+            if self.info_args.filepath is not None:
+                filepath = self.info_args.file
 
-            #else:
-            #    filepath = 'output/data_output_' + self.info_args.dataset + '.npz'
-            filepath = 'output/data_output_' + self.info_args.dataset + '_1.npz'
+            else:
+                filepath = 'output/data_output_' + self.info_args.dataset + '_1.npz'
+            #filepath = 'output/data_output_' + self.info_args.dataset + '_1.npz'
+            self.info_filepath = filepath
             dataset_orig = np.load(filepath, allow_pickle=True)["positions_2d"].item()
             count_key_list = list(dataset_orig.keys())
             if self.info_args.sample is not None: 
                 sample_key = int(self.info_args.sample); 
             else: 
                 sample_key = random.choice( count_key_list )
+
+            print("\n")
+            print("Current File: " + filepath)
+            print("Current Sample: " + str(sample_key))
+            print("\n")
+            
             self.data_truth = dataset_orig[sample_key]
             self.info_sample = sample_key
 
             prediction_orig = np.load(filepath, allow_pickle=True)["positions_3d"].item()
-            prediction = prediction_orig[count_key_list[sample_key]]
+            prediction = prediction_orig[sample_key]
             
             # the block below is used 4 transform list(tensor[],tensor[],...) into array[] 
             #       with the same shape of list 
-            pos_pred = list()
-            for item in prediction["pose_pred"]: pos_pred.append(item.cpu().detach().numpy())
+            #pos_pred = list()
+            #for item in prediction["pose_pred"]: pos_pred.append(item.cpu().detach().numpy())
+            pos_pred = prediction["pose_pred"]#.cpu().detach().numpy()
             pos_pred = np.array(pos_pred).squeeze()
 
-            pos_trans = list()
-            for item in prediction["T"]: pos_trans.append(item.cpu().detach().numpy())
+            #pos_trans = list()
+            #for item in prediction["T"]: pos_trans.append(item.cpu().detach().numpy())
+            pos_trans = prediction["T"]#.cpu().detach().numpy()
             pos_trans = np.array(pos_trans).squeeze()
 
             self.data_prediction["pose_pred"] = pos_pred
             self.data_prediction["trans"] = pos_trans
 
-            self.info_receptive_field = list(prediction["receptive_field"])
+            self.info_receptive_field = [prediction["receptive_field"],3] #list(prediction["receptive_field"])
             
         except KeyError:
             print('Sample does not exist! Please input right sample number')
@@ -128,10 +137,13 @@ class Visualization:
                 - self.info_receptive_field[0] + 2 - self.info_receptive_field[1])
             self.info_skeleton = dataset_metadata['skeleton']
             self.info_num_joints = dataset_metadata['num_joints']
-            Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
+            #Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
         except KeyError:
             print("The dataset havent been fully supported yet")
         
+
+        Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
+
         self.info_plot_radius = 4000
 
         for key in self.info_view_key:
@@ -141,14 +153,14 @@ class Visualization:
         pass
 
     def cut_length(self, receptive_field_1, receptive_field_2):
-        start_true = int(receptive_field_1/2) + int(receptive_field_2/2) - 1; end_true = start_true + self.info_frame
+        start_true = int(receptive_field_1/2) - 1; end_true = start_true + self.info_frame
         start_pred = int(receptive_field_2/2) - 1; end_pred = start_pred + self.info_frame
 
         for key in self.info_view_key:
             self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
             self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
 
-        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"][:,start_pred:end_pred,:,:]
+        #self.data_prediction["trans"] = self.data_prediction["trans"][:,start_pred:end_pred,:]
 
         return
 
@@ -160,18 +172,21 @@ class Visualization:
         self.fig = plt.figure()
         if ifcomp:
             ax = dict()
-            view_num = len(self.info_view_key)
+            view_num = len(self.info_view_key) + 1
             i = 1
             for view_key in self.info_view_key:
                 pos = np.array([i,i+1]) + 20 + view_num*100
                 ax[view_key]=[self.fig.add_subplot(pos[0], projection='3d'), self.fig.add_subplot(pos[1])]
                 ax[view_key][0].set_xlabel("x"); ax[view_key][0].set_xlabel("y"); ax[view_key][0].set_xlabel("z")
-                ax[view_key][1].set_xlabel("x"); ax[view_key][1].set_xlabel("y")
+                ax[view_key][1].set_xlabel("x"); ax[view_key][1].set_xlabel("y"); 
+                ax[view_key][0].set_title("Ground Truth: " + view_key); ax[view_key][0].set_title("Plane Image: " + view_key)
                 i += 2
-            self.ax = ax
+            self.ax = ax; self.bx = self.fig.add_subplot(i + 20 + view_num*100, projection='3d')
         else:
             self.bx = self.fig.add_subplot(111, projection='3d')
 
+        self.bx.set_xlabel("x"); self.bx.set_xlabel("y"); self.bx.set_xlabel("z")
+        self.bx.set_title("Prediction")
 
         pass
         
@@ -219,7 +234,7 @@ class Visualization:
                     z = np.stack((multiperson_data[k, frame, i[0], 1], multiperson_data[k, frame, i[1], 1]), 0)
                     x = np.stack((multiperson_data[k, frame, i[0], 2], multiperson_data[k, frame, i[1], 2]), 0)
                     if iftrans: 
-                        temp = y; y = -x; x = temp
+                        temp = y; y = z; z = temp
                     ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 0.8); 
             
             if ifroot:
@@ -257,9 +272,9 @@ class Visualization:
         if self.info_args.compare:
             for key in self.info_view_key:
                 Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
-                Visualization.plt3D(self, frame, self.ax[key][0], self.data_truth[key]["pose_c"], self.data_truth[key]["center"], False, True, True, True, True, False, True)
+                Visualization.plt3D(self, frame, self.ax[key][0], self.data_truth[key]["pose_c"], self.data_truth[key]["center"], False, True, True, True, False, False, True)
                 pass
-            Visualization.plt3D(self, frame, self.ax[self.info_view_key[0]][0] ,self.data_prediction["pose_pred"], self.data_truth[key]["center"], False, False, False, False, True, False, False)
+            Visualization.plt3D(self, frame, self.bx ,self.data_prediction["pose_pred"], self.data_truth[key]["center"], False, True, True, True, False, False, True)
         else:
             Visualization.plt3D(self, frame, self.bx, self.data_prediction["pose_pred"], self.data_prediction["center"],  True, True)
 
@@ -274,9 +289,10 @@ class Visualization:
         Produce animation and save it
         '''
         anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=1)
-        plt.show()
+        #plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
-        if self.info_args.playback: anim.save("output/data_multi_output_" + self.info_args.dataset + ".gif", writer='pillow', fps=165)
+        savepath = self.info_filepath + "_sample" + str(self.info_sample) + ".gif"
+        if self.info_args.playback: anim.save(savepath, writer='pillow', fps=165)
 
         return
 
