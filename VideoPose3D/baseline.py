@@ -38,8 +38,8 @@ with torch.no_grad():
         # normolization  
         # make a assignment x=(x-c)/f, y=(y-c)/f
         cameras = camera[:,None,None,None,:]
-        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
-        pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
+        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
+        pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
         # pose_2ds -> reshape to [view*number,frame,joint,2]
         pose_2d = pose_2d.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2d).reshape(v, n, f-242, j, 3)
@@ -47,7 +47,8 @@ with torch.no_grad():
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
         mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
+        # mean_loss = p_mpjpe(pose_pred[0,0].cpu().numpy(), pose[0,0].cpu().numpy())
         loss.append(mean_loss)
-        
+        # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
         logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[:,:,0].item(),4)))
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))

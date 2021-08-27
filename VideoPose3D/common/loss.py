@@ -78,6 +78,7 @@ def n_mpjpe(predicted, target):
 
 def multi_n_mpjpe(predicted, target):
     """
+    [view(1),id(4-5),f,17,3]
     Multi person and view Normalized MPJPE (scale only)
     """
     assert predicted.shape == target.shape

@@ -90,7 +90,11 @@ with torch.no_grad():
         pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
         # pose_2ds -> reshape to [view*number,frame,joint,2]
         pose_2ds = pose_2ds.reshape(-1,f,j,2)
-        pose_pred = model_pos(pose_2ds)
+        pose_2d = pose_2ds.clone()
+        cameras = cameras.squeeze(0)
+        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
+        pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
+        pose_pred = model_pos(pose_2d)
         # here we make a cut for pose_2d via receptive_field
         pose_2ds = pose_2ds[:, (receptive_field-1)//2:-(receptive_field-1)//2]       
         T, _ = init_regressor(pose_pred, pose_2ds, w)
