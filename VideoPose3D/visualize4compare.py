@@ -337,7 +337,6 @@ setattr(Axes3D, 'arrow3D', _arrow3D)
 
 if __name__ == '__main__':
     
-    filename = '1'
     v = Visualization()
     #v.check_data(1)
     v.animate()
