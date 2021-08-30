@@ -118,11 +118,12 @@ with torch.no_grad():
         loss.append(mpjpe_loss)
         logger.info("id:{}, loss:{}, scale:{}, reg_loss:{}".format(round(count.item(),4), round(mpjpe_loss.item(),4), round(scale[:,:,0].item(),4), reg_loss.item()))
         
-        output_zip['pose_pred'] = pose_pred
-        output_zip['T'] = T
-        output_zip['ground'] = ground
-        output_zip['receptive_field'] = receptive_field
-        output_zip['scale'] = scale
+        output_zip[count] = dict()
+        output_zip[count]['pose_pred'] = pose_pred
+        output_zip[count]['T'] = T
+        output_zip[count]['ground'] = ground
+        output_zip[count]['receptive_field'] = receptive_field
+        output_zip[count]['scale'] = scale
         # pbar.update(1)
         
 # pbar.close()
