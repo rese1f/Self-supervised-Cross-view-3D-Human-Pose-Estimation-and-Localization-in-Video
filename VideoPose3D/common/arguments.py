@@ -29,10 +29,12 @@ def parse_args():
     
     # Visualize arguments
     parser.add_argument('-ns', '--sample', default=None, type=int, metavar='NAME', help='sample number') 
-    parser.add_argument('-p', '--playback', default=False, type=bool, metavar='NAME', 
+    parser.add_argument('-p', '--playback', default=True, type=bool, metavar='NAME', 
         help='if saving the visualize result for playback') 
     parser.add_argument('-cp', '--compare', default=True, type=bool, metavar='NAME', 
         help='if compare prediction with gt') 
+    parser.add_argument('-fp', '--filepath', default=None, type=str, metavar='NAME', 
+        help='if loading from specific path') 
 
     args = parser.parse_args()
 
