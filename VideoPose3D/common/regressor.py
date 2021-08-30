@@ -44,8 +44,8 @@ def init_subregressor(pose_pred, pose_2d):
     # get component [128,17]
     x = pose_2d[...,0]
     y = pose_2d[...,1]
-    xzX = torch.mul(x,pose_pred[...,2]).add(pose_pred[...,0])
-    yzY = torch.mul(y,pose_pred[...,2]).add(pose_pred[...,1])
+    xzX = (-torch.mul(x,pose_pred[...,2])).add(pose_pred[...,0])
+    yzY = (-torch.mul(y,pose_pred[...,2])).add(pose_pred[...,1])
     
     A_tuple, b_tuple = zip(*[submatrix(w, i, x[i], y[i], xzX[i], yzY[i]) for i in range(w)])
     A_mse = torch.cat(A_tuple)
@@ -133,8 +133,8 @@ def iter_subregressor(pose_pred, pose_2d, ground):
     # get component [w,17]
     x = pose_2d[...,0]
     y = pose_2d[...,1]
-    xzX = torch.mul(x,pose_pred[...,2]).add(pose_pred[...,0])
-    yzY = torch.mul(y,pose_pred[...,2]).add(pose_pred[...,1])
+    xzX = (-torch.mul(x,pose_pred[...,2])).add(pose_pred[...,0])
+    yzY = (-torch.mul(y,pose_pred[...,2])).add(pose_pred[...,1])
     
     A_tuple, b_tuple = zip(*[submatrix(w, i, x[i], y[i], xzX[i], yzY[i]) for i in range(w)])
     A_mse = torch.cat(A_tuple)
