@@ -152,8 +152,8 @@ class Visualization:
         start_pred = int(receptive_field_2/2) - 1; end_pred = start_pred + self.info_frame
 
         for key in self.info_view_key:
-            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
-            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,start_true:end_true,:,:]
+            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:] * 1e3
+            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,start_true:end_true,:,:] * 1e3
 
         #self.data_prediction["trans"] = self.data_prediction["trans"][:,start_pred:end_pred,:]
 
@@ -263,7 +263,6 @@ class Visualization:
 
         
     def updater(self, frame):
-
         if self.info_args.compare:
             for key in self.info_view_key:
                 Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
