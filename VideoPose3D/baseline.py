@@ -47,12 +47,12 @@ with torch.no_grad():
         traj_pred = model_traj(pose_2d).reshape(v, n, f-242, 1, 3)
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
-        
-        pose_scale = scale(pose_pred)
-        # pose_pred = pose_pred * pose_scale
-        mean_loss = mpjpe(pose_pred, pose)
+
+        mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
         # mean_loss = p_mpjpe(pose_pred[0,0].cpu().numpy(), pose[0,0].cpu().numpy())
         loss.append(mean_loss)
         # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
-        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(pose_scale[0,0,0].item(),4)))
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[0,0,0].item(),4)))
+        
+        break
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))

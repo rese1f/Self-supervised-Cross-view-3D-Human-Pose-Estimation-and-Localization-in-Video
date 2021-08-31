@@ -16,6 +16,8 @@ from common.regressor import *
 from common.ground import *
 from common.generators import ChunkedGenerator
 
+torch.set_printoptions(precision=None, threshold=10000, edgeitems=None, linewidth=None, profile=None)
+
 args = parse_args()
 print(args)
 logger.add('output/run.log')
@@ -124,6 +126,8 @@ with torch.no_grad():
         output_zip[count]['ground'] = ground
         output_zip[count]['receptive_field'] = receptive_field
         output_zip[count]['scale'] = scale
+        print(pose[0,0,:,0,:])
+        break
         # pbar.update(1)
         
 # pbar.close()

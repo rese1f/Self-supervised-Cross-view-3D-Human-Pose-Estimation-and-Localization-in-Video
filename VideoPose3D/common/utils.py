@@ -28,7 +28,7 @@ def len(pose):
     length = torch.mean(torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1),dim=-1)
     return length
 
-def scale(pose):
+def devide_scale(pose):
     length = 0.2580
     scale = (len(pose)/length).unsqueeze(-1).unsqueeze(-1)
     return scale
