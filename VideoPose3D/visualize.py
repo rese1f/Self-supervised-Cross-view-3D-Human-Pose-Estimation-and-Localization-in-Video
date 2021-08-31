@@ -43,9 +43,6 @@ class Visualization:
     
     '''
 
-
-
-
     def __init__(self) -> None:
 
         self.data_truth = dict(); self.data_prediction = dict()
@@ -100,13 +97,11 @@ class Visualization:
             #       with the same shape of list 
             #pos_pred = list()
             #for item in prediction["pose_pred"]: pos_pred.append(item.cpu().detach().numpy())
-            pos_pred = prediction["pose_pred"]#.cpu().detach().numpy()
-            pos_pred = np.array(pos_pred).squeeze()
+            pos_pred = prediction["pose_pred"].cpu().detach().numpy().squeeze()
 
             #pos_trans = list()
             #for item in prediction["T"]: pos_trans.append(item.cpu().detach().numpy())
-            pos_trans = prediction["T"]#.cpu().detach().numpy()
-            pos_trans = np.array(pos_trans).squeeze()
+            pos_trans = prediction["T"].cpu().detach().numpy().squeeze()
 
             self.data_prediction["pose_pred"] = pos_pred
             self.data_prediction["trans"] = pos_trans
@@ -144,7 +139,7 @@ class Visualization:
 
         Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
 
-        self.info_plot_radius = 4000
+        self.info_plot_radius = 1000
 
         for key in self.info_view_key:
             self.data_truth[key] = Visualization.__get_center(self.data_truth[key], "pose_c", 1)
@@ -158,7 +153,7 @@ class Visualization:
 
         for key in self.info_view_key:
             self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
-            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,start_true:end_true,:,:]
 
         #self.data_prediction["trans"] = self.data_prediction["trans"][:,start_pred:end_pred,:]
 
@@ -235,7 +230,7 @@ class Visualization:
                     x = np.stack((multiperson_data[k, frame, i[0], 2], multiperson_data[k, frame, i[1], 2]), 0)
                     if iftrans: 
                         temp = y; y = z; z = temp
-                    ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 0.8); 
+                    ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 1); 
             
             if ifroot:
                 root = multiperson_data[k, frame, 0, :]
@@ -250,7 +245,7 @@ class Visualization:
                     z = multiperson_data[k, frame, j, 1]
                     y = multiperson_data[k, frame, j, 2]
 
-                    if j != 0: ax.plot3D(x, y, z, '.',color="r",alpha=1)
+                    if j != 0: ax.plot3D(x, y, z, '.',color="r",alpha=0.5)
 
         if arrow:
             ax.arrow3D(0,0,0,
@@ -340,19 +335,10 @@ def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
 
 setattr(Axes3D, 'arrow3D', _arrow3D)
 
-
-
-
-
-
 #visualize main
 
-
 if __name__ == '__main__':
-    
-    filename = '1'
     v = Visualization()
-    #v.check_data(1)
     v.animate()
 
 
