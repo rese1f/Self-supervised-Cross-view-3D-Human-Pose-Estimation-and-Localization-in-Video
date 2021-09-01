@@ -25,5 +25,6 @@ def sk_len(pose):
         15:14,
         16:15
     }
-    length = torch.mean(torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1).reshape(-1,16),dim=0)
+    # length = torch.mean(torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1).reshape(-1,16),dim=0)
+    length = torch.mean(torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1).reshape(-1,16))
     return length

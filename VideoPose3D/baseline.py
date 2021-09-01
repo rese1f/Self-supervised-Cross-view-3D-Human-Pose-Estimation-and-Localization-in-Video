@@ -32,7 +32,7 @@ dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
 loss, sklen = list(), list()
-# len = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.2553, 0.1162, 0.1147, 0.1472, 0.2806, 0.2448, 0.1479, 0.2774, 0.2463])
+len = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.2553, 0.1162, 0.1147, 0.1472, 0.2806, 0.2448, 0.1479, 0.2774, 0.2463])
 
 with torch.no_grad():
     for camera, pose, pose_2d, count in data_iter:
@@ -50,14 +50,14 @@ with torch.no_grad():
         traj_pred = model_traj(pose_2d).reshape(v, n, f-242, 1, 3)
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
-
-        mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
-        # mean_loss = p_mpjpe(pose_pred[0,0].cpu().numpy(), pose[0,0].cpu().numpy())
-        loss.append(mean_loss)
+        
         sklen.append(sk_len(pose))
-        logger.info("len:{}".format(sk_len(pose)))
-        logger.info("pred_len:{}".format(sk_len(pose_pred)))
-        logger.info("scale:{}".format(torch.div(sk_len(pose),sk_len(pose_pred))))
+        # logger.info("len:{}".format(sk_len(pose)))
+        scale = sk_len(pose_pred)/0.2580
+        logger.info("pred_len:{}, scale:{}".format(sk_len(pose_pred), scale))
+        mean_loss, scale = multi_n_mpjpe(pose_pred*scale, pose)
+        loss.append(mean_loss)
+        
         # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
         logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[0,0,0].item(),4)))
         # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
