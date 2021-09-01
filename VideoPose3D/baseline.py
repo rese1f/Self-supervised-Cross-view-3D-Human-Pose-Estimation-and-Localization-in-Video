@@ -31,7 +31,7 @@ dataset_path = 'data/data_multi_h36m.npz'
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
-loss = list()
+loss, sklen = list(), list()
 
 with torch.no_grad():
     for camera, pose, pose_2d, count in data_iter:
@@ -53,9 +53,11 @@ with torch.no_grad():
         mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
         # mean_loss = p_mpjpe(pose_pred[0,0].cpu().numpy(), pose[0,0].cpu().numpy())
         loss.append(mean_loss)
+        sklen.append(sk_len(pose))
+        logger.info("len:{}".format(sk_len(pose_pred)))
         # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
         logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[0,0,0].item(),4)))
         # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
-        logger.warning(sk_len(pose_pred)[0,0,0])
-        # print(sk_len(pose)[0,0,0])
+        
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))
+logger.error("skeleton length:{}".format(torch.mean(torch.stack(sklen),dim=0)))
