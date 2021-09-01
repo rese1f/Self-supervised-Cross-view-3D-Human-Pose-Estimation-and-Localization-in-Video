@@ -14,9 +14,10 @@ from common.loss import *
 from common.model import *
 from common.regressor import *
 from common.ground import *
+from common.utils import *
 from common.generators import ChunkedGenerator
 
-torch.set_printoptions(precision=None, threshold=10000, edgeitems=None, linewidth=None, profile=None)
+torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth=None, profile=None)
 
 args = parse_args()
 print(args)
@@ -74,46 +75,48 @@ model_pos.eval()
 loss = list()
 
 with torch.no_grad():
-    for cameras, pose, pose_2ds, count in data_iter:
+    for camera, pose, pose_2d, count in data_iter:
         # initial the output format      
         # cut the useless dimention
         # pose_2d - [view,number,frame,joint,2]
         # camera - [view,4] [cx,cy,fx,fy]
         # shape - [view,number,frame,joint,2]
-        cameras = cameras.squeeze(0)
+        camera = camera.squeeze(0)
         pose = pose.squeeze(0)
-        pose_2ds = pose_2ds.squeeze(0)
-        shape = pose_2ds.shape
+        pose_2d = pose_2d.squeeze(0)
+        shape = pose_2d.shape
         v, n, f, j, w = shape[0], shape[1], shape[2], shape[3], args.width
-        # normolization  
-        # make a assignment x=(x-c)/f, y=(y-c)/f
-        cameras = cameras[:,None,None,None,:]
-        pose_2ds[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
-        pose_2ds[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
-        # pose_2ds -> reshape to [view*number,frame,joint,2]
-        pose_2ds = pose_2ds.reshape(-1,f,j,2)
-        pose_2d = pose_2ds.clone()
-        cameras = cameras.squeeze(0)
-        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
-        pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
-        pose_pred = model_pos(pose_2d)
-        # here we make a cut for pose_2d via receptive_field
-        pose_2ds = pose_2ds[:, (receptive_field-1)//2:-(receptive_field-1)//2]       
-        T, _ = init_regressor(pose_pred, pose_2ds, w)
+        # normolization
+        # make a assignment x=(x-c)/w, y=(y-c)/w
+        cameras = camera[:,None,None,None,:]
+        pose_2d_temp = pose_2d.clone()
+        pose_2d_temp[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
+        pose_2d_temp[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
+        pose_2d_temp = pose_2d_temp.reshape(-1,f,j,2)
+        pose_pred = model_pos(pose_2d_temp)
+        del pose_2d_temp
         
-        T = T.reshape(shape[0],shape[1],-1,3)     
+        # regression  
+        # make a assignment x=(x-c)/f, y=(y-c)/f
+        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
+        pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
+        # pose_2ds -> reshape to [view*number,frame,joint,2]
+        pose_2d = pose_2d.reshape(-1,f,j,2)
+        # here we make a cut for pose_2d via receptive_field
+        pose_2d = pose_2d[:, (receptive_field-1)//2:-(receptive_field-1)//2]       
+        T, _ = init_regressor(pose_pred, pose_2d, w)
+        T = T.reshape(v,n,-1,3)     
         # compute ground equation
         foot = pose_pred.reshape(v,n,-1,j,3)[:,:,:,[3,6],:] + T.unsqueeze(3)
         # reshape to [v*f, n*2, 3]
         foot = foot.permute(0,2,1,3,4).reshape(-1,2*n,3)
         init_ground = ground_computer(foot)
         init_ground = init_ground.reshape(1,-1,3,1)
-        T, ground, reg_loss = iter_regressor(pose_pred, pose_2ds, init_ground, args.iter_nums, w)
+        T, ground, reg_loss = iter_regressor(pose_pred, pose_2d, init_ground, args.iter_nums, w)
         
         # reshape back to [view, number, frame, joint, 2/3]
-        pose_2ds = pose_2ds.reshape(v,n,-1,j,2)
+        pose_2ds = pose_2d.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
-
         pose_pred += T.unsqueeze(0).unsqueeze(3)
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
@@ -126,8 +129,8 @@ with torch.no_grad():
         output_zip[count]['ground'] = ground
         output_zip[count]['receptive_field'] = receptive_field
         output_zip[count]['scale'] = scale
-        print(pose[0,0,:,0,:])
-        break
+        # logger.warning(sk_len(pose_pred)[0,0,0])
+        # logger.warning((pose[0,0,0,0,:]-T.unsqueeze(0).unsqueeze(3)[0,0,0,0,:]))
         # pbar.update(1)
         
 # pbar.close()

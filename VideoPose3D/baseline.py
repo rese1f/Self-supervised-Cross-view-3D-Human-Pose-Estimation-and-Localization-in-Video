@@ -10,6 +10,8 @@ from common.loss import *
 from common.utils import *
 from common.generators import ChunkedGenerator
 
+torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth=None, profile=None)
+
 logger.add('output/baseline.log')
 pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
@@ -29,7 +31,7 @@ dataset_path = 'data/data_multi_h36m.npz'
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
-loss, length = list(), 0.2580
+loss = list()
 
 with torch.no_grad():
     for camera, pose, pose_2d, count in data_iter:
@@ -37,7 +39,7 @@ with torch.no_grad():
         shape = pose_2d.shape
         v, n, f, j = shape[0], shape[1], shape[2], shape[3]
         # normolization  
-        # make a assignment x=(x-c)/f, y=(y-c)/f
+        # make a assignment x=(x-c)/w, y=(y-c)/w
         cameras = camera[:,None,None,None,:]
         pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
         pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
@@ -53,6 +55,7 @@ with torch.no_grad():
         loss.append(mean_loss)
         # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
         logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[0,0,0].item(),4)))
-        
-        break
+        # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
+        logger.warning(sk_len(pose_pred)[0,0,0])
+        # print(sk_len(pose)[0,0,0])
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))

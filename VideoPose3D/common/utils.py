@@ -1,7 +1,7 @@
 import torch
 
 
-def len(pose):
+def sk_len(pose):
     """computing the total length
 
     Args:
@@ -25,10 +25,5 @@ def len(pose):
         15:14,
         16:15
     }
-    length = torch.mean(torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1),dim=-1)
+    length = torch.stack([torch.norm(pose[:,:,:,i]-pose[:,:,:,JC[i]],dim=-1) for i in range(1,17)],dim=-1)
     return length
-
-def devide_scale(pose):
-    length = 0.2580
-    scale = (len(pose)/length).unsqueeze(-1).unsqueeze(-1)
-    return scale
