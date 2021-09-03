@@ -47,7 +47,7 @@ class Visualization:
 
         self.data_truth = dict(); self.data_prediction = dict()
         self.info_args = parse_args()
-        print(self.info_args)
+        # print(self.info_args)
         #load data
         
         

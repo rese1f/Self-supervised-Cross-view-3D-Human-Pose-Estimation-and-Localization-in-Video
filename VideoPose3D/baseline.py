@@ -53,14 +53,13 @@ with torch.no_grad():
         
         sklen.append(sk_len(pose))
         # logger.info("len:{}".format(sk_len(pose)))
-        scale = sk_len(pose_pred)/0.2580
-        logger.info("pred_len:{}, scale:{}".format(sk_len(pose_pred), scale))
-        mean_loss, scale = multi_n_mpjpe(pose_pred*scale, pose)
+        scale = 0.25803840160369873/sk_len(pose_pred)
+        # logger.info("pred_len:{}, scale:{}".format(sk_len(pose_pred), scale))
+        mean_loss, _ = multi_n_mpjpe(pose_pred*scale, pose)
         loss.append(mean_loss)
         
-        # logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
-        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[0,0,0].item(),4)))
-        # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale.item(),4)))
+        logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
         
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))
 logger.info("skeleton length:{}".format(torch.mean(torch.stack(sklen),dim=0)))
