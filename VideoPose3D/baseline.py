@@ -47,19 +47,19 @@ with torch.no_grad():
         # pose_2ds -> reshape to [view*number,frame,joint,2]
         pose_2d = pose_2d.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2d).reshape(v, n, f-242, j, 3)
+        scale = torch.div(0.25803840160369873,sk_len(pose_pred)).unsqueeze(-1).unsqueeze(-1)
+        pose_pred *= scale
         traj_pred = model_traj(pose_2d).reshape(v, n, f-242, 1, 3)
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
         
-        sklen.append(sk_len(pose))
+        # sklen.append(sk_len(pose))
         # logger.info("len:{}".format(sk_len(pose)))
-        scale = 0.25803840160369873/sk_len(pose_pred)
-        # logger.info("pred_len:{}, scale:{}".format(sk_len(pose_pred), scale))
-        mean_loss, _ = multi_n_mpjpe(pose_pred*scale, pose)
-        loss.append(mean_loss)
         
-        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale.item(),4)))
-        logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
+        mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
+        loss.append(mean_loss)
+        logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
+        # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
         
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))
-logger.info("skeleton length:{}".format(torch.mean(torch.stack(sklen),dim=0)))
+# logger.info("skeleton length:{}".format(torch.mean(torch.stack(sklen),dim=0)))
