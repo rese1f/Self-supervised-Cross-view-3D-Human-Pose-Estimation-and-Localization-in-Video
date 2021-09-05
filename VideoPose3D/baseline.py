@@ -52,6 +52,7 @@ with torch.no_grad():
         traj_pred = model_traj(pose_2d).reshape(v, n, f-242, 1, 3)
         pose_pred += traj_pred
         pose = pose[:,:,121:-121]
+        # pose -= pose[:,:,:,0,:].unsqueeze(3)
         
         # sklen.append(sk_len(pose))
         # logger.info("len:{}".format(sk_len(pose)))

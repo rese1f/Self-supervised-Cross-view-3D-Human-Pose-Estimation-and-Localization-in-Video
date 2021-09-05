@@ -94,6 +94,9 @@ with torch.no_grad():
         pose_2d_temp[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
         pose_2d_temp = pose_2d_temp.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2d_temp)
+        # make scale trans
+        scale = torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).unsqueeze(-1).unsqueeze(-1).squeeze(0)
+        pose_pred *= scale
         del pose_2d_temp
         
         # regression  
@@ -103,9 +106,9 @@ with torch.no_grad():
         # pose_2ds -> reshape to [view*number,frame,joint,2]
         pose_2d = pose_2d.reshape(-1,f,j,2)
         # here we make a cut for pose_2d via receptive_field
-        pose_2d = pose_2d[:, (receptive_field-1)//2:-(receptive_field-1)//2]       
+        pose_2d = pose_2d[:, (receptive_field-1)//2:-(receptive_field-1)//2]
         T, _ = init_regressor(pose_pred, pose_2d, w)
-        T = T.reshape(v,n,-1,3)     
+        T = T.reshape(v,n,-1,3)
         # compute ground equation
         foot = pose_pred.reshape(v,n,-1,j,3)[:,:,:,[3,6],:] + T.unsqueeze(3)
         # reshape to [v*f, n*2, 3]
