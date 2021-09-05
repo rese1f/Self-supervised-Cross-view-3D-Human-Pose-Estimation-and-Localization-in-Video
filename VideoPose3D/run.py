@@ -132,7 +132,6 @@ with torch.no_grad():
         output_zip[count]['ground'] = ground
         output_zip[count]['receptive_field'] = receptive_field
         output_zip[count]['scale'] = scale
-        # logger.warning(sk_len(pose_pred)[0,0,0])
         # logger.warning((pose[0,0,0,0,:]-T.unsqueeze(0).unsqueeze(3)[0,0,0,0,:]))
         # pbar.update(1)
         
