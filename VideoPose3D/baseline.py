@@ -37,6 +37,7 @@ len = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.25
 with torch.no_grad():
     for camera, pose, pose_2d, count in data_iter:
         camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
+        pose = pose[:,:,121:-121]
         shape = pose_2d.shape
         v, n, f, j = shape[0], shape[1], shape[2], shape[3]
         # normolization  
@@ -51,7 +52,6 @@ with torch.no_grad():
         pose_pred *= scale
         traj_pred = model_traj(pose_2d).reshape(v, n, f-242, 1, 3)
         pose_pred += traj_pred
-        pose = pose[:,:,121:-121]
         # pose -= pose[:,:,:,0,:].unsqueeze(3)
         
         # sklen.append(sk_len(pose))
