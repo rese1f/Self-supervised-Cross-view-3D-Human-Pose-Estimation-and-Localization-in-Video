@@ -22,7 +22,7 @@ def get_center(data_3d_std):
         datas: of the same size as input data, i.e. [n, x, 17, 3]
     """
 
-    center = np.array([np.sum(data_3d_std[:, 0, 10, 0]), np.sum(data_3d_std[:, 0, 10, 1]), 0]) / 3
+    center = np.array([np.mean(data_3d_std[:, :, 10, 0], axis=0), np.mean(data_3d_std[:, :, 10, 1], axis=0), 0])
     return center
 
 def get_angle(data):
