@@ -173,6 +173,30 @@ class Visualization():
     def connect_node(vector_1, vector_2, i):
         return (torch.subtract(vector_2,vector_1)).unsqueeze(3)
 
+    def calculate_axis(vector_1, vector_2):
+        axis_unnormalized = torch.dot(vector_1,vector_2)
+        return axis_unnormalized/torch.norm(axis_unnormalized)
+
+    def Rodrigue(vect_orig, vect_finl):
+        
+        axis_unnormalized = torch.dot(vect_orig,vect_finl)
+        axis = axis_unnormalized/torch.norm(axis_unnormalized)
+        angle = torch.arccos(torch.dot(vect_orig, vect_orig))
+        
+        r_vect = axis * angle; r_mat = (torch.eye(3) * torch.cos(angle) + 
+            (1 - torch.cos(angle)) * torch.matmul(axis.unsqueeze(-1),axis) + 
+            torch.sin(angle) * torch.tensor([]))
+
+        return r_vect, r_mat
+
+    def v_cat(axis):
+
+        row1 = torch.cat((torch.cat((torch.zeros_like(axis[:,:,:,:,0]),-axis[:,:,:,:,2]),dim=-1),axis[:,:,:,:,1]),dim=-1)
+        row2 = torch.cat((torch.cat((axis[:,:,:,:,2],torch.zeros_like(axis[:,:,:,:,0])),dim=-1),-axis[:,:,:,:,0]),dim=-1)
+        row3 = torch.cat((torch.cat((torch.zeros_like(axis[:,:,:,:,0]),-axis[:,:,:,:,2]),dim=-1),axis[:,:,:,:,1]),dim=-1)
+
+        return mat
+
 
 def calculate_rotational_vector(n, init, finl):
     # rotation axis
