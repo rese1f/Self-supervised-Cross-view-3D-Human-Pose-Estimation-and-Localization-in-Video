@@ -115,11 +115,11 @@ class Visualization:
 
     def process_prediction(self):
         
-        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((0,2,1,3)).transpose((1,0,2,3))
+        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((0,2,1,3)).transpose((1,0,2,3))
         self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] * 1e3
-        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] + self.data_prediction["trans"] * 1e3
+        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] + self.data_prediction["trans"] * 1e3
         self.data_prediction["pose_pred"][:,:,:,1] = - self.data_prediction["pose_pred"][:,:,:,1] # not sure about this operation
-        self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((1,0,2,3)).transpose((0,2,1,3))            
+        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((1,0,2,3)).transpose((0,2,1,3))            
         pass
 
     def get_datainfo(self):
