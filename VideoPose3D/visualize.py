@@ -43,11 +43,14 @@ class Visualization:
     
     '''
 
+
+
+
     def __init__(self) -> None:
 
         self.data_truth = dict(); self.data_prediction = dict()
         self.info_args = parse_args()
-        # print(self.info_args)
+        print(self.info_args)
         #load data
         
         
@@ -93,18 +96,11 @@ class Visualization:
             prediction_orig = np.load(filepath, allow_pickle=True)["positions_3d"].item()
             prediction = prediction_orig[sample_key]
             
-            # the block below is used 4 transform list(tensor[],tensor[],...) into array[] 
-            #       with the same shape of list 
-            #pos_pred = list()
-            #for item in prediction["pose_pred"]: pos_pred.append(item.cpu().detach().numpy())
-            pos_pred = prediction["pose_pred"].cpu().detach().numpy().squeeze()
-
-            #pos_trans = list()
-            #for item in prediction["T"]: pos_trans.append(item.cpu().detach().numpy())
-            pos_trans = prediction["T"].cpu().detach().numpy().squeeze()
+            pos_pred = prediction["pose_pred"].cpu().detach().numpy()
+            #pos_trans = prediction["T"].cpu().detach().numpy()
 
             self.data_prediction["pose_pred"] = pos_pred
-            self.data_prediction["trans"] = pos_trans
+            #self.data_prediction["trans"] = pos_trans
 
             self.info_receptive_field = [prediction["receptive_field"],3] #list(prediction["receptive_field"])
             
@@ -114,12 +110,35 @@ class Visualization:
         pass
 
     def process_prediction(self):
-        
-        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((0,2,1,3)).transpose((1,0,2,3))
+        """
+        This module is used for scaling and changing coordinate
+        """
+
+        # Scaling
         self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] * 1e3
-        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"] + self.data_prediction["trans"] * 1e3
-        self.data_prediction["pose_pred"][:,:,:,1] = - self.data_prediction["pose_pred"][:,:,:,1] # not sure about this operation
-        #self.data_prediction["pose_pred"] = self.data_prediction["pose_pred"].transpose((1,0,2,3)).transpose((0,2,1,3))            
+
+        # Change coordinate
+        temp = np.copy(self.data_prediction["pose_pred"])
+        self.data_prediction["pose_pred"][:,:,:,:,0] = - temp[:,:,:,:,0]
+        self.data_prediction["pose_pred"][:,:,:,:,1] = - temp[:,:,:,:,2]
+        self.data_prediction["pose_pred"][:,:,:,:,2] = - temp[:,:,:,:,1]
+
+        temp = None
+
+        self.data_prediction = Visualization.__get_center_1(self.data_prediction, "pose_pred", 1)
+
+
+        for key in self.info_view_key:
+            #self.data_truth[key]["pose_c"][:,:,:,:] = self.data_truth[key]["pose_c"][:,:,:,:] * 10 / 2
+            print(self.data_truth[key]["pose_c"][:,:,:,:])
+            temp = np.copy(self.data_truth[key]["pose_c"])
+            self.data_truth[key]["pose_c"][:,:,:,2] = temp[:,:,:,1]
+            self.data_truth[key]["pose_c"][:,:,:,1] = temp[:,:,:,2]
+
+            self.data_truth[key] = Visualization.__get_center(self.data_truth[key], "pose_c", 1)
+
+            pass
+
         pass
 
     def get_datainfo(self):
@@ -127,9 +146,8 @@ class Visualization:
         dataset_metadata = suggest_metadata(self.info_args.dataset)
         try:
             self.info_view_key = list(self.data_truth.keys())
-            self.info_number = self.data_truth[self.info_view_key[0]]['pose_2d'].shape[0]
-            self.info_frame = (self.data_truth[self.info_view_key[0]]['pose_2d'].shape[1] 
-                - self.info_receptive_field[0] + 2 - self.info_receptive_field[1])
+            self.info_number = self.data_truth[self.info_view_key[0]]['pose_2d'].shape[1]
+            self.info_frame = self.data_prediction["pose_pred"].shape[2]
             self.info_skeleton = dataset_metadata['skeleton']
             self.info_num_joints = dataset_metadata['num_joints']
             #Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
@@ -139,21 +157,20 @@ class Visualization:
 
         Visualization.cut_length(self, self.info_receptive_field[0], self.info_receptive_field[1])
 
-        self.info_plot_radius = 1000
+        self.info_plot_radius = 4000
+        
 
-        for key in self.info_view_key:
-            self.data_truth[key] = Visualization.__get_center(self.data_truth[key], "pose_c", 1)
-        if not self.info_args.compare: self.data_prediction = Visualization.__get_center(self.data_prediction, "pose_c", 1e3)
-
+        
         pass
 
     def cut_length(self, receptive_field_1, receptive_field_2):
         start_true = int(receptive_field_1/2) - 1; end_true = start_true + self.info_frame
         start_pred = int(receptive_field_2/2) - 1; end_pred = start_pred + self.info_frame
+    
 
         for key in self.info_view_key:
-            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:] * 1e3
-            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,start_true:end_true,:,:] * 1e3
+            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
 
         #self.data_prediction["trans"] = self.data_prediction["trans"][:,start_pred:end_pred,:]
 
@@ -167,25 +184,29 @@ class Visualization:
         self.fig = plt.figure()
         if ifcomp:
             ax = dict()
-            view_num = len(self.info_view_key) + 1
+            view_num = len(self.info_view_key) 
             i = 1
             for view_key in self.info_view_key:
-                pos = np.array([i,i+1]) + 20 + view_num*100
-                ax[view_key]=[self.fig.add_subplot(pos[0], projection='3d'), self.fig.add_subplot(pos[1])]
+                pos = np.array([i,i+1,i+2]) + 30 + view_num*100
+                ax[view_key]=[self.fig.add_subplot(pos[0], projection='3d'), self.fig.add_subplot(pos[1]), self.fig.add_subplot(pos[2], projection='3d'),]
+
                 ax[view_key][0].set_xlabel("x"); ax[view_key][0].set_xlabel("y"); ax[view_key][0].set_xlabel("z")
                 ax[view_key][1].set_xlabel("x"); ax[view_key][1].set_xlabel("y"); 
-                ax[view_key][0].set_title("Ground Truth: " + view_key); ax[view_key][0].set_title("Plane Image: " + view_key)
-                i += 2
-            self.ax = ax; self.bx = self.fig.add_subplot(i + 20 + view_num*100, projection='3d')
+                ax[view_key][2].set_xlabel("x"); ax[view_key][2].set_xlabel("y"); ax[view_key][2].set_xlabel("z")
+
+                ax[view_key][0].set_title("Ground Truth: " + view_key); ax[view_key][1].set_title("Plane Image: " + view_key)
+                ax[view_key][2].set_title("Prediction: " + view_key)
+                i += 3
+            self.ax = ax
         else:
             self.bx = self.fig.add_subplot(111, projection='3d')
 
-        self.bx.set_xlabel("x"); self.bx.set_xlabel("y"); self.bx.set_xlabel("z")
-        self.bx.set_title("Prediction")
+            self.bx.set_xlabel("x"); self.bx.set_xlabel("y"); self.bx.set_xlabel("z")
+            self.bx.set_title("Prediction")
 
         pass
         
-    def plt2D(self, frame, ax, multiperson_data, camdata = None, ifclear = True, ifdot = True, ifscale = True):
+    def plt2D(self, frame, ax, multiperson_data, camdata = None, ifclear = True, ifdot = False, ifscale = True):
         if ifclear: ax.clear()
         for k in range(multiperson_data.shape[0]):
             for i in self.info_skeleton:
@@ -225,12 +246,11 @@ class Visualization:
             
                 for i in self.info_skeleton:
 
-                    y = np.stack((multiperson_data[k, frame, i[0], 0], multiperson_data[k, frame, i[1], 0]), 0)
-                    z = np.stack((multiperson_data[k, frame, i[0], 1], multiperson_data[k, frame, i[1], 1]), 0)
-                    x = np.stack((multiperson_data[k, frame, i[0], 2], multiperson_data[k, frame, i[1], 2]), 0)
-                    if iftrans: 
-                        temp = y; y = z; z = temp
-                    ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 1); 
+                    x = np.stack((multiperson_data[k, frame, i[0], 0], multiperson_data[k, frame, i[1], 0]), 0)
+                    y = np.stack((multiperson_data[k, frame, i[0], 1], multiperson_data[k, frame, i[1], 1]), 0)
+                    z = np.stack((multiperson_data[k, frame, i[0], 2], multiperson_data[k, frame, i[1], 2]), 0)
+
+                    ax.plot3D(x, y, z, lw=2, c=self.info_color[k], alpha = 0.8); 
             
             if ifroot:
                 root = multiperson_data[k, frame, 0, :]
@@ -245,7 +265,7 @@ class Visualization:
                     z = multiperson_data[k, frame, j, 1]
                     y = multiperson_data[k, frame, j, 2]
 
-                    if j != 0: ax.plot3D(x, y, z, '.',color="r",alpha=0.5)
+                    if j != 0: ax.plot3D(x, y, z, '.',color="r",alpha=1)
 
         if arrow:
             ax.arrow3D(0,0,0,
@@ -256,24 +276,32 @@ class Visualization:
 
         if ifscale:
             ax.set_xlim3d([center[0] - 2*self.info_plot_radius, center[0] + 2*self.info_plot_radius]) # 画布大小
-            ax.set_ylim3d([center[2] - 2*self.info_plot_radius, center[2] + 2*self.info_plot_radius])
-            ax.set_zlim3d([-self.info_plot_radius + center[1], self.info_plot_radius + center[1]])
+            ax.set_ylim3d([center[1] - 2*self.info_plot_radius, center[1] + 2*self.info_plot_radius])
+            ax.set_zlim3d([-self.info_plot_radius/4 + center[2], self.info_plot_radius + center[2]])
         pass
 
 
         
     def updater(self, frame):
+
         if self.info_args.compare:
+            k = 0
             for key in self.info_view_key:
+                # 2D Truth
                 Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
+                # 3D Truth
                 Visualization.plt3D(self, frame, self.ax[key][0], self.data_truth[key]["pose_c"], self.data_truth[key]["center"], False, True, True, True, False, False, True)
+                # Prediction
+                Visualization.plt3D(self, frame, self.ax[key][2] ,self.data_prediction["pose_pred"][k], self.data_prediction["center"][k], False, True, True, True, False, False, True)
                 pass
-            Visualization.plt3D(self, frame, self.bx ,self.data_prediction["pose_pred"], self.data_truth[key]["center"], False, True, True, True, False, False, True)
+            
         else:
             Visualization.plt3D(self, frame, self.bx, self.data_prediction["pose_pred"], self.data_prediction["center"],  True, True)
 
         if __name__ == '__main__':
             self.pbar.update(1)
+
+        #input("Press any key to continue")
 
         pass
 
@@ -282,16 +310,20 @@ class Visualization:
         '''
         Produce animation and save it
         '''
-        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=1)
+        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=100000)
         plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
-        savepath = self.info_filepath + "_sample" + str(self.info_sample) + ".gif"
+        savepath = self.info_filepath[0:-4] + "_sample" + str(self.info_sample) + ".gif"
         if self.info_args.playback: anim.save(savepath, writer='pillow', fps=165)
 
         return
 
     def __get_center(data: dict, key, scale = 1):
         data['center'] = np.mean(data[key][:,0,0,:],axis=0) * scale
+        return data
+        
+    def __get_center_1(data: dict, key, scale = 1):
+        data['center'] = np.mean(data[key][:,:,0,0,:],axis=1) * scale
         return data
 
     def check_data(self, n):
@@ -334,10 +366,19 @@ def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
 
 setattr(Axes3D, 'arrow3D', _arrow3D)
 
+
+
+
+
+
 #visualize main
 
+
 if __name__ == '__main__':
+    
+    filename = '1'
     v = Visualization()
+    #v.check_data(1)
     v.animate()
 
 
