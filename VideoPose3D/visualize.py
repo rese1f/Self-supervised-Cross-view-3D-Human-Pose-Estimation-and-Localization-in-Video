@@ -283,7 +283,7 @@ class Visualization:
         Produce animation and save it
         '''
         anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=1)
-        #plt.show()
+        plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
         savepath = self.info_filepath + "_sample" + str(self.info_sample) + ".gif"
         if self.info_args.playback: anim.save(savepath, writer='pillow', fps=165)
