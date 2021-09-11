@@ -32,7 +32,7 @@ dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
 loss, sklen = list(), list()
-len = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.2553, 0.1162, 0.1147, 0.1472, 0.2806, 0.2448, 0.1479, 0.2774, 0.2463])
+# len = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.2553, 0.1162, 0.1147, 0.1472, 0.2806, 0.2448, 0.1479, 0.2774, 0.2463])
 
 with torch.no_grad():
     for camera, pose, pose_2d, count in data_iter:
