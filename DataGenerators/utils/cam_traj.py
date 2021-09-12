@@ -11,7 +11,7 @@ def parse_args():
                         help="mean distance, unit: mm")
     parser.add_argument('--v', default=10, type=int,
                         help="mean velocity, unit: mm per frame")
-    parser.add_argument('-a', '--alpha', default=0.1, type=float,
+    parser.add_argument('-a', '--alpha', default=0, type=float,
                         help="close coefficient")
     parser.add_argument('-b', '--beta', default=0.9, type=float,
                         help="momentum coefficient")
@@ -42,7 +42,6 @@ def cam_traj(pose_3d):
     clockwise = np.random.choice([-1,1])
     d = random(args.d)
     p[0] = o[0] + (r[0] + d)*np.array([np.sin(angle), np.cos(angle)])
-    v[0] = np.zeros((2))
     for t in range(1,f):
         dis = np.linalg.norm(p[t-1]-o[t-1])-r[t-1]
         v[t] = (1-args.beta)*(args.alpha*dis*radial_component(p,o,r,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
@@ -136,7 +135,7 @@ def random(x:float)-> float:
 
 if __name__=='__main__':
     # 2-people 3-frames
-    pose_3d = np.zeros((3,4,3))
+    pose_3d = np.zeros((3,1000,3))
     p = cam_traj(pose_3d)
     import matplotlib.pyplot as plt
     plt.plot(p[:,0],p[:,1])
