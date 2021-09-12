@@ -11,7 +11,7 @@ def parse_args():
                         help="mean distance, unit: mm")
     parser.add_argument('--v', default=10, type=int,
                         help="mean velocity, unit: mm per frame")
-    parser.add_argument('--alpha', default=0.01, type=float,
+    parser.add_argument('--alpha', default=0.001, type=float,
                         help="close coefficient")
     parser.add_argument('--beta', default=0.9, type=float,
                         help="momentum coefficient")
@@ -44,7 +44,8 @@ def cam_traj(pose_3d):
     p[0] = o[0] + (r[0] + d)*np.array([np.sin(angle), np.cos(angle)])
     v[0] = np.zeros((2))
     for t in range(1,f):
-        v[t] = (1-args.beta)*(args.alpha*d*radial_component(p,o,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
+        dis = np.linalg.norm(p[t-1]-o[t-1])-r[t-1]
+        v[t] = (1-args.beta)*(args.alpha*dis*radial_component(p,o,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
         p[t] = p[t-1] + v[t]
     p_h = vertical_component(args.h,f,args.gamma)
     cam_traj = np.hstack((p, p_h))
