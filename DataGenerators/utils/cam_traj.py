@@ -11,9 +11,9 @@ def parse_args():
                         help="mean distance, unit: mm")
     parser.add_argument('--v', default=10, type=int,
                         help="mean velocity, unit: mm per frame")
-    parser.add_argument('--alpha', default=0.001, type=float,
+    parser.add_argument('-a', '--alpha', default=0.1, type=float,
                         help="close coefficient")
-    parser.add_argument('--beta', default=0.9, type=float,
+    parser.add_argument('-b', '--beta', default=0.9, type=float,
                         help="momentum coefficient")
     parser.add_argument('--gamma', default=0.05, type=float,
                         help="shake coefficient")
@@ -45,7 +45,7 @@ def cam_traj(pose_3d):
     v[0] = np.zeros((2))
     for t in range(1,f):
         dis = np.linalg.norm(p[t-1]-o[t-1])-r[t-1]
-        v[t] = (1-args.beta)*(args.alpha*dis*radial_component(p,o,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
+        v[t] = (1-args.beta)*(args.alpha*dis*radial_component(p,o,r,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
         p[t] = p[t-1] + v[t]
     p_h = vertical_component(args.h,f,args.gamma)
     cam_traj = np.hstack((p, p_h))
@@ -73,12 +73,13 @@ def bounding_circle(pose_2d):
     r = np.sqrt((xmax-xmin)**2+(ymax-xmin)**2)
     return o, r
 
-def radial_component(p,o,t):
-    """this function returns the radial unit component at time t
+def radial_component(p,o,r,t):
+    """this function returns the radial component without alpha coeffient at time t
 
     Args:
-        p ([array]): [2]
-        o ([array]): [2]
+        p ([array]): [f,2]
+        o ([array]): [f,2]
+        r ([array]): [f]
         t ([int]): time
     
     Returns:
@@ -86,15 +87,16 @@ def radial_component(p,o,t):
     """
     
     v_r = p[t] - o[t]
-    v_r /= np.linalg.norm(v_r)
+    l = np.linalg.norm(v_r)
+    v_r = v_r/l*(l-r[t])
     return v_r
 
 def tangential_component(p,o,t):
     """this function returns the tangential unit component at time t
 
     Args:
-        p ([array]): [2]
-        o ([array]): [2]
+        p ([array]): [f,2]
+        o ([array]): [f,2]
         t ([int]): time
     
     Returns:
@@ -134,11 +136,12 @@ def random(x:float)-> float:
 
 if __name__=='__main__':
     # 2-people 3-frames
-    pose_3d = np.zeros((3,1000,3))
+    pose_3d = np.zeros((3,4,3))
     p = cam_traj(pose_3d)
     import matplotlib.pyplot as plt
     plt.plot(p[:,0],p[:,1])
-    plt.scatter([0], [0], s=25, c='r')
+    plt.scatter([0],[0], s=25, c='r', marker='o')
+    plt.scatter(p[0,0],p[0,1], c='r', marker='o')
     plt.xlim(-3000,3000)
     plt.ylim(-3000,3000)
     plt.show()
@@ -149,6 +152,7 @@ if __name__=='__main__':
     ax.set_ylim(-3000,3000)
     ax.set_zlim(0,2000)
     ax.plot(p[:,0],p[:,1],p[:,2])
-    ax.scatter(0, 0, 0, c='r',marker='o')
+    ax.scatter(p[0,0],p[0,1],p[0,2], c='r', marker='o')
+    ax.scatter(0,0,0, c='r', marker='o')
     plt.show()
     
