@@ -141,4 +141,13 @@ if __name__=='__main__':
     plt.xlim(-3000,3000)
     plt.ylim(-3000,3000)
     plt.show()
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.set_xlim(-3000,3000)
+    ax.set_ylim(-3000,3000)
+    ax.set_zlim(0,2000)
+    ax.plot(p[:,0],p[:,1],p[:,2])
+    ax.scatter(0, 0, 0, c='r',marker='o')
+    plt.show()
     
