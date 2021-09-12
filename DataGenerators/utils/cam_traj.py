@@ -15,6 +15,8 @@ def parse_args():
                         help="close coefficient")
     parser.add_argument('--beta', default=0.9, type=float,
                         help="momentum coefficient")
+    parser.add_argument('--gamma', default=0.05, type=float,
+                        help="shake coefficient")
     
     args = parser.parse_args()
     return args
@@ -36,7 +38,6 @@ def cam_traj(pose_3d):
     # init cam position and velocity
     p = np.empty((f,2))
     v = np.empty((f,2))
-    h = random(args.h)
     angle = np.random.rand()*2*np.pi
     clockwise = np.random.choice([-1,1])
     d = random(args.d)
@@ -45,7 +46,10 @@ def cam_traj(pose_3d):
     for t in range(1,f):
         v[t] = (1-args.beta)*(args.alpha*d*radial_component(p,o,t-1) + random(args.v)*clockwise*tangential_component(p,o,t-1)) + args.beta*v[t-1]
         p[t] = p[t-1] + v[t]
-    cam_traj = np.insert(p,2,values=h,axis=1)
+    p_h = vertical_component(args.h,f,args.gamma)
+    cam_traj = np.hstack((p, p_h))
+    # with constant h
+    # cam_traj = np.insert(p,2,values=args.h,axis=1)
     return cam_traj
     
 def bounding_circle(pose_2d):
@@ -100,6 +104,20 @@ def tangential_component(p,o,t):
     v_t = np.matmul(p[t] - o[t], rot90)
     v_t /= np.linalg.norm(v_t)
     return v_t
+
+def vertical_component(h, f, gamma):
+    """this function returns the vertical position of camera
+
+    Args:
+        h ([int]): mean and init height
+    
+    Returns:
+        p_h ([array]): [f]
+    """
+    A = h*gamma
+    p_h = A * np.sin(np.linspace(0,f,f)/25*np.pi) + h
+    p_h = np.expand_dims(p_h, axis=1)
+    return p_h
 
 def random(x:float)-> float:
     """random number with mean x
