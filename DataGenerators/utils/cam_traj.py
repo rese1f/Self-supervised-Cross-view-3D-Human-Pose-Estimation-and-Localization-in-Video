@@ -3,11 +3,11 @@
 import numpy as np
 import argparse
 
-def parse_args():
+def parse_args_4_camtraj():
     parser = argparse.ArgumentParser(description='Generating script')
     parser.add_argument('--h', default=1500, type=int,
                         help="mean height, unit: mm")
-    parser.add_argument('--d', default=2000, type=int,
+    parser.add_argument('--d', default=7000, type=int,
                         help="mean distance, unit: mm")
     parser.add_argument('--v', default=10, type=int,
                         help="mean velocity, unit: mm per frame")
@@ -30,7 +30,7 @@ def cam_traj(pose_3d):
     Returns:
         camera trajction[array]: (f,3)
     """
-    args = parse_args()
+    args = parse_args_4_camtraj()
     print(args)
     pose_2d = pose_3d.transpose(1,0,2)[...,:2]
     f = pose_2d.shape[0]

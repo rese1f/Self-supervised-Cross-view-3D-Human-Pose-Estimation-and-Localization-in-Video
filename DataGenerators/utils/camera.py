@@ -1,4 +1,5 @@
 import numpy as np
+from utils.cam_traj import *
 
 """Note(Jack BAI):
     This file is to deal with the camera part, incl. 
@@ -22,7 +23,7 @@ def get_center(data_3d_std):
         datas: of the same size as input data, i.e. [n, x, 17, 3]
     """
 
-    center = np.array([np.mean(data_3d_std[:, :, 10, 0], axis=0), np.mean(data_3d_std[:, :, 10, 1], axis=0), 0])
+    center = np.mean(data_3d_std[:, :, 0, :], axis=0)
     return center
 
 def get_angle(data):
@@ -44,7 +45,7 @@ def get_angle(data):
         result[2] = (np.add(np.arctan2(y, x),np.pi/2))
         result[0] =  np.pi/2
     else:
-        result = np.zeros(data.shape[0], 3)
+        result = np.zeros((data.shape[0], 3))
                 
         x = data[:, 0]; y = data[:, 1]; z = data[:, 2]
         result[:, 2] = (np.add(np.arctan2(y, x),np.pi/2))
@@ -64,16 +65,18 @@ def get_endpoint(center, distance, height, cross):
     start_angle = np.random.random()*2*np.pi
 
     start_distance = np.random.randint(distance[0],distance[1],1)
-    start = center + np.array([start_distance*np.cos(start_angle), start_distance*np.sin(start_angle), height]).reshape(-1)
+    start = center[0] + np.array([start_distance*np.cos(start_angle), start_distance*np.sin(start_angle), height]).reshape(-1)
 
     if cross:
         end_angle = np.random.random()*2*np.pi
     else:
         end_angle = start_angle + (np.random.random()-0.5)/np.pi/4
+    end_angle = 0.1
 
-    end_distance = np.random.randint(distance[0],distance[1],1)
-    end = center + np.array([end_distance*np.cos(end_angle), end_distance*np.sin(end_angle), height]).reshape(-1)
-
+    end_distance = 0.1 #np.random.randint(distance[0],distance[1],1)
+    end = center[0] + np.array([end_distance*np.cos(end_angle), end_distance*np.sin(end_angle), height]).reshape(-1)
+    #end = start; # used for fixed camera
+    
     return start, end
 
 
@@ -82,7 +85,7 @@ def T(endpoint, frame):
     input: two endpoint location, frame
     output: location of camera by the time
     """
-
+    #print(endpoint)
     T_mat = np.linspace(endpoint[0], endpoint[1], frame)
     return T_mat
 
@@ -108,12 +111,14 @@ def generate_exmat(T_mat, center, tracking):
         NOError: no error occurred up to now
     """
     exmat = np.zeros((T_mat.shape[0],4,4))
+    #print(T_mat.shape)
     for i in range(T_mat.shape[0]):
         posCamera = T_mat[i]
+        posTarget = center[i]
         if tracking is True:
-            argCamera = get_angle(center - posCamera)
+            argCamera = get_angle(posTarget - posCamera)
         else:
-            argCamera = get_angle(center - T_mat[0])
+            argCamera = get_angle(posTarget - T_mat[0])
             pass
 
         Rz = np.array(
@@ -152,9 +157,9 @@ def w2c(data_3d_std, camera_metadata, frame):
     cross = camera_metadata['cross']
     tracking = camera_metadata['tracking']
 
-    endpoint = get_endpoint(center, distance, height, cross)
+    #endpoint = get_endpoint(center, distance, height, cross)
     
-    T_mat = T(endpoint, frame)
+    T_mat = cam_traj(data_3d_std[:,:,0,:].squeeze())
     exmat = generate_exmat(T_mat, center, tracking)
     
     data_3d_std = data_3d_std.transpose(1,0,2,3) # transpose n and x for the loop

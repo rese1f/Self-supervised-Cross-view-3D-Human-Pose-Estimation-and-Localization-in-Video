@@ -166,7 +166,7 @@ class Visualization:
         '''
         Produce animation and save it
         '''
-        anim = FuncAnimation(self.fig, self.updater, self.x, interval=1)
+        anim = FuncAnimation(self.fig, self.updater, self.x, interval=2)
         plt.show()
         if self.args.playback: anim.save("player/output.gif", writer='pillow', fps=165)
 
