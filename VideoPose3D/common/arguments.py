@@ -35,6 +35,7 @@ def parse_args():
         help='if compare prediction with gt') 
     parser.add_argument('-fp', '--filepath', default=None, type=str, metavar='NAME', 
         help='if loading from specific path') 
+    parser.add_argument('-fr', '--framerate', default=2, type=int, metavar='NAME', help='frame rate of visualize')
 
     args = parser.parse_args()
 
