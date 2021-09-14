@@ -314,7 +314,7 @@ class Visualization:
         '''
         Produce animation and save it
         '''
-        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=1)
+        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=self.info_args.framerate)
         plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
         savepath = self.info_filepath[0:-4] + "_sample" + str(self.info_sample) + ".gif"
