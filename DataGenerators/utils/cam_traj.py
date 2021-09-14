@@ -31,7 +31,7 @@ def cam_traj(pose_3d):
         camera trajction[array]: (f,3)
     """
     args = parse_args_4_camtraj()
-    print(args)
+    # print(args)
     pose_2d = pose_3d.transpose(1,0,2)[...,:2]
     f = pose_2d.shape[0]
     o, r = bounding_circle(pose_2d)
@@ -50,6 +50,7 @@ def cam_traj(pose_3d):
     cam_traj = np.hstack((p, p_h))
     # with constant h
     # cam_traj = np.insert(p,2,values=args.h,axis=1)
+    visualize(o, r, p)
     return cam_traj
     
 def bounding_circle(pose_2d):
@@ -132,6 +133,22 @@ def random(x:float)-> float:
     """
     y = np.random.normal(loc=x, scale=x/10)
     return y
+
+def visualize(o, r, p):
+    """visualize the camera trajction by picture
+    
+    Args:
+        o ([array]): [f,2]
+        r ([array]): [f]
+        p ([array]): [f,2]
+    """
+    import matplotlib.pyplot as plt
+    i = 5
+    o = o[::i]
+    r = r[::i]
+    plt.plot(p[:,0],p[:,1])
+    plt.plot(o[:,0],o[:,1])
+    plt.show()
 
 if __name__=='__main__':
     # 2-people 3-frames

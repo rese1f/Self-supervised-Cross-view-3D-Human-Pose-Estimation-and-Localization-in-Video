@@ -59,7 +59,7 @@ with torch.no_grad():
         
         mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mean_loss)
-        logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[:,:,0].item(),4)))
         # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
         
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))
