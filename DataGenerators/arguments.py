@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument('-r', '--rotation', default=True, type=bool, metavar='R', help='if rotate single raw data')
 
     # Generating arguments
-    parser.add_argument('-n', '--number', default=1, type=int, metavar='N', help='number of the generated dataset')
+    parser.add_argument('-n', '--number', default=128, type=int, metavar='N', help='number of the generated dataset')
     parser.add_argument('-c', '--camera', default=['phone'], type=list, metavar='C', help='the type of camera used')
     parser.add_argument('-v', '--view', default=1, type=int, metavar='V', help='the number of view')
 
