@@ -27,7 +27,7 @@ if torch.cuda.is_available():
 model_pos.eval()
 model_traj.eval()
 
-dataset_path = 'data/data_multi_h36m.npz'
+dataset_path = '../data/data_multi_h36m.npz'
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)

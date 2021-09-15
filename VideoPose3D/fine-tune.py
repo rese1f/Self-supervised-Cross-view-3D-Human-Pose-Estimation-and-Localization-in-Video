@@ -18,7 +18,7 @@ model_pos.load_state_dict(pose_checkpoint['model_pos'])
 if torch.cuda.is_available():
     model_pos = model_pos.cuda()
 model_pos.train()
-dataset_path = 'data/data_multi_h36m.npz'
+dataset_path = '../data/data_multi_h36m.npz'
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)

@@ -21,7 +21,7 @@ torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth
 
 args = parse_args()
 print(args)
-logger.add('output/run.log')
+logger.add('log/run.log')
 logger.warning('iter_nums:{}'.format(args.iter_nums))
 
 try:
@@ -33,14 +33,14 @@ except OSError as e:
 
 try:
     # Create out directory if it does not exist
-    os.makedirs('output')
+    os.makedirs('log')
 except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create output directory')
 
 
 print('Loading dataset...')
-dataset_path = 'data/data_multi_' + args.dataset + '.npz'
+dataset_path = '../data/data_multi_' + args.dataset + '.npz'
 print('- Loading file', dataset_path)
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 
