@@ -19,16 +19,16 @@ print(args)
 
 print('Loading data...')
 
-dataset = np.load('data/data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
+dataset = np.load('./raw_data/data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
 dict_keys = dataset.keys()
 
-if not os.path.exists('output'):
+if not os.path.exists('./data'):
     print('Creating output path...')
-    os.makedirs('output')
+    os.makedirs('./data')
 else:
     print('Cleaning output path...')
-    shutil.rmtree('output')
-    os.makedirs('output')
+    shutil.rmtree('./data')
+    os.makedirs('./data')
 
 
 print('Loading camera...')
@@ -104,6 +104,6 @@ dataset{
         }
     }
 '''
-np.savez_compressed('output/'+output_filename, dataset=dataset_zip)
+np.savez_compressed('./data/'+output_filename, dataset=dataset_zip)
 
 print('Done.')
