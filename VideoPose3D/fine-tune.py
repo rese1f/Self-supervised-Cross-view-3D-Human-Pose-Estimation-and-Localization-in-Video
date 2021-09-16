@@ -26,18 +26,28 @@ optimizer = optim.Adam(list(model_pos.parameters()) ,lr=1e-3, amsgrad=True)
 if 'optimizer' in pose_checkpoint and pose_checkpoint['optimizer'] is not None:
     optimizer.load_state_dict(pose_checkpoint['optimizer'])
 
-for camera, pose, pose_2d, count in data_iter:
-    camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
-    pose = pose[:,:,121:-121]
-    shape = pose_2d.shape
-    v, n, f, j = shape[0], shape[1], shape[2], shape[3]
-    cameras = camera[:,None,None,None,:]
-    pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
-    pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
-    pose_2d = pose_2d.reshape(-1,f,j,2)
-    pose_pred = model_pos(pose_2d).reshape(v, n, f-242, j, 3)
-    loss = mpjpe(pose_pred, pose)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    logger.info("loss: {}".format(loss.item()))
+epoch = 0
+loss_list = []
+while epoch < 30:
+    
+    for camera, pose, pose_2d, count in data_iter:
+        camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
+        pose = pose[:,:,121:-121]
+        shape = pose_2d.shape
+        v, n, f, j = shape[0], shape[1], shape[2], shape[3]
+        cameras = camera[:,None,None,None,:]
+        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
+        pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
+        pose_2d = pose_2d.reshape(-1,f,j,2)
+        pose_pred = model_pos(pose_2d).reshape(1, -1, j, 3)
+        pose -= pose[:,:,:,0].unsqueeze(3)
+        pose = pose.reshape(1, -1, j, 3)
+        loss = n_mpjpe(pose_pred, pose)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        loss = loss.item()
+        logger.info("loss: {}".format(loss))
+        loss_list.append(loss)
+    logger.error("epoch: {}, loss: {}".format(epoch, np.mean(loss_list)))
+    epoch += 1
