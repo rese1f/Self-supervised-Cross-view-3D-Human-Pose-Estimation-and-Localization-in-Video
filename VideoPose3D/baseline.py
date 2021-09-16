@@ -13,7 +13,8 @@ from common.generators import ChunkedGenerator
 torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth=None, profile=None)
 
 logger.add('output/baseline.log')
-pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
+# pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
+pose_checkpoint = torch.load('checkpoint/ft.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
 
 model_pos = TemporalModel(17, 2, 17, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024, dense=False)

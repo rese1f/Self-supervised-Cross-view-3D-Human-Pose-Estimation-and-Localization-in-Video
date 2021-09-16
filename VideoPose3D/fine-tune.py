@@ -27,9 +27,8 @@ if 'optimizer' in pose_checkpoint and pose_checkpoint['optimizer'] is not None:
     optimizer.load_state_dict(pose_checkpoint['optimizer'])
 
 epoch = 0
-loss_list = []
-while epoch < 30:
-    
+while epoch < 50:
+    loss_list = []
     for camera, pose, pose_2d, count in data_iter:
         camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
         pose = pose[:,:,121:-121]
@@ -50,4 +49,12 @@ while epoch < 30:
         logger.info("loss: {}".format(loss))
         loss_list.append(loss)
     logger.error("epoch: {}, loss: {}".format(epoch, np.mean(loss_list)))
+    loss_list = []
     epoch += 1
+    
+chk_path = './checkpoint/ft.bin'
+torch.save({
+    'epoch': epoch,
+    'optimizer': optimizer.state_dict(),
+    'model_pos': model_pos.state_dict(),
+    }, chk_path)
