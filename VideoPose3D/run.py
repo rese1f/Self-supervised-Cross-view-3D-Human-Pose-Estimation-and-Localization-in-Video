@@ -124,7 +124,7 @@ with torch.no_grad():
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mpjpe_loss)
-        logger.info("id:{}, loss:{}, scale:{}, reg_loss:{}".format(round(count.item(),4), round(mpjpe_loss.item(),4), round(scale[:,:,0].item(),4), reg_loss.item()))
+        logger.info("id:{}, loss:{}, scale:{}".format(round(count.item(),4), round(mpjpe_loss.item(),4), round(scale[:,:,0].item(),4)))
         count = count.item()
         output_zip[count] = dict()
         output_zip[count]['pose_pred'] = pose_pred
