@@ -31,17 +31,19 @@ while epoch < 50:
     loss_list = []
     for camera, pose, pose_2d, count in data_iter:
         camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
-        pose = pose[:,:,121:-121]
         shape = pose_2d.shape
         v, n, f, j = shape[0], shape[1], shape[2], shape[3]
         cameras = camera[:,None,None,None,:]
-        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
-        pose_2d[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
-        pose_2d = pose_2d.reshape(-1,f,j,2)
-        pose_pred = model_pos(pose_2d).reshape(1, -1, j, 3)
-        pose -= pose[:,:,:,0].unsqueeze(3)
-        pose = pose.reshape(1, -1, j, 3)
-        loss = n_mpjpe(pose_pred, pose)
+        pose_2dt = pose_2d.clone()
+        pose_2dt[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
+        pose_2dt[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
+        pose_2dt = pose_2dt.reshape(-1, f, j, 2)
+        pose_pred = model_pos(pose_2dt).reshape(v, n, -1, j, 3)
+        # pose -= pose[:,:,:,0].unsqueeze(3)
+        # pose = pose[:,:,121:-121]
+        pose_2d = pose_2d[:,:,121:-121]
+        loss = 0*bone_loss(pose_pred) + 1*projection_loss(pose_pred, pose_2d, camera)
+        
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
