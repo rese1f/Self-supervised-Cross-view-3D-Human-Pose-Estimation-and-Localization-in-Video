@@ -8,6 +8,7 @@
 import torch
 import numpy as np
 from common.utils import *
+from common.regressor import *
 
 def mpjpe(predicted, target):
     """
@@ -123,7 +124,9 @@ def projection_loss(pose_pred, pose_2d, camera):
     Returns:
         loss
     """
-    cx, cy, fx, fy = camera[0], camera[1], camera[2], camera[3]
-    pose_pred = pose_pred.reshape(-1,3)
-    pose_2d = pose_2d.reshape(-1,2)
-    
+    cx, cy, fx, fy = camera[:,0], camera[:,1], camera[:,2], camera[:,3]
+    f = pose_2d.shape[2]
+    pose_pred = pose_pred.reshape(-1,f,17,3)
+    pose_2d = pose_2d.reshape(-1,f,17,2)
+    T, loss = init_regressor(pose_pred, pose_2d, 128)
+    return loss
