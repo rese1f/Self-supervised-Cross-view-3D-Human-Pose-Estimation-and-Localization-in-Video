@@ -43,7 +43,6 @@ while epoch < 50:
         # pose = pose[:,:,121:-121]
         pose_2d = pose_2d[:,:,121:-121]
         loss = 0*bone_loss(pose_pred) + 1*projection_loss(pose_pred, pose_2d, camera)
-        
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
