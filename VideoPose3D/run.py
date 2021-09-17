@@ -95,7 +95,7 @@ with torch.no_grad():
         pose_2d_temp = pose_2d_temp.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2d_temp)
         # make scale trans
-        scale = torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).unsqueeze(-1).unsqueeze(-1).squeeze(0)
+        scale = torch.mean(torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).squeeze(0),dim=-1).unsqueeze(-1).unsqueeze(-1)
         pose_pred *= scale
         del pose_2d_temp
         
@@ -116,7 +116,6 @@ with torch.no_grad():
         init_ground = ground_computer(foot)
         init_ground = init_ground.reshape(1,-1,3,1)
         T, ground, reg_loss = iter_regressor(pose_pred, pose_2d, init_ground, args.iter_nums, w)
-        
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2d.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
