@@ -27,7 +27,7 @@ if 'optimizer' in pose_checkpoint and pose_checkpoint['optimizer'] is not None:
     optimizer.load_state_dict(pose_checkpoint['optimizer'])
 
 epoch = 0
-while epoch < 50:
+while epoch < 5:
     loss_list = []
     for camera, pose, pose_2d, count in data_iter:
         camera, pose, pose_2d = camera.squeeze(0), pose.squeeze(0), pose_2d.squeeze(0)
@@ -50,7 +50,7 @@ while epoch < 50:
         loss2 = projection_loss(pose_pred, pose_2d, camera)
         loss = k1*loss1 + k2*loss2
         optimizer.zero_grad()
-        loss.backward()
+        loss2.backward()
         optimizer.step()
         loss = loss.item()
         logger.info("loss: {}, loss1: {}, loss2: {}".format(loss, loss1, loss2))
