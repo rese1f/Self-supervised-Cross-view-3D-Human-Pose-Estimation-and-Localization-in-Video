@@ -38,7 +38,10 @@ while epoch < 50:
         pose_2dt[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,0])
         pose_2dt[...,1].add_(-cameras[...,1]).mul_(-1/cameras[...,0])
         pose_2dt = pose_2dt.reshape(-1, f, j, 2)
-        pose_pred = model_pos(pose_2dt).reshape(v, n, -1, j, 3)
+        pose_pred = model_pos(pose_2dt)
+        scale = torch.mean(torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).squeeze(0),dim=-1).unsqueeze(-1).unsqueeze(-1)
+        pose_pred *= scale
+        pose_pred = pose_pred.reshape(v, n, -1, j, 3)
         # pose -= pose[:,:,:,0].unsqueeze(3)
         # pose = pose[:,:,121:-121]
         pose_2d = pose_2d[:,:,121:-121]
@@ -50,7 +53,7 @@ while epoch < 50:
         loss.backward()
         optimizer.step()
         loss = loss.item()
-        logger.info("loss1: {}, loss2: {}".format(loss1, loss2))
+        logger.info("loss: {}, loss1: {}, loss2: {}".format(loss, loss1, loss2))
         loss_list.append(loss)
     logger.error("epoch: {}, loss: {}".format(epoch, np.mean(loss_list)))
     loss_list = []
