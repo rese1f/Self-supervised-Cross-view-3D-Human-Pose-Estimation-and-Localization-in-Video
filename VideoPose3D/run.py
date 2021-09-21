@@ -99,7 +99,7 @@ with torch.no_grad():
         pose_pred *= scale
         del pose_2d_temp
         
-        # regression  
+        # regression
         # make a assignment x=(x-c)/f, y=(y-c)/f
         pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
         pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
@@ -107,7 +107,7 @@ with torch.no_grad():
         pose_2d = pose_2d.reshape(-1,f,j,2)
         # here we make a cut for pose_2d via receptive_field
         pose_2d = pose_2d[:, (receptive_field-1)//2:-(receptive_field-1)//2]
-        T, _ = init_regressor(pose_pred, pose_2d, w)
+        T, l = init_regressor(pose_pred, pose_2d, w)
         T = T.reshape(v,n,-1,3)
         # compute ground equation
         foot = pose_pred.reshape(v,n,-1,j,3)[:,:,:,[3,6],:] + T.unsqueeze(3)

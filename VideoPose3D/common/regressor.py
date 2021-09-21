@@ -66,7 +66,7 @@ def init_subregressor(pose_pred, pose_2d):
     return T, loss
 
 def submatrix(w, i, x, y, xzX, yzY):
-    """create a matrix block+
+    """create a matrix block
     
 
     Args:

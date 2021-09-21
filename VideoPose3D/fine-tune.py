@@ -42,12 +42,15 @@ while epoch < 50:
         # pose -= pose[:,:,:,0].unsqueeze(3)
         # pose = pose[:,:,121:-121]
         pose_2d = pose_2d[:,:,121:-121]
-        loss = 0*bone_loss(pose_pred) + 1*projection_loss(pose_pred, pose_2d, camera)
+        k1, k2 = 1, 1
+        loss1 = bone_loss(pose_pred)
+        loss2 = projection_loss(pose_pred, pose_2d, camera)
+        loss = k1*loss1 + k2*loss2
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         loss = loss.item()
-        logger.info("loss: {}".format(loss))
+        logger.info("loss1: {}, loss2: {}".format(loss1, loss2))
         loss_list.append(loss)
     logger.error("epoch: {}, loss: {}".format(epoch, np.mean(loss_list)))
     loss_list = []
