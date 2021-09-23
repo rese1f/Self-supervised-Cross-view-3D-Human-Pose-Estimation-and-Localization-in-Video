@@ -45,18 +45,19 @@ while epoch < 5:
         # pose -= pose[:,:,:,0].unsqueeze(3)
         # pose = pose[:,:,121:-121]
         pose_2d = pose_2d[:,:,121:-121]
+        pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
+        pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
         k1, k2 = 1, 1
-        loss1 = bone_loss(pose_pred)
+        loss1, w = bone_loss(pose_pred)
         loss2 = projection_loss(pose_pred, pose_2d, camera)
         loss = k1*loss1 + k2*loss2
         optimizer.zero_grad()
-        loss2.backward()
+        loss1.backward()
         optimizer.step()
         loss = loss.item()
         logger.info("loss: {}, loss1: {}, loss2: {}".format(loss, loss1, loss2))
         loss_list.append(loss)
     logger.error("epoch: {}, loss: {}".format(epoch, np.mean(loss_list)))
-    loss_list = []
     epoch += 1
     
 chk_path = './checkpoint/ft.bin'
