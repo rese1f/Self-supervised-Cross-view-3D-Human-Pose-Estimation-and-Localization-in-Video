@@ -47,7 +47,7 @@ while epoch < 5:
         pose_2d = pose_2d[:,:,121:-121]
         pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
         pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
-        k1, k2 = 1, 1
+        k1, k2 = 1, 1e5
         loss1, w = bone_loss(pose_pred)
         loss2 = projection_loss(pose_pred, pose_2d, camera)
         loss = k1*loss1 + k2*loss2
