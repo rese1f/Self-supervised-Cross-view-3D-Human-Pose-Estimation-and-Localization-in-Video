@@ -64,6 +64,7 @@ class Visualization():
 
         print(self.data_prediction[1].shape)
         self.data_vector = Visualization.node_2_vector(self, self.data_prediction[1])
+        Visualization.run(self)
 
         pass
 
@@ -89,6 +90,9 @@ class Visualization():
             print('File does not exist! Please input right file path')
 
         self.info_meta_data = suggest_metadata(self.info_args.dataset)
+        self.info_std_shape = suggest_metadata("star_model")
+        self.data_std_shape = []
+        for i in range(3): self.data_std_shape.append(torch.tensor(self.info_std_shape["standard"]))
 
         return
 
@@ -139,11 +143,21 @@ class Visualization():
 
         return
 
-    def run():
+    def run(self):
         """
         The main function 
         """
+        for i in range(3): 
+            shape = self.data_vector.shape
+            self.data_std_shape[i].unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(shape[0],shape[1],shape[2],1,1)
 
+        print(self.data_std_shape[1].shape)
+        
+
+        self.data_rotvect = torch.zeros_like(self.data_vector)
+        order_list = self.info_meta_data["tree_connect"]
+        for i in range(5):
+            Visualization.iterator(self, order_list[i])
 
 
         return
@@ -161,16 +175,28 @@ class Visualization():
 
     def node_2_vector(self,array_node):
         """
+        The module is used to transfor node tensor into directional vector tensor
+        Input: tensor([v,n,x,N,3])
+        Output: tensor([v,n,x,24,3])
         """
         shape = array_node.shape
         connect = self.info_meta_data["connect"]
         array_vector = torch.cat([Visualization.connect_node(array_node[:,:,:,connect[i][0],:],
-                        array_node[:,:,:,connect[i][1],:], i) for i in range(24)], dim = 3)
-        array_vector = array_vector.reshape(shape[0],shape[1],shape[2],72)
+                        array_node[:,:,:,connect[i][1],:], i) for i in range(24)], dim = -2)
+        #array_vector = array_vector.reshape(shape[0],shape[1],shape[2],72)
+        
+        #shape = array_node.shape
+        #skeleton = self.info_meta_data["skeleton"]
+
+        #array_vector = torch.cat([Visualization.connect_node(array_node[:,:,:,skeleton[i][0],:],
+        #                array_node[:,:,:,skeleton[i][1],:], i) for i in range(len(skeleton))], dim = -2)
 
         return array_vector
 
     def connect_node(vector_1, vector_2, i):
+        """
+        Assistant function for "node_2_vector"
+        """
         return (torch.subtract(vector_2,vector_1)).unsqueeze(3)
 
     def calculate_axis(vector_1, vector_2):
@@ -178,24 +204,51 @@ class Visualization():
         return axis_unnormalized/torch.norm(axis_unnormalized)
 
     def Rodrigue(vect_orig, vect_finl):
+        """
+        The mathematic model for rotation vector and matrix calculation
+        Input: []
+        """
+
         
-        axis_unnormalized = torch.dot(vect_orig,vect_finl)
-        axis = axis_unnormalized/torch.norm(axis_unnormalized)
-        angle = torch.arccos(torch.dot(vect_orig, vect_orig))
+        axis_unnormalized = torch.cross(vect_orig, vect_finl, dim = -1) # 求旋转轴
+        axis = torch.divide(axis_unnormalized,torch.norm(axis_unnormalized,dim=-1).unsqueeze(-1)) # 标准化旋转轴
+        angle = torch.arccos(torch.dot(vect_orig, vect_orig, dim = -1).unsqueeze(-1)) # 求旋转角度
         
-        r_vect = axis * angle; r_mat = (torch.eye(3) * torch.cos(angle) + 
-            (1 - torch.cos(angle)) * torch.matmul(axis.unsqueeze(-1),axis) + 
-            torch.sin(angle) * torch.tensor([]))
+        r_vect = torch.multiply(axis, angle) # 求得旋转向量
+        
+        # Rodrigues 公式，可以求得矩阵R
+        r_mat = (torch.matmul(torch.eye(3), torch.cos(angle)) + 
+            torch.mul((torch.subtract(torch.tensor(1),torch.cos(angle)),torch.matmul(axis.unsqueeze(-1).permute(0,1,2,3,5,4),axis))) + 
+            torch.mul(torch.sin(angle),Visualization.v_cat(axis)))
 
         return r_vect, r_mat
 
     def v_cat(axis):
+        """
+        This module is used for concatcate a matrix used in Rodrigue()
+        Input: tensor([v,n,x,N,3])
+        Output: tensor([v,n,x,N,3,3])
+        """
 
-        row1 = torch.cat((torch.cat((torch.zeros_like(axis[:,:,:,:,0]),-axis[:,:,:,:,2]),dim=-1),axis[:,:,:,:,1]),dim=-1)
-        row2 = torch.cat((torch.cat((axis[:,:,:,:,2],torch.zeros_like(axis[:,:,:,:,0])),dim=-1),-axis[:,:,:,:,0]),dim=-1)
-        row3 = torch.cat((torch.cat((torch.zeros_like(axis[:,:,:,:,0]),-axis[:,:,:,:,2]),dim=-1),axis[:,:,:,:,1]),dim=-1)
-
+        row1 = torch.cat((torch.cat((torch.zeros_like(axis[...,0]),-axis[...,2]),dim=-1),axis[...,1]),dim=-1).unsqueeze(4)
+        row2 = torch.cat((torch.cat((axis[...,2],torch.zeros_like(axis[...,0])),dim=-1),-axis[...,0]),dim=-1).unsqueeze(4)
+        row3 = torch.cat((torch.cat((torch.zeros_like(axis[...,0]),-axis[...,2]),dim=-1),axis[...,1]),dim=-1).unsqueeze(4)
+        mat = torch.cat((torch.cat((row1,row2),dim=-1),row3),dim=-1)
+        
         return mat
+
+    def iterator(self, pair):
+        '''
+        This module is used for iteration to get rotational vector
+        '''
+
+        for i in range(3):
+            self.data_rotvect[:,:,:,i,:], R_mat = Visualization.Rodrigue(self.data_std_shape[i][:,:,:,i,:], self.data_vector[:,:,:,i,:])
+            self.data_std_shape[i][:,:,:,:,:] = torch.matmul(R_mat, self.data_std_shape[i][:,:,:,:,:].unsqueeze(5).permute(3,0,1,2,5,4)).permute(1,2,3,0,5,4).unsqueeze(5)
+        
+
+
+        return
 
 
 def calculate_rotational_vector(n, init, finl):
