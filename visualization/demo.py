@@ -35,9 +35,12 @@ batch_size=1
 star = STAR(gender='female',num_betas=num_betas)
 
 # Zero pose
+# TODO: edit this part into poses
 poses = torch.cuda.FloatTensor(np.zeros((batch_size,72)))
-betas = torch.cuda.FloatTensor(betas)
 
+
+
+betas = torch.cuda.FloatTensor(betas)
 trans = torch.cuda.FloatTensor(np.zeros((batch_size,3)))
 model = star.forward(poses, betas,trans).cpu().detach().numpy()
 # shaped = model.v_shaped[-1, :, :]

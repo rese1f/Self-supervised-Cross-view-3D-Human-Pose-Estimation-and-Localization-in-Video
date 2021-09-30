@@ -1,6 +1,6 @@
 # Datasets
 
-This file describes the basic parameters of the datasets appeared in the program. Note that before version 2.0.0, there is only 1 dataset used, i.e. `Human3.6M`. More datasets will be carried out after the implementation of the Inference part of this program.
+This file describes the basic parameters of the datasets appeared in the program. Note that our project 
 
 ## Human3.6M (Native Dataset)
 
@@ -14,5 +14,9 @@ The mapping of these two kinds of notations is shown below. Note that the origin
 
 ![image-20210630171302068](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-12-113305.png)
 
-## Inference Datasets
+## Our Dataset
 
+-   Data format.
+-   Bounding Box Alignment.
+-   Number of Frames per data bunch.
+-   s
