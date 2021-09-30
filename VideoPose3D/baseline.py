@@ -13,7 +13,8 @@ from common.generators import ChunkedGenerator
 torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth=None, profile=None)
 
 logger.add('output/baseline.log')
-pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
+# pose_checkpoint = torch.load('checkpoint/pretrained_h36m_cpn.bin', map_location=lambda storage, loc: storage)
+pose_checkpoint = torch.load('checkpoint/ft.bin', map_location=lambda storage, loc: storage)
 traj_checkpoint = torch.load('checkpoint/epoch_80.bin', map_location=lambda storage, loc: storage)
 
 model_pos = TemporalModel(17, 2, 17, filter_widths=[3,3,3,3,3], causal=False, dropout=0.25, channels=1024, dense=False)
@@ -27,7 +28,7 @@ if torch.cuda.is_available():
 model_pos.eval()
 model_traj.eval()
 
-dataset_path = 'data/data_multi_h36m.npz'
+dataset_path = '../data/data_multi_h36m.npz'
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 dataset = ChunkedGenerator(dataset_zip)
 data_iter = DataLoader(dataset, batch_size=1, shuffle=False)
@@ -59,7 +60,7 @@ with torch.no_grad():
         
         mean_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mean_loss)
-        logger.info("id:{}, loss:{}".format(count.item(), round(mean_loss.item(),4)))
+        logger.info("id:{}, loss:{}, scale:{}".format(count.item(), round(mean_loss.item(),4), round(scale[:,:,0].item(),4)))
         # logger.warning(traj_pred[0,0,0,0,:]-pose[0,0,0,0,:])
         
 logger.error("n_MPJPE:{}".format(torch.mean(torch.stack(loss)).item()))

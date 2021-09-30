@@ -7,7 +7,7 @@ def parse_args_4_camtraj():
     parser = argparse.ArgumentParser(description='Generating script')
     parser.add_argument('--h', default=1500, type=int,
                         help="mean height, unit: mm")
-    parser.add_argument('--d', default=7000, type=int,
+    parser.add_argument('--d', default=3000, type=int,
                         help="mean distance, unit: mm")
     parser.add_argument('--v', default=10, type=int,
                         help="mean velocity, unit: mm per frame")
@@ -50,7 +50,7 @@ def cam_traj(pose_3d):
     cam_traj = np.hstack((p, p_h))
     # with constant h
     # cam_traj = np.insert(p,2,values=args.h,axis=1)
-    visualize(o, r, p)
+    # visualize(o, r, p)
     return cam_traj
     
 def bounding_circle(pose_2d):

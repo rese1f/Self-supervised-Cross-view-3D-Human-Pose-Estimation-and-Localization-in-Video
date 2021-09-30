@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument('-k', '--keypoints_number', default=17, type=int, metavar='NAME', help='number of keypoints')
     parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH',
                         help='checkpoint directory')
-    parser.add_argument('-l', '--load', default='pretrained_h36m_cpn.bin', type=str, metavar='FILENAME',
+    parser.add_argument('-l', '--load', default='ft.bin', type=str, metavar='FILENAME',
                         help='checkpoint to load (file name)')
 
     # Model arguments
@@ -35,6 +35,7 @@ def parse_args():
         help='if compare prediction with gt') 
     parser.add_argument('-fp', '--filepath', default=None, type=str, metavar='NAME', 
         help='if loading from specific path') 
+    parser.add_argument('-fr', '--framerate', default=2, type=int, metavar='NAME', help='frame rate of visualize')
 
     args = parser.parse_args()
 

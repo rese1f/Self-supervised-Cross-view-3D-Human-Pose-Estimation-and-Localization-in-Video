@@ -21,7 +21,7 @@ torch.set_printoptions(precision=None, threshold=4096, edgeitems=None, linewidth
 
 args = parse_args()
 print(args)
-logger.add('output/run.log')
+logger.add('log/run.log')
 logger.warning('iter_nums:{}'.format(args.iter_nums))
 
 try:
@@ -33,14 +33,14 @@ except OSError as e:
 
 try:
     # Create out directory if it does not exist
-    os.makedirs('output')
+    os.makedirs('log')
 except OSError as e:
     if e.errno != errno.EEXIST:
         raise RuntimeError('Unable to create output directory')
 
 
 print('Loading dataset...')
-dataset_path = 'data/data_multi_' + args.dataset + '.npz'
+dataset_path = '../data/data_multi_' + args.dataset + '.npz'
 print('- Loading file', dataset_path)
 dataset_zip = np.load(dataset_path, allow_pickle=True)['dataset']
 
@@ -95,11 +95,11 @@ with torch.no_grad():
         pose_2d_temp = pose_2d_temp.reshape(-1,f,j,2)
         pose_pred = model_pos(pose_2d_temp)
         # make scale trans
-        scale = torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).unsqueeze(-1).unsqueeze(-1).squeeze(0)
+        scale = torch.mean(torch.div(0.25803840160369873,sk_len(pose_pred.unsqueeze(0))).squeeze(0),dim=-1).unsqueeze(-1).unsqueeze(-1)
         pose_pred *= scale
         del pose_2d_temp
         
-        # regression  
+        # regression
         # make a assignment x=(x-c)/f, y=(y-c)/f
         pose_2d[...,0].add_(-cameras[...,0]).mul_(1/cameras[...,2])
         pose_2d[...,1].add_(-cameras[...,1]).mul_(1/cameras[...,3])
@@ -107,7 +107,7 @@ with torch.no_grad():
         pose_2d = pose_2d.reshape(-1,f,j,2)
         # here we make a cut for pose_2d via receptive_field
         pose_2d = pose_2d[:, (receptive_field-1)//2:-(receptive_field-1)//2]
-        T, _ = init_regressor(pose_pred, pose_2d, w)
+        T, l = init_regressor(pose_pred, pose_2d, w)
         T = T.reshape(v,n,-1,3)
         # compute ground equation
         foot = pose_pred.reshape(v,n,-1,j,3)[:,:,:,[3,6],:] + T.unsqueeze(3)
@@ -116,7 +116,6 @@ with torch.no_grad():
         init_ground = ground_computer(foot)
         init_ground = init_ground.reshape(1,-1,3,1)
         T, ground, reg_loss = iter_regressor(pose_pred, pose_2d, init_ground, args.iter_nums, w)
-        
         # reshape back to [view, number, frame, joint, 2/3]
         pose_2ds = pose_2d.reshape(v,n,-1,j,2)
         pose_pred = pose_pred.reshape(v,n,-1,j,3)
@@ -124,7 +123,7 @@ with torch.no_grad():
         pose = pose[:, :, (receptive_field-1)//2:-(receptive_field-1)//2]
         mpjpe_loss, scale = multi_n_mpjpe(pose_pred, pose)
         loss.append(mpjpe_loss)
-        logger.info("id:{}, loss:{}, scale:{}, reg_loss:{}".format(round(count.item(),4), round(mpjpe_loss.item(),4), round(scale[:,:,0].item(),4), reg_loss.item()))
+        logger.info("id:{}, loss:{}, scale:{}".format(round(count.item(),4), round(mpjpe_loss.item(),4), round(scale[:,:,0].item(),4)))
         count = count.item()
         output_zip[count] = dict()
         output_zip[count]['pose_pred'] = pose_pred

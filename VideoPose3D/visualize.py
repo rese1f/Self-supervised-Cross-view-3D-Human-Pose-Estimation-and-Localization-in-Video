@@ -130,10 +130,10 @@ class Visualization:
 
         for key in self.info_view_key:
             #self.data_truth[key]["pose_c"][:,:,:,:] = self.data_truth[key]["pose_c"][:,:,:,:] * 10 / 2
-            print(self.data_truth[key]["pose_c"][:,:,:,:])
-            temp = np.copy(self.data_truth[key]["pose_c"])
+            temp = np.copy(self.data_truth[key]["pose_c"] * 1e3)
             self.data_truth[key]["pose_c"][:,:,:,2] = temp[:,:,:,1]
             self.data_truth[key]["pose_c"][:,:,:,1] = temp[:,:,:,2]
+            self.data_truth[key]["pose_c"][:,:,:,0] = temp[:,:,:,0]
 
             self.data_truth[key] = Visualization.__get_center(self.data_truth[key], "pose_c", 1)
 
@@ -169,8 +169,10 @@ class Visualization:
     
 
         for key in self.info_view_key:
-            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
-            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+            #self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,start_true:end_true,:,:]
+            #self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,start_true:end_true,:,:]
+            self.data_truth[key]["pose_2d"] = self.data_truth[key]["pose_2d"][:,121:-121,:,:]
+            self.data_truth[key]["pose_c"] = self.data_truth[key]["pose_c"][:,121:-121,:,:]
 
         #self.data_prediction["trans"] = self.data_prediction["trans"][:,start_pred:end_pred,:]
 
@@ -287,10 +289,12 @@ class Visualization:
         if self.info_args.compare:
             k = 0
             for key in self.info_view_key:
-                # 2D Truth
-                Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
                 # 3D Truth
                 Visualization.plt3D(self, frame, self.ax[key][0], self.data_truth[key]["pose_c"], self.data_truth[key]["center"], False, True, True, True, False, False, True)
+                
+                # 2D Truth
+                Visualization.plt2D(self, frame, self.ax[key][1], self.data_truth[key]["pose_2d"], self.data_truth[key]['camera'])
+                
                 # Prediction
                 Visualization.plt3D(self, frame, self.ax[key][2] ,self.data_prediction["pose_pred"][k], self.data_prediction["center"][k], False, True, True, True, False, False, True)
                 pass
@@ -310,7 +314,7 @@ class Visualization:
         '''
         Produce animation and save it
         '''
-        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=100000)
+        anim = FuncAnimation(self.fig, self.updater, self.info_frame, interval=self.info_args.framerate)
         plt.show()
         #if self.pb: anim.save("output/data_multi_output_" + self.ds + ".gif", writer='imagemagick')
         savepath = self.info_filepath[0:-4] + "_sample" + str(self.info_sample) + ".gif"

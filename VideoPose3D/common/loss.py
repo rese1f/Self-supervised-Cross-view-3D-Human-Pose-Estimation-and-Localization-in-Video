@@ -7,6 +7,8 @@
 
 import torch
 import numpy as np
+from common.utils import *
+from common.regressor import *
 
 def mpjpe(predicted, target):
     """
@@ -97,3 +99,35 @@ def mean_velocity_error(predicted, target):
     velocity_target = np.diff(target, axis=0)
     
     return np.mean(np.linalg.norm(velocity_predicted - velocity_target, axis=len(target.shape)-1))
+
+def bone_loss(pose):
+    """loss due to length ratio of bone
+
+    Args:
+        pose (v,n,f,17,3)
+        
+    Returns:
+        loss
+    """
+    H = torch.mean(sk_len(pose).reshape(-1,16), dim=0).unsqueeze(-1)
+    y = torch.tensor([0.1318, 0.4513, 0.4455, 0.1318, 0.4508, 0.4460, 0.2412, 0.2553, 0.1162, 0.1147, 0.1472, 0.2806, 0.2448, 0.1479, 0.2774, 0.2463]).cuda().unsqueeze(-1)
+    w = torch.mm(torch.mm(torch.mm(H.T,H).inverse(),H.T),y)
+    loss = torch.norm(H*w-y)
+    return loss, w
+
+def projection_loss(pose_pred, pose_2d, camera):
+    """loss due to 2D-3D projection
+
+    Args:
+        pose_pred (v,n,f,17,3)
+        pose_2d (v,n,f,17,2)
+        
+    Returns:
+        loss
+    """
+    cx, cy, fx, fy = camera[:,0], camera[:,1], camera[:,2], camera[:,3]
+    f = pose_2d.shape[2]
+    pose_pred = pose_pred.reshape(-1,f,17,3)
+    pose_2d = pose_2d.reshape(-1,f,17,2)
+    T, loss = init_regressor(pose_pred, pose_2d, 128)
+    return loss
