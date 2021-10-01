@@ -1,8 +1,6 @@
 from star.star import STAR
-import numpy as np
 from util.data_utils import *
 from util.helper import *
-import torch
 
 # define the basic global variables
 betas = np.array([
@@ -13,6 +11,9 @@ num_betas = 10
 batch_size = 1
 obj_number = 5
 star = STAR(gender='female', num_betas=num_betas)
+
+# allocate the right device for the data
+torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 for i in range(obj_number):
     # load data into the runtime system

@@ -11,7 +11,7 @@ def randomly_load_data():
 
     # set scope variables
     input_path = '../VideoPose3D/output/data_output_h36m_1.npz'
-    print("Current Input Path: " + input_path)
+    print("\033[1;32mCurrent Input Path\033[0m: " + input_path)
 
     # get the random sample of one person
     item = np.load(input_path, allow_pickle=True)["positions_3d"].item()
@@ -47,16 +47,16 @@ def connect_node(vector_1, vector_2):
 def apply_to_pose(star_model, h36m_medatada, vector):
     standard_shape = []
     for i in range(3):
-        standard_shape.append(torch.tensor(star_model["standard"]))
+        standard_shape.append(torch.tensor(star_model["standard"], dtype=torch.float32))
     connect = h36m_medatada["tree_connect"]
     rotation_vector = torch.zeros_like(vector)
     for i in range(5):
         for j in range(3):
             rotation_vector[connect[i][j], :], r_matrix = Rodrigue(vector[connect[i][j], :],
                                                                    standard_shape[j][connect[i][j], :])
-            standard_shape[j] = torch.matmul(r_matrix.unsqueeze(0).repeat(24, 1, 1),
-                                             standard_shape[j].unsqueeze(2).
-                                             permute(-1, -2)).permute(-1, -2).squeeze()
+            standard_shape[j] = torch.matmul((r_matrix.unsqueeze(0).repeat(24, 1, 1),
+                                              standard_shape[j].unsqueeze(2).
+                                              permute(-1, -2))).permute(-1, -2).squeeze()
 
     return rotation_vector
 
@@ -67,17 +67,29 @@ def Rodrigue(vect_orig, vect_finl):
     Input: []
     """
 
+    # change to the same device
+    vect_orig = vect_orig.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    vect_finl = vect_finl.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+
+    # shift the axises
     axis_unnormalized = torch.cross(vect_orig, vect_finl, dim=-1)  # 求旋转轴
     axis = torch.divide(axis_unnormalized, torch.norm(axis_unnormalized, dim=-1).unsqueeze(-1))  # 标准化旋转轴
-    angle = torch.arccos(torch.dot(vect_orig, vect_orig, dim=-1).unsqueeze(-1))  # 求旋转角度
-
+    angle = torch.arccos(torch.dot(vect_orig, vect_orig).unsqueeze(-1))  # 求旋转角度
     r_vect = torch.multiply(axis, angle)  # 求得旋转向量
 
+    # change to the same device
+    angle = angle.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    r_vect = r_vect.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+
     # Rodrigues 公式，可以求得矩阵R
-    r_mat = (torch.matmul(torch.eye(3), torch.cos(angle)) +
-             torch.mul((torch.subtract(torch.tensor(1), torch.cos(angle)),
-                        torch.matmul(axis.unsqueeze(-1).permute(0, 2, 1), axis))) +
-             torch.mul(torch.sin(angle), v_cat(axis)))
+    eye = torch.eye(3).to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    cos = torch.cos(angle).to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    first_term = torch.mul(eye, cos)
+
+    second_term = torch.subtract(torch.tensor(1), torch.cos(angle))
+    third_term = torch.matmul(axis.unsqueeze(-1).permute(1, 0), axis)
+    fourth_term = torch.mul(torch.sin(angle), v_cat(axis))
+    r_mat = first_term + torch.mul(second_term, third_term) + fourth_term
 
     return r_vect, r_mat
 
@@ -89,13 +101,14 @@ def v_cat(axis):
     Output: tensor([v,n,x,N,3,3])
     """
 
+    axis = axis.unsqueeze(0)
     row1 = torch.cat((torch.cat((torch.zeros_like(axis[..., 0]), -axis[..., 2]), dim=-1), axis[..., 1]),
-                     dim=-1).unsqueeze(4)
+                     dim=-1).unsqueeze(0)
     row2 = torch.cat((torch.cat((axis[..., 2], torch.zeros_like(axis[..., 0])), dim=-1), -axis[..., 0]),
-                     dim=-1).unsqueeze(4)
-    row3 = torch.cat((torch.cat((torch.zeros_like(axis[..., 0]), -axis[..., 2]), dim=-1), axis[..., 1]),
-                     dim=-1).unsqueeze(4)
-    mat = torch.cat((torch.cat((row1, row2), dim=-1), row3), dim=-1)
+                     dim=-1).unsqueeze(0)
+    row3 = torch.cat((torch.cat((-axis[..., 1], axis[..., 2]), dim=-1), torch.zeros_like(axis[..., 0])),
+                     dim=-1).unsqueeze(0)
+    mat = torch.cat((torch.cat((row1, row2), dim=-2), row3), dim=-2)
 
     return mat
 
