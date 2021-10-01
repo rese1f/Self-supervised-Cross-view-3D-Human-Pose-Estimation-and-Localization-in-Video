@@ -22,7 +22,7 @@ for i in range(obj_number):
     vector = subject_to_vector(h36m_metadata, subject)  # unit test passed
     # apply the vectors on the STAR pose
     rotation_vector = apply_to_pose(star_model, h36m_metadata, vector)
-    poses = rotation_vector
+    poses = rotation_vector.reshape(batch_size, 72)
     # form the STAR model
     model = form_star_model(betas, batch_size, poses, star)
     # save the file

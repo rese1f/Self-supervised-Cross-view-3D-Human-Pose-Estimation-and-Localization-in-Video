@@ -54,9 +54,12 @@ def apply_to_pose(star_model, h36m_medatada, vector):
         for j in range(3):
             rotation_vector[connect[i][j], :], r_matrix = Rodrigue(vector[connect[i][j], :],
                                                                    standard_shape[j][connect[i][j], :])
-            standard_shape[j] = torch.matmul((r_matrix.unsqueeze(0).repeat(24, 1, 1),
-                                              standard_shape[j].unsqueeze(2).
-                                              permute(-1, -2))).permute(-1, -2).squeeze()
+
+            first_term = r_matrix.unsqueeze(0).repeat(24, 1, 1)\
+                .to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+            second_term = standard_shape[j].unsqueeze(2)\
+                .to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+            standard_shape[j] = torch.matmul(first_term, second_term).squeeze()
 
     return rotation_vector
 
@@ -121,11 +124,11 @@ def form_star_model(betas, batch_size, poses, star):
 
 
 def save_model(model, star, obj_index):
-    output_path = 'objects/random_demo.obj'
+    output_path = 'objects/random_demo' + str(obj_index) + '.obj'
+    print("\033[1;32mCurrent Output Path\033[0m: " + output_path)
     with open(output_path, 'w') as fp:
         for i in model:
             for v in i:
                 fp.write('v %f %f %f\n' % (v[0], v[1], v[2]))
         for f in star.f + 1:
             fp.write('f %d %d %d\n' % (f[0], f[1], f[2]))
-    print("Done for the {} object.".format(obj_index))
