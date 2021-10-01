@@ -12,7 +12,7 @@ from util.data_utils import *
 from util.arguments import parse_args
 
 
-"""
+""" Some hints for self-re-reading
 input
 
 output_zip = {
@@ -44,12 +44,7 @@ class Visualization():
 
     info:
         info_args: argument
-        info_samplelist: 
-
-
-
-
-    
+        info_samplelist:
     """
 
 
@@ -120,7 +115,8 @@ class Visualization():
             
         return
 
-    def load_model(self)::x
+    def load_model(self):
+
 
         """
         Import the STAR model, ready to use it
