@@ -19,7 +19,7 @@ print(args)
 
 print('Loading data...')
 
-dataset = np.load('../raw_data/data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
+dataset = np.load('./data/data_3d_' + args.dataset + '.npz', allow_pickle=True)['positions_3d'].item()
 dict_keys = dataset.keys()
 
 if not os.path.exists('../data'):
