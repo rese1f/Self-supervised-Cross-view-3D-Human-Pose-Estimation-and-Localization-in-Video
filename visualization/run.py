@@ -69,6 +69,10 @@ class Visualization():
         pass
 
     def load_data(self):
+        """
+        load data
+
+        """
         try:
             if self.info_args.inputpath is not None:
                 filepath = self.info_args.inputpath
@@ -97,6 +101,11 @@ class Visualization():
         return
 
     def create_path(self):
+        """
+        create the path
+        Returns: None
+
+        """
         self.info_shape = dict()
         for sample in self.samplelist:
             self.info_shape[sample] = self.data_prediction[sample].shape
@@ -113,7 +122,7 @@ class Visualization():
 
     def load_model(self):
         """
-        Load the STAR model
+        Import the STAR model, ready to use it
         """
 
         self.data_betas = np.array([
@@ -125,13 +134,16 @@ class Visualization():
         self.data_star = STAR(gender='female',num_betas=self.info_num_betas)
         return
 
-    def visualize():
-
-
-        return
-
     def save_data(self, model, outmesh_path):
+        """
 
+        Args:
+            model:
+            outmesh_path:
+
+        Returns:
+        ISSUES:
+        """
         #outmesh_path = './hello_star.obj'
         with open(outmesh_path, 'w') as fp:
             for i in model:
