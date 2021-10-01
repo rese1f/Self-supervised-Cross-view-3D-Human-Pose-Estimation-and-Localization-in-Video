@@ -60,7 +60,7 @@ def init_subregressor(pose_pred, pose_2d):
 
     A = torch.cat((A_mse,A_1), dim=0)
     b = torch.cat((b_mse,b_1), dim=0)
-    T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
+    T = torch.mm(torch.mm(torch.cholesky_inverse(torch.mm(A.T,A)),A.T),b)
     loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
     T = T.reshape(w,3)
     return T, loss
@@ -156,7 +156,7 @@ def iter_subregressor(pose_pred, pose_2d, ground):
     
     A = torch.cat((A_mse,A_t), dim=0)
     b = torch.cat((b_mse,b_t), dim=0)
-    T = torch.mm(torch.mm(torch.inverse(torch.mm(A.T,A)),A.T),b)
+    T = torch.mm(torch.mm(torch.cholesky_inverse(torch.mm(A.T,A)),A.T),b)
     loss = torch.mm((torch.mm(A,T)-b).T,(torch.mm(A,T)-b))/(2*J*w+3*w-3)**2
     T = T.reshape(w,3)
     return T, loss
