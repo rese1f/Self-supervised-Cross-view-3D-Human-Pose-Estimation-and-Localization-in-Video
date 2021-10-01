@@ -141,6 +141,8 @@ settings.json
 *.mat
 *.npz
 *.bin
-*.png
 *.obj
-*.gif
+
+# Graph Storages
+# *.gif 
+# *.png
