@@ -249,6 +249,7 @@ class Visualization():
     def iterator(self, pair):
         '''
         This module is used for iteration to get rotational vector
+        FIXME: there is a bug here!
         '''
 
         for i in range(3):

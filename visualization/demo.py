@@ -42,7 +42,7 @@ trans = torch.cuda.FloatTensor(np.zeros((batch_size, 3)))
 model = star.forward(poses, betas, trans).cpu().detach().numpy()
 # shaped = model.v_shaped[-1, :, :]
 
-outmesh_path = 'objects/hello_star.obj'
+outmesh_path = 'objects/demo.obj'
 with open(outmesh_path, 'w') as fp:
     for i in model:
         for v in i:

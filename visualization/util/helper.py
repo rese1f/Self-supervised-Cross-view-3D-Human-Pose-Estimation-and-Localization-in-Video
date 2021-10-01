@@ -1,0 +1,118 @@
+import torch
+import numpy as np
+import random
+
+
+def randomly_load_data():
+    """
+    Randomly load one person in one frame into the system.
+    Returns: the data loaded
+    """
+
+    # set scope variables
+    input_path = '../VideoPose3D/output/data_output_h36m_1.npz'
+    print("Current Input Path: " + input_path)
+
+    # get the random sample of one person
+    item = np.load(input_path, allow_pickle=True)["positions_3d"].item()
+    sampled_item = item[random.sample(range(128), 1)[0]]['pose_pred']
+    size = sampled_item.shape
+    sampled_item = sampled_item[0, random.sample(range(size[1]), 1)[0], random.sample(range(size[2]), 1)[0]]
+
+    return sampled_item
+
+
+def subject_to_vector(h36m_metadata, subject):
+    """
+    The module is used to transfer node tensor into directional vector tensor
+    Input: tensor([v,n,x,N,3])
+    Output: tensor([v,n,x,24,3])
+    """
+
+    connect = h36m_metadata["connect"]
+    array_vector = torch.cat([connect_node(subject[connect[i][0], :],
+                                           subject[connect[i][1], :])
+                              for i in range(24)], dim=-2)
+    return array_vector
+
+
+def connect_node(vector_1, vector_2):
+    """
+    Assistant function for "subject_to_vector"
+    Used for reshaping the tensors
+    """
+    return (torch.subtract(vector_2, vector_1)).unsqueeze(0)
+
+
+def apply_to_pose(star_model, h36m_medatada, vector):
+    standard_shape = []
+    for i in range(3):
+        standard_shape.append(torch.tensor(star_model["standard"]))
+    connect = h36m_medatada["tree_connect"]
+    rotation_vector = torch.zeros_like(vector)
+    for i in range(5):
+        for j in range(3):
+            rotation_vector[connect[i][j], :], r_matrix = Rodrigue(vector[connect[i][j], :],
+                                                                   standard_shape[j][connect[i][j], :])
+            standard_shape[j] = torch.matmul(r_matrix.unsqueeze(0).repeat(24, 1, 1),
+                                             standard_shape[j].unsqueeze(2).
+                                             permute(-1, -2)).permute(-1, -2).squeeze()
+
+    return rotation_vector
+
+
+def Rodrigue(vect_orig, vect_finl):
+    """
+    The mathematic model for rotation vector and matrix calculation
+    Input: []
+    """
+
+    axis_unnormalized = torch.cross(vect_orig, vect_finl, dim=-1)  # 求旋转轴
+    axis = torch.divide(axis_unnormalized, torch.norm(axis_unnormalized, dim=-1).unsqueeze(-1))  # 标准化旋转轴
+    angle = torch.arccos(torch.dot(vect_orig, vect_orig, dim=-1).unsqueeze(-1))  # 求旋转角度
+
+    r_vect = torch.multiply(axis, angle)  # 求得旋转向量
+
+    # Rodrigues 公式，可以求得矩阵R
+    r_mat = (torch.matmul(torch.eye(3), torch.cos(angle)) +
+             torch.mul((torch.subtract(torch.tensor(1), torch.cos(angle)),
+                        torch.matmul(axis.unsqueeze(-1).permute(0, 2, 1), axis))) +
+             torch.mul(torch.sin(angle), v_cat(axis)))
+
+    return r_vect, r_mat
+
+
+def v_cat(axis):
+    """
+    This module is used for concatcate a matrix used in Rodrigue()
+    Input: tensor([v,n,x,N,3])
+    Output: tensor([v,n,x,N,3,3])
+    """
+
+    row1 = torch.cat((torch.cat((torch.zeros_like(axis[..., 0]), -axis[..., 2]), dim=-1), axis[..., 1]),
+                     dim=-1).unsqueeze(4)
+    row2 = torch.cat((torch.cat((axis[..., 2], torch.zeros_like(axis[..., 0])), dim=-1), -axis[..., 0]),
+                     dim=-1).unsqueeze(4)
+    row3 = torch.cat((torch.cat((torch.zeros_like(axis[..., 0]), -axis[..., 2]), dim=-1), axis[..., 1]),
+                     dim=-1).unsqueeze(4)
+    mat = torch.cat((torch.cat((row1, row2), dim=-1), row3), dim=-1)
+
+    return mat
+
+
+def form_star_model(betas, batch_size, poses, star):
+    betas = torch.cuda.FloatTensor(betas)
+    trans = torch.cuda.FloatTensor(np.zeros((batch_size, 3)))
+    model = star.forward(poses, betas, trans).cpu().detach().numpy()
+    return model
+
+
+def save_model(model, star, obj_index):
+    output_path = 'objects/random_demo.obj'
+    with open(output_path, 'w') as fp:
+        for i in model:
+            for v in i:
+                fp.write('v %f %f %f\n' % (v[0], v[1], v[2]))
+        for f in star.f + 1:
+            fp.write('f %d %d %d\n' % (f[0], f[1], f[2]))
+    print("Done for the {} object.".format(obj_index))
