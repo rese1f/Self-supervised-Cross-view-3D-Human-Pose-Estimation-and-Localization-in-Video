@@ -120,7 +120,8 @@ class Visualization():
             
         return
 
-    def load_model(self):
+    def load_model(self)::x
+
         """
         Import the STAR model, ready to use it
         """
