@@ -1,18 +1,6 @@
 # Documentation
 
-- [Documentation](#documentation)
-  * [Prepare Dataset](#prepare-dataset)
-    + [Principles](#principles)
-    + [Execution](#execution)
-  * [Data Enhancement](#data-enhancement)
-    + [Principles](#principles-1)
-      - [Random Functioning](#random-functioning)
-      - [Collision Elimination](#collision-elimination)
-      - [Camera generator](#camera-generator)
-    + [Execution/Super-parameters](#execution-super-parameters)
-  * [Video Pose 3D](#video-pose-3d)
-    + [Principles](#principles-2)
-    + [Execution/Super-parameters](#execution-super-parameters-1)
+[TOC]
 
 This guide includes **all** important information about the whole project and includes the essential principles of the code logic. Please be **sure** that you’ve read [README.md](./README.md) thoroughly before you move on.
 
@@ -30,14 +18,25 @@ By graph presentation, the algorithm of the data preparation part can be express
 
 ### Execution
 
-For execution, simply type
+For execution, please firstly download the datasets from [Human3.6M Official Website](http://vision.imar.ro/human3.6m/description.php) into `DataGenerators/data/h36m`, so that the python script can successfully load your dataset. Make sure your dir tree look like this:
+
+```shell
+./data/h36m
+|-- S1_Directions\ 1.mat
+|-- S1_Directions.mat
+|-- S1_Discussion\ 1.mat
+|-- S1_Discussion.mat
+|-- S1_Eating\ 2.mat
+```
+
+After you’ve completed the structure for the input, simply type
 
 ```shell
 cd ./DataGenerators/
 python3 prepare_dataset.py
 ```
 
-If you’re on the right way, you will find `data_3d_h36m.npz` in dir `DataGenerators/data`. 
+After this step, you’ll get a combined data in `DataGenerators/data/data_3d_h36m.npz`
 
 ## Data Enhancement
 
@@ -67,13 +66,13 @@ This part basically deals with the movements of the raw data. Firstly, the algor
 
 #### Collision Elimination
 
-The collision elimination part is a brand new, self-developed algorithm, *Sequential Approach for Eliminating Individual Collisions*.  The pseudo code is shown below.
+The collision elimination part is a brand new, self-developed algorithm, *Sequential Approach for Eliminating Individual Collisions* (SAEIC) Algorithm.  The Pseudo-code is shown below.
 
-![image-20210713153609929](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-073610.png)
+![image-20211002194813922](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-10-02-114814.png)
 
 In this function, there is another complicated function `find_shift_vector()`, which is illustrated below.
 
-![image-20210713153622881](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-13-073623.png)
+![image-20211002194829538](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-10-02-114829.png)
 
 #### Camera generator
 
@@ -90,7 +89,7 @@ cd ./DataGenerators/
 python3 run.py
 ```
 
-If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `DataGenerators/output`.
+If you’re on the right way, you will find `data_multi_3d_h36m.npz` in dir `data` (which is the same-level dir of DataGenerators).
 
 If you want to changes the super-parameters, you have these choices below:
 
@@ -108,7 +107,7 @@ If you want to changes the super-parameters, you have these choices below:
 
 If you are curious about the source code implementing the parameters, turn to [DataGenerators/arguments.py](./DataGenerators/arguments.py)
 
-## Video Pose 3D
+## Video Pose 3D Estimation
 
 ### Principles
 
@@ -124,7 +123,35 @@ The basic logic of this part can be expressed below.
 
 ![9461626954532_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-22-143126.png)
 
+### A Multi-view Matching Loss Algorithm
+
+![10151627036981_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-23-155600.png)
+
+We use the regression test to estimate the loss of the trajectories and poses of each subject, and use the results to analyze the performance of our dataset.
+
 ### Execution/Super-parameters
+
+Before you star this part, please make sure that you already have `data/data_multi_h36m.npz` in your project directory.
+
+Firstly, we need to run the baseline for comparison.
+
+```shell
+cd VideoPose3D
+python3 baseline.py
+```
+
+Secondly, we need to run the fine-tune script to carry out the better arguments. Then, we run the new arguments.
+
+```shell
+python3 fine-tune.py
+python3 run.py
+```
+
+At last, if you want to figure out the graphical results, please use the visualization approach provided.
+
+```shell
+python3	visualization.py 
+```
 
 | Arg.    | Abbr.                      | Meaning                                                      | Default                   |
 | ------- | -------------------------- | ------------------------------------------------------------ | ------------------------- |
@@ -148,7 +175,40 @@ The basic logic of this part can be expressed below.
 
 If you are curious about the source code implementing the parameters, turn to [VideoPose3D/common/arguments.py](VideoPose3D/common/arguments.py).
 
-### A Multi-view Matching Loss Algorithm Based on ICP
+## STAR Visualization
 
-![10151627036981_.pic_hd](http://jacklovespictures.oss-cn-beijing.aliyuncs.com/2021-07-23-155600.png)
+### Principles
+
+At the last part of our project, we use the [STAR method](https://star.is.tue.mpg.de/) to make the flat subjects more visible and instinctively looking.
+
+### Execution
+
+Before you run this part of file, please make sure your `visualization/model` look like this:
+
+```shell
+$ tree ./model
+./model
+|-- LICENSE.txt
+|-- female
+|   `-- model.npz
+|-- male
+|   `-- model.npz
+`-- neutral
+    `-- model.npz
+```
+
+If you want to run a demo object that has all zero vectors, simply run the command below.
+
+```shell
+cd visualization
+python3 demo.py
+```
+
+If you want to carry out a better object with actions, please run the command below.
+
+```shell
+python3 run.py
+```
+
+Note that the output files are in `visualization/objects`.
 
