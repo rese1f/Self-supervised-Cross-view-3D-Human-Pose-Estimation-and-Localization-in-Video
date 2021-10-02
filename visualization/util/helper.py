@@ -44,11 +44,11 @@ def connect_node(vector_1, vector_2):
     return (torch.subtract(vector_2, vector_1)).unsqueeze(0)
 
 
-def apply_to_pose(star_model, h36m_medatada, vector):
+def apply_to_pose(star_model, h36m_medadata, vector):
     standard_shape = []
     for i in range(3):
         standard_shape.append(torch.tensor(star_model["standard"], dtype=torch.float32))
-    connect = h36m_medatada["tree_connect"]
+    connect = h36m_medadata["tree_connect"]
     rotation_vector = torch.zeros_like(vector)
     for i in range(5):
         for j in range(3):
@@ -124,11 +124,11 @@ def form_star_model(betas, batch_size, poses, star):
 
 
 def save_model(model, star, obj_index):
-    output_path = 'objects/random_demo' + str(obj_index) + '.obj'
+    output_path = 'objects/run' + str(obj_index) + '.obj'
     print("\033[1;32mCurrent Output Path\033[0m: " + output_path)
-    with open(output_path, 'w') as fp:
+    with open(output_path, 'w') as file:
         for i in model:
             for v in i:
-                fp.write('v %f %f %f\n' % (v[0], v[1], v[2]))
+                file.write('v %f %f %f\n' % (v[0], v[1], v[2]))
         for f in star.f + 1:
-            fp.write('f %d %d %d\n' % (f[0], f[1], f[2]))
+            file.write('f %d %d %d\n' % (f[0], f[1], f[2]))

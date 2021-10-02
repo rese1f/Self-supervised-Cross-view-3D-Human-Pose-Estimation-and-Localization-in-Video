@@ -10,19 +10,16 @@ betas = np.array([
 num_betas = 10
 batch_size = 1
 obj_number = 5
-star = STAR(gender='female', num_betas=num_betas)
-
-# allocate the right device for the data
-torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+star = STAR(gender='neutral', num_betas=num_betas)
 
 for i in range(obj_number):
     # load data into the runtime system
-    subject = randomly_load_data()  # unit test passed
+    subject = randomly_load_data()
     # transform the tensors of our subjects into the corresponding vectors for the STAR model
-    vector = subject_to_vector(h36m_metadata, subject)  # unit test passed
+    vector = subject_to_vector(h36m_metadata, subject)
     # apply the vectors on the STAR pose
     rotation_vector = apply_to_pose(star_model, h36m_metadata, vector)
-    poses = rotation_vector.reshape(batch_size, 72)
+    poses = rotation_vector.reshape(batch_size, 72, 1)
     # form the STAR model
     model = form_star_model(betas, batch_size, poses, star)
     # save the file
