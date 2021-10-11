@@ -1,8 +1,23 @@
 # Documentation
 
-[TOC]
-
-This guide includes **all** important information about the whole project and includes the essential principles of the code logic. Please be **sure** that you’ve read [README.md](./README.md) thoroughly before you move on.
+* [Documentation](#documentation)
+   * [Prepare Dataset](#prepare-dataset)
+      * [Principles](#principles)
+      * [Execution](#execution)
+   * [Data Enhancement](#data-enhancement)
+      * [Principles](#principles-1)
+         * [Random Functioning](#random-functioning)
+         * [Collision Elimination](#collision-elimination)
+         * [Camera generator](#camera-generator)
+      * [Execution/Super-parameters](#executionsuper-parameters)
+   * [Video Pose 3D Estimation](#video-pose-3d-estimation)
+      * [Principles](#principles-2)
+      * [Algorithm for Single-view Camera Coordination Regression](#algorithm-for-single-view-camera-coordination-regression)
+      * [A Multi-view Matching Loss Algorithm](#a-multi-view-matching-loss-algorithm)
+      * [Execution/Super-parameters](#executionsuper-parameters-1)
+   * [STAR Visualization](#star-visualization)
+      * [Principles](#principles-3)
+      * [Execution](#execution-1)
 
 The following part of this file defines all the used classes/functions in each block. Again, please turn back to [README.md](./README.md) if you have not understood the macro functionalities of all the workflow parts.
 

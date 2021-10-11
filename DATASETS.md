@@ -1,5 +1,10 @@
 # Datasets
 
+* [Datasets](#datasets)
+   * [Human3.6M (Native Dataset)](#human36m-native-dataset)
+      * [Vertex Layout](#vertex-layout)
+   * [Our Dataset](#our-dataset)
+
 This file describes the basic parameters of the datasets appeared in the program. Note that our project 
 
 ## Human3.6M (Native Dataset)

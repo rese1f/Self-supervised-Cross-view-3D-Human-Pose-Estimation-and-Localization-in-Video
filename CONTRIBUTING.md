@@ -1,4 +1,12 @@
 # Contributing
+
+* [Contributing](#contributing)
+   * [Pull Requests](#pull-requests)
+   * [Contributor License Agreement ("CLA")](#contributor-license-agreement-cla)
+   * [Issues](#issues)
+   * [Coding Style](#coding-style)
+   * [License](#license)
+
 We want to make contributing to this project as easy and transparent as
 possible.
 
