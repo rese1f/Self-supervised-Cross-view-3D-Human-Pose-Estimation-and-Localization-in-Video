@@ -290,20 +290,18 @@ class Human36mDataset(MocapDataset):
             
             for i in range(4):
                 d_vec = r_avg - r_cam[i]
-                d_vec_normd = d_vec/np.linalg.norm(d_vec)
-                z_transformed = d_vec_normd
-                y_transformed = np.array([np.cos(theta + np.pi/2*(i-1)),np.sin(theta + np.pi/2*(i-1)),0])
-                x_transformed = np.cross(y_transformed,d_vec_normd)
-                p_vec_transformed = (z_transformed+x_transformed+y_transformed)/np.linalg.norm((z_transformed+x_transformed+y_transformed))
-                p_vec_original = np.array([1,1,1])/np.linalg.norm(np.array([1,1,1]))
-
-                u_vec = np.cross(p_vec_original, p_vec_transformed )
-                u_vec = u_vec/np.linalg.norm(u_vec)
-            
-                angle = np.arccos(np.dot(p_vec_original, p_vec_transformed))
-                q = np.zeros(4, dtype = np.float32)
-                q[1:] = - u_vec * np.sin(angle/2); q[0] = np.cos(angle/2)
                 
+                # Euler angle
+                z = np.arctan2(-d_vec[0],d_vec[1])
+                y = 0
+                x = - np.pi/2 + np.arctan(d_vec[2]/np.linalg.norm(d_vec[0:2]))
+
+                q = np.array([np.cos(x/2) * np.cos(y/2) * np.cos(z/2) - np.sin(x/2) * np.sin(y/2) * np.sin(z/2),
+                              np.sin(y/2) * np.sin(z/2) * np.cos(x/2) + np.cos(y/2) * np.cos(z/2) * np.sin(x/2),
+                              np.sin(y/2) * np.cos(z/2) * np.cos(x/2) + np.cos(y/2) * np.sin(z/2) * np.sin(x/2),
+                              np.cos(y/2) * np.sin(z/2) * np.cos(x/2) - np.sin(y/2) * np.cos(z/2) * np.sin(x/2)
+                                    ])
+
                 cam_dic = {'orientation': list(q), 'translation': list(r_cam[i] * 1e3)}
                 camera[subject].append(cam_dic); print(cam_dic)
             
