@@ -1,5 +1,11 @@
 # Byte-compiled / optimized / DLL files
+
+# toplevel caching file
 __pycache__/
+# inherited caching files
+*/__pycache__/
+^.*pycache.*$
+
 *.py[cod]
 *$py.class
 
