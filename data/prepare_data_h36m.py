@@ -25,8 +25,8 @@ from common.h36m_dataset import Human36mDataset
 from common.camera import world_to_camera, project_to_2d, image_coordinates
 from common.utils import wrap
 
-output_filename = "test_3d" #'data_3d_sh36m'
-output_filename_2d = "test_2d" #'data_2d_sh36m_gt'
+output_filename = 'data_3d_sh36m'
+output_filename_2d = 'data_2d_sh36m_gt'
 subjects = ['S1', 'S5', 'S6', 'S7', 'S8', 'S9', 'S11']
 
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--from-archive', default='', type=str, metavar='PATH', help='convert preprocessed dataset')
 
     # Alternatively, convert dataset from original source (the Human3.6M dataset path must be specified manually)
-    parser.add_argument('--from-source', default='/mnt/sdb/h36m', type=str, metavar='PATH', help='convert original dataset')
+    parser.add_argument('--from-source', default='/Human3.6M/Human3.6M/Human3.6M_gt', type=str, metavar='PATH', help='convert original dataset')
 
     args = parser.parse_args()
 

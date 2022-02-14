@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 # data
-.npz
+*.npz
+checkpoint/
+Human3.6M/
