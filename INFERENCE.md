@@ -60,3 +60,14 @@ You can also export the 3D joint positions (in camera space) to a NumPy archive.
 - If you want multi-person tracking, you should implement a bounding box matching strategy. An example would be to use bipartite matching on the bounding box overlap (IoU) between subsequent frames, but there many other approaches.
 - Predictions are relative to the root joint, i.e. the global trajectory is not regressed. If you need it, you may want to use another model to regress it, such as the one we use for semi-supervision.
 - Predictions are always in *camera space* (regardless of whether the trajectory is available). For our visualization script, we simply take a random camera from Human3.6M, which fits decently most videos where the camera viewport is parallel to the ground. 
+
+预训练pose模型：checkpoint/pretrained_h36m_cpn.bin
+轨迹模型：checkpoint/epoch_80.bin
+
+hm3.6m inference:
+python run_traj.py -k cpn_ft_h36m_dbb -arc 3,3,3,3,3 -c checkpoint --evaluate epoch_80.bin
+
+run_traj.py:
+L218-L219：分别load轨迹模型和pose模型
+L680-L681：分别预测轨迹和pose
+L716：n_mpjpe函数是以归一化scale为标准的评估（hm3.6m上误差是59.1mm），这个是单人的，我们可以把它拓展为多人的，作为我们的评估策略。
