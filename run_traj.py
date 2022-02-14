@@ -691,7 +691,7 @@ def evaluate(test_generator, action=None, return_predictions=False):
             
             plot_3d = False
             plot_2d = False
-            val = True
+            val = False
             
             if val:
                 print('model: ', predicted_3d_pos[0][0])
