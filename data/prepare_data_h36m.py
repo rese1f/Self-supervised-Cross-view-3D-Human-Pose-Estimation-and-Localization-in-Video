@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--from-archive', default='', type=str, metavar='PATH', help='convert preprocessed dataset')
 
     # Alternatively, convert dataset from original source (the Human3.6M dataset path must be specified manually)
-    parser.add_argument('--from-source', default='/Human3.6M/Human3.6M/Human3.6M_gt', type=str, metavar='PATH', help='convert original dataset')
+    parser.add_argument('--from-source', default='C:\\Users\\Reself\\OneDrive\\Projects\\.Pose\\Human3.6M\\Human3.6M\\Human3.6M_gt', type=str, metavar='PATH', help='convert original dataset')
 
     args = parser.parse_args()
 

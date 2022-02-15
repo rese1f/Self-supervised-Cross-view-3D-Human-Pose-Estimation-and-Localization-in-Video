@@ -38,8 +38,11 @@ except OSError as e:
 
 print('Loading dataset...')
 dataset_path = 'data/data_3d_' + args.dataset + '.npz'
-if args.dataset == 'h36m' or 'sh36m':
+if args.dataset == 'h36m':
     from common.h36m_dataset import Human36mDataset
+    dataset = Human36mDataset(dataset_path)
+elif args.dataset == 'sh36m':
+    from common.sh36m_dataset import Human36mDataset
     dataset = Human36mDataset(dataset_path)
 elif args.dataset.startswith('humaneva'):
     from common.humaneva_dataset import HumanEvaDataset

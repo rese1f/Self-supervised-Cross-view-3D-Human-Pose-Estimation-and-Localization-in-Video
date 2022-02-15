@@ -214,8 +214,8 @@ class Human36mDataset(MocapDataset):
         # Load serialized dataset
         data = np.load(path, allow_pickle=True)['positions_3d'].item()
         
-        # self._cameras = Human36mDataset.__ext_gen(data)
-        self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
+        self._cameras = Human36mDataset.__ext_gen(data)
+        # self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
         for cameras in self._cameras.values():
             for i, cam in enumerate(cameras):
                 cam.update(h36m_cameras_intrinsic_params[i])
