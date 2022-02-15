@@ -206,6 +206,52 @@ h36m_cameras_extrinsic_params = {
     ],
 }
 
+# [ADDED] Intrinsic Parameters
+modified_cameras_intrinsic_params = [
+    {
+        'id': '54138969',
+        'center': [512.54150390625, 515.4514770507812],
+        'focal_length': [1145.0494384765625, 1143.7811279296875],
+        'radial_distortion': [0, 0, 0],
+        'tangential_distortion': [0, 0],
+        'res_w': 1000,
+        'res_h': 1000,
+        'azimuth': 70, # Only used for visualization
+    },
+    {
+        'id': '55011271',
+        'center': [512.54150390625, 515.4514770507812],
+        'focal_length': [1145.0494384765625, 1143.7811279296875],
+        'radial_distortion': [0, 0, 0],
+        'tangential_distortion': [0, 0],
+        'res_w': 1000,
+        'res_h': 1000,
+        'azimuth': -70, # Only used for visualization
+    },
+    {
+        'id': '58860488',
+        'center': [512.54150390625, 515.4514770507812],
+        'focal_length': [1145.0494384765625, 1143.7811279296875],
+        'radial_distortion': [0, 0, 0],
+        'tangential_distortion': [0, 0],
+        'res_w': 1000,
+        'res_h': 1000,
+        'azimuth': 110, # Only used for visualization
+    },
+    {
+        'id': '60457274',
+        'center': [512.54150390625, 515.4514770507812],
+        'focal_length': [1145.0494384765625, 1143.7811279296875],
+        'radial_distortion': [0, 0, 0],
+        'tangential_distortion': [0, 0],
+        'res_w': 1000,
+        'res_h': 1000,
+        'azimuth': -110, # Only used for visualization
+    },
+]
+
+
+
 class Human36mDataset(MocapDataset):
     def __init__(self, path, remove_static_joints=True):
         super().__init__(fps=50, skeleton=h36m_skeleton)
@@ -214,11 +260,16 @@ class Human36mDataset(MocapDataset):
         # Load serialized dataset
         data = np.load(path, allow_pickle=True)['positions_3d'].item()
         
-        # self._cameras = Human36mDataset.__ext_gen(data)
-        self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
+        self._cameras = Human36mDataset.__ext_gen(data)
+        # self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
+        
         for cameras in self._cameras.values():
             for i, cam in enumerate(cameras):
-                cam.update(h36m_cameras_intrinsic_params[i])
+
+                # using the same camera for each view and eliminate distorsion
+                # cam.update(h36m_cameras_intrinsic_params[i])
+                cam.update(modified_cameras_intrinsic_params[i])
+
                 for k, v in cam.items():
                     if k not in ['id', 'res_w', 'res_h']:
                         cam[k] = np.array(v, dtype='float32')
