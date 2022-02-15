@@ -165,7 +165,10 @@ if __name__ == '__main__':
                 positions /= 1000 # Meters instead of millimeters
                 output[subject][canonical_name] = positions.astype('float32')
         
-        output = regroup(output, 2, 4, 1) # the only changed line in the original code
+        output = regroup(cascading_dict=output,
+                         min_batch=3,
+                         max_batch=3,
+                         num_samples=128)
         
         print('Saving...')
         np.savez_compressed(output_filename, positions_3d=output)
