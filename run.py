@@ -412,9 +412,11 @@ if not args.evaluate:
 
                 inputs_3d = torch.from_numpy(batch_3d.astype('float32'))
                 inputs_2d = torch.from_numpy(batch_2d.astype('float32'))
+                inputs_cam = torch.from_numpy(batch_cam.astype('float32'))
                 if torch.cuda.is_available():
                     inputs_3d = inputs_3d.cuda()
                     inputs_2d = inputs_2d.cuda()
+                    inputs_cam = inputs_cam.cuda()
                 inputs_traj = inputs_3d[:, :, :1].clone()
                 inputs_3d[:, :, 0] = 0
 
@@ -422,16 +424,21 @@ if not args.evaluate:
 
                 # Predict 3D poses
                 predicted_3d_pos = init_model(inputs_2d)
-                
-                # reg_traj = reg(predicted_3d_pos, inputs_2d)
-                # loss_3d_pos = RCLoss(predicted_3d_pos, reg_traj)
+                reg_traj = reg(predicted_3d_pos, inputs_2d)
+                # ——————
+                # LOSS 1
+                # ——————
+                loss_3d_pos = RCLoss(inputs_2d, predicted_3d_pos, reg_traj, inputs_cam)
+                # ——————
+                # LOSS 2
+                # ——————
+                # loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
                 
                 # The origin loss
                 # w = 1 / inputs_traj[:, :, :, 2] # Weight inversely proportional to depth
                 # loss_3d_pos = weighted_mpjpe(predicted_3d_pos, inputs_traj, w)                
                 
-                loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
-                print(loss_3d_pos)
+                # loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
                 #import pdb; pdb.set_trace()
 
                 epoch_loss_3d_train += inputs_3d.shape[0]*inputs_3d.shape[1] * loss_3d_pos.item()
