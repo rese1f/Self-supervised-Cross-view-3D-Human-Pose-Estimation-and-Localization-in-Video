@@ -41,7 +41,7 @@ class Regression(nn.Module):
 
         # union of single person and single frame
         t = torch.stack([torch.stack([self.unit_solver(index=bi, frame=fi) for fi in range(f)]) for bi in range(b)])
-        return t
+        return t.detach()
         
     def unit_matrix(self, index, frame):
         """
