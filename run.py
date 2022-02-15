@@ -421,17 +421,17 @@ if not args.evaluate:
                 optimizer.zero_grad()
 
                 # Predict 3D poses
-                predicted_3d_pos = model_pos_train(inputs_2d)
-                import pdb
-                pdb.set_trace()
-                reg_traj = reg(predicted_3d_pos, inputs_2d)
-
+                predicted_3d_pos = init_model(inputs_2d)
+                
+                # reg_traj = reg(predicted_3d_pos, inputs_2d)
+                # loss_3d_pos = RCLoss(predicted_3d_pos, reg_traj)
                 
                 # The origin loss
                 # w = 1 / inputs_traj[:, :, :, 2] # Weight inversely proportional to depth
                 # loss_3d_pos = weighted_mpjpe(predicted_3d_pos, inputs_traj, w)                
                 
-                #loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
+                loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
+                print(loss_3d_pos)
                 #import pdb; pdb.set_trace()
 
                 epoch_loss_3d_train += inputs_3d.shape[0]*inputs_3d.shape[1] * loss_3d_pos.item()

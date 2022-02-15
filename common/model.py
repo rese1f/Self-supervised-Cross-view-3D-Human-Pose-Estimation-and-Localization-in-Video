@@ -28,7 +28,7 @@ class Regression(nn.Module):
     def __call__(self, predicted_3d_pos, inputs_2d):
         # predicted_3d_pos(b,f,17,3)
         b, f, j, _ = predicted_3d_pos.shape
-        self.inputs_3d = predicted_3d_pos #(b,f,17,3)
+        self.inputs_3d = predicted_3d_pos.detach() #(b,f,17,3)
         self.inputs_2d = inputs_2d[:,self.i:-self.i] #(b,f,17,2)
         
         self.inputs_2d += 1
@@ -41,8 +41,8 @@ class Regression(nn.Module):
 
         # union of single person and single frame
         t = torch.stack([torch.stack([self.unit_solver(index=bi, frame=fi) for fi in range(f)]) for bi in range(b)])
-        return t.detach()
-        
+        return t
+
     def unit_matrix(self, index, frame):
         """
         (x+Tx) / (z+Tz) = X
