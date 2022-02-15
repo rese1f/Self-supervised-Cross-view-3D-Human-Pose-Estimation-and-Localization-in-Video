@@ -7,6 +7,7 @@
 
 import torch
 import numpy as np
+from .camera import *
 
 def mpjpe(predicted, target):
     """
@@ -89,5 +90,18 @@ def mean_velocity_error(predicted, target):
     
     return np.mean(np.linalg.norm(velocity_predicted - velocity_target, axis=len(target.shape)-1))
 
-def RCLoss(pose_3d, traj):
-    pass
+def RCLoss(inputs_2d, pose_3d, traj, camera_params):
+    """
+
+    Args:
+        pose_3d: N x F x 17 x 3
+        traj: N x F x 3 -> N x F x 1 x 3
+        cam: N x 9
+    """
+    
+    X = pose_3d + traj.unsqueeze(2)
+    pred_2d = project_to_2d(X, camera_params)
+    # pred_2d = project_to_2d_linear(X, camera_params)
+    gt_2d = inputs_2d[:,121:-121]
+    
+    return mpjpe(pred_2d, gt_2d)
