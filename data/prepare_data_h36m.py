@@ -21,7 +21,8 @@ import tqdm
 import sys
 
 sys.path.append('../')
-from common.h36m_dataset import Human36mDataset
+# from common.h36m_dataset import Human36mDataset
+from common.sh36m_dataset import Human36mDataset
 from common.camera import world_to_camera, project_to_2d, image_coordinates
 from common.utils import wrap
 
@@ -100,9 +101,11 @@ if __name__ == '__main__':
         exit(0)
 
     if os.path.exists(output_filename + '.npz'):
-        print('The dataset already exists at', output_filename + '.npz')
-        exit(0)
-
+        # print('The dataset already exists at', output_filename + '.npz')
+        # exit(0)
+        print('Delete old dataset at', output_filename + '.npz')
+        os.remove(output_filename + '.npz')
+        
     if args.from_archive:
         print('Extracting Human3.6M dataset from', args.from_archive)
         with zipfile.ZipFile(args.from_archive, 'r') as archive:
