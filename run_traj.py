@@ -406,7 +406,7 @@ if not args.evaluate:
             losses_2d_train_unlabeled.append(epoch_loss_2d_train_unlabeled / N_semi)
         else:
             # Regular supervised scenario
-            for _, batch_3d, batch_2d in train_generator.next_epoch():
+            for batch_cam, batch_3d, batch_2d in train_generator.next_epoch():
 
                 inputs_3d = torch.from_numpy(batch_3d.astype('float32'))
                 inputs_2d = torch.from_numpy(batch_2d.astype('float32'))
@@ -420,8 +420,13 @@ if not args.evaluate:
 
                 # Predict 3D poses
                 predicted_3d_pos = model_pos_train(inputs_2d)
-                w = 1 / inputs_traj[:, :, :, 2] # Weight inversely proportional to depth
-                loss_3d_pos = weighted_mpjpe(predicted_3d_pos, inputs_traj, w)                
+                import pdb
+                pdb.set_trace()
+                # reg_traj = reg(predicted_3d_pos, inputs_2d)
+                
+                # The origin loss
+                # w = 1 / inputs_traj[:, :, :, 2] # Weight inversely proportional to depth
+                # loss_3d_pos = weighted_mpjpe(predicted_3d_pos, inputs_traj, w)                
                 #loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
                 #import pdb; pdb.set_trace()
 

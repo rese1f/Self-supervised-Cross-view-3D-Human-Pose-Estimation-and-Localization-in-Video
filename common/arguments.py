@@ -24,9 +24,9 @@ def parse_args():
                         help='checkpoint directory')
     parser.add_argument('--checkpoint-frequency', default=10, type=int, metavar='N',
                         help='create a checkpoint every N epochs')
-    parser.add_argument('-r', '--resume', default='', type=str, metavar='FILENAME',
+    parser.add_argument('-r', '--resume', default='epoch_80.bin', type=str, metavar='FILENAME',
                         help='checkpoint to resume (file name)')
-    parser.add_argument('--evaluate', default='epoch_80.bin', type=str, metavar='FILENAME', help='checkpoint to evaluate (file name)')
+    parser.add_argument('--evaluate', default='', type=str, metavar='FILENAME', help='checkpoint to evaluate (file name)')
     parser.add_argument('--render', action='store_true', help='visualize a particular video')
     parser.add_argument('--by-subject', action='store_true', help='break down error by subject (on evaluation)')
     parser.add_argument('--export-training-curves', action='store_true', help='save training curves as .png images')
