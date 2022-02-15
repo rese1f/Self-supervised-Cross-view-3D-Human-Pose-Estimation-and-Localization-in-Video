@@ -279,6 +279,7 @@ class Human36mDataset(MocapDataset):
             const_a = 1.5
             h = 1.0
             
+            d = 5335./1e3
             theta = np.pi/4
             r_cam = list()
             # r_cam.append(r_avg + np.array([r_dif * const_a * np.cos(theta + np.pi/2*0), r_dif * const_a * np.sin(theta + np.pi/2*0), h]))
@@ -286,7 +287,7 @@ class Human36mDataset(MocapDataset):
             # r_cam.append(r_avg + np.array([r_dif * const_a * np.cos(theta + np.pi/2*2), r_dif * const_a * np.sin(theta + np.pi/2*2), h]))
             # r_cam.append(r_avg + np.array([r_dif * const_a * np.cos(theta + np.pi/2*3), r_dif * const_a * np.sin(theta + np.pi/2*3), h]))
             for i in range(4):
-                r_cam.append(r_avg + np.array([r_dif * const_a * np.cos(theta + np.pi/2*i), r_dif * const_a * np.sin(theta + np.pi/2*i), h]))
+                r_cam.append(r_avg + np.array([d * np.cos(theta + np.pi/2*i), d * np.sin(theta + np.pi/2*i), h]))
             
             for i in range(4):
                 d_vec = r_avg - r_cam[i]
